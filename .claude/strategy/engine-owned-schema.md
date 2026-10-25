@@ -209,4 +209,6 @@ After Wave 1 ships, update the root `.claude/CLAUDE.md` documentation index with
 
 Also link this strategy doc under the "Before You Write Any Code" table:
 
-> | Node system schema changes | [engine-owned-schema.md](.claude/strategy/engine-owned-schema.md) |
+```markdown
+| Node system schema changes | [engine-owned-schema.md](.claude/strategy/engine-owned-schema.md) |
+```

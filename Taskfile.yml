@@ -128,8 +128,9 @@ tasks:
 
   # Documentation validation
   docs:validate:
-    desc: Validate crate README documentation is complete
+    desc: Validate crate READMEs, node docs and every relative Markdown link
     cmds:
+      - pnpm exec tsx --test scripts/docs/brokenLinks.test.ts
       - pnpm exec tsx scripts/validate-docs.ts
 
   # Turbo cache inputs (ISS-9)

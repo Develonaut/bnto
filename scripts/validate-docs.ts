@@ -5,10 +5,14 @@
 // 2. Processor-owning crate READMEs mention all their processors
 // 3. bnto-engine README mentions all registered processors
 // 4. Every processor node type has a doc file in packages/@bnto/nodes/docs/
+// 5. Every relative link in a tracked Markdown file resolves (see
+//    docs/brokenLinks.ts for how links resolve)
 
+import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { brokenLinks } from "./docs/brokenLinks";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -38,13 +42,7 @@ const CATEGORY_TO_CRATE: Record<string, string> = {
 };
 
 // Categories that don't have dedicated processor crates
-const SKIP_CATEGORIES = new Set([
-  "control",
-  "io",
-  "data",
-  "network",
-  "transform",
-]);
+const SKIP_CATEGORIES = new Set(["control", "io", "data", "network", "transform"]);
 
 // --- Helpers ---
 
@@ -59,10 +57,7 @@ function readCatalog(): CatalogSnapshot {
 }
 
 function readWorkspaceMembers(): string[] {
-  const cargoToml = readFileSync(
-    resolve(ROOT, "engine/Cargo.toml"),
-    "utf-8",
-  );
+  const cargoToml = readFileSync(resolve(ROOT, "engine/Cargo.toml"), "utf-8");
   const members: string[] = [];
   const memberRegex = /"crates\/([^"]+)"/g;
   let match;
@@ -92,9 +87,7 @@ function checkCrateReadmes(members: string[]): string[] {
   return errors;
 }
 
-function checkProcessorCoverage(
-  processorTypes: NodeType[],
-): string[] {
+function checkProcessorCoverage(processorTypes: NodeType[]): string[] {
   const errors: string[] = [];
 
   // Group processors by crate
@@ -126,16 +119,11 @@ function checkProcessorCoverage(
 }
 
 function checkEngineRegistry(processorTypes: NodeType[]): string[] {
-  const readmePath = resolve(
-    ROOT,
-    "engine/crates/bnto-engine/README.md",
-  );
+  const readmePath = resolve(ROOT, "engine/crates/bnto-engine/README.md");
   if (!existsSync(readmePath)) return []; // already reported
 
   const readme = readFileSync(readmePath, "utf-8");
-  const missing = processorTypes
-    .map((nt) => nt.name)
-    .filter((name) => !readme.includes(name));
+  const missing = processorTypes.map((nt) => nt.name).filter((name) => !readme.includes(name));
 
   if (missing.length > 0) {
     return [
@@ -165,31 +153,53 @@ function checkNodeDocs(catalog: CatalogSnapshot): string[] {
   return errors;
 }
 
+function trackedMarkdown(): string[] {
+  const out = execFileSync("git", ["ls-files", "-z", "--", "*.md"], {
+    cwd: ROOT,
+    encoding: "utf-8",
+  });
+  return out.split("\0").filter((file) => file && existsSync(resolve(ROOT, file)));
+}
+
+function checkLinks(): string[] {
+  const exists = (path: string) => existsSync(resolve(ROOT, path));
+  return trackedMarkdown()
+    .flatMap((file) => brokenLinks(file, readFileSync(resolve(ROOT, file), "utf-8"), exists))
+    .map(
+      ({ file, line, target }) =>
+        `ERROR: ${file}:${line} links ${target}, which doesn't exist.\n` +
+        `       scripts/docs/brokenLinks.ts says how links resolve.`,
+    );
+}
+
 // --- Main ---
+
+function report(errors: string[]): void {
+  if (errors.length === 0) {
+    console.log("Documentation validation passed.");
+    return;
+  }
+  console.error("\nDocumentation validation failed:\n");
+  for (const err of errors) {
+    console.error(err);
+    console.error();
+  }
+  console.error(`${errors.length} error(s) found.`);
+  process.exit(1);
+}
 
 function main(): void {
   const catalog = readCatalog();
   const members = readWorkspaceMembers();
   const processorTypes = getProcessorNodeTypes(catalog);
 
-  const allErrors = [
+  report([
     ...checkCrateReadmes(members),
     ...checkProcessorCoverage(processorTypes),
     ...checkEngineRegistry(processorTypes),
     ...checkNodeDocs(catalog),
-  ];
-
-  if (allErrors.length > 0) {
-    console.error("\nDocumentation validation failed:\n");
-    for (const err of allErrors) {
-      console.error(err);
-      console.error();
-    }
-    console.error(`${allErrors.length} error(s) found.`);
-    process.exit(1);
-  }
-
-  console.log("Documentation validation passed.");
+    ...checkLinks(),
+  ]);
 }
 
 main();

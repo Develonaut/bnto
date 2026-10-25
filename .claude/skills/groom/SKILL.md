@@ -174,7 +174,7 @@ Report your findings in this structure:
 - Is the current sprint aligned with the active ROADMAP milestone? If not, what's misaligned?
 - Any tasks building for the wrong milestone?
 - Any browser-first violations (cloud infra being built for browser-capable bntos)?
-- Any pricing model drift? Check against [pricing-model.md](strategy/pricing-model.md) three-layer framework
+- Any pricing model drift? Check against [pricing-model.md](../../strategy/pricing-model.md) three-layer framework
 
 ### Issues Found
 

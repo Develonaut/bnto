@@ -19,6 +19,12 @@ pre-commit:
       priority: 3
       run: pnpm exec tsx scripts/validate-docs.ts
 
+    # Same script: it also checks every relative Markdown link (ISS-20).
+    docs-links:
+      glob: "*.md"
+      priority: 3
+      run: pnpm exec tsx scripts/validate-docs.ts
+
     rust-fmt:
       glob: "engine/**/*.rs"
       priority: 4

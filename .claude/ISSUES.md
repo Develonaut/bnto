@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-65**.
+- **IDs never get reused.** The next one is **ISS-66**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -19,7 +19,6 @@
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines                                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                                              | docs        | Open                                             |
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
 | ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
 | ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
@@ -51,6 +50,7 @@
 | ISS-62 | Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60     | docs        | Open                                             |
 | ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
+| ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
 
 ---
 
@@ -95,18 +95,6 @@ CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scri
 **Found:** October 24, 2026 (v0.18.2 release run 40096930376).
 
 `terminate_all_kills_orphaned_grandchild_on_windows` (`engine/crates/bnto/src/context.rs:743`) starts `cmd /c start /b powershell … $PID; Start-Sleep 30` and waits once, `recv_timeout(20 s)`, for PowerShell to print its PID (`:758-759`). On the release's Windows runner PowerShell didn't print in time: `called Result::unwrap() on an Err value: Timeout`. The same commit passed the same job on #743's CI an hour earlier, so the failure is timing, not code. It failed the release's CI Gate. Wait on PowerShell's start with a longer bound, or start a lighter process for the grandchild, so a slow runner can't fail a release.
-
-### ISS-20: 12 broken links in `.claude/` docs; nothing checks links
-
-**Found:** October 24, 2026 (cold review of #745).
-
-Relative links that don't resolve from the file they're in:
-
-- `.claude/PLAN.md:168, 172, 439, 850, 878`: `.claude/strategy/…` paths written root-relative, the missing `file-node-ecosystem.md`, and `research/reports/Shell%20script%20injection%20safety.md`.
-- four in `.claude/plans/inherited-watching-hennessy.md`.
-- one each in `.claude/skills/pickup/SKILL.md:202`, `.claude/skills/groom/SKILL.md` and `.claude/strategy/engine-owned-schema.md`.
-
-`task docs:validate` (`scripts/validate-docs.ts`) checks crate READMEs and node docs only, never links. `CLAUDE.md`'s 115 root-relative links (`.claude/rules/…`) work for agents, which read from the repo root, but not on GitHub; keep that convention or not, but say so. Fix the 12 and add a link check to `docs:validate` (a Python sketch that lists them: walk `.claude/**/*.md`, resolve each Markdown link target against the file's folder).
 
 ### ISS-22: The output node's `directory` leaves `{{env.*}}` as a literal folder name
 
@@ -422,3 +410,12 @@ ESLint fails any `.tsx` function over 60 lines (`eslint.config.base.mjs`, the `.
 
 - **Fix:** build the footer from the same `-p` values and `--vars` files, as `DryRunHint` does for the declined-run hint (`engine/crates/bnto/src/dry_run_hint.rs`), each one shell word.
 - **Regression test:** `bnto dry-run <path> -p version=1.2.3 --vars vars.json` ends `Run with: bnto run <path> -p version=1.2.3 --vars vars.json <input>`.
+
+### ISS-65: Nothing lints the root `scripts/` folder
+
+**Found:** October 25, 2026 (cold review of the ISS-20 fix).
+
+ESLint runs per workspace package (`turbo run lint`), and the workspaces are `packages/*`, `packages/@bnto/*` and `apps/*` (`pnpm-workspace.yaml`). The repo root has only `eslint.config.base.mjs`, which packages import, so the 14 TypeScript files in `scripts/` (`validate-docs.ts`, `generate-theme.ts`, `scripts/turbo/`, `scripts/seo/`, `scripts/docs/`) get no function-length, file-length or complexity checks. `validate-docs.ts`'s `main()` reached 21 lines unflagged (fixed with ISS-20). Like ISS-16, which is `@bnto/nodes` ignoring its own `scripts/`.
+
+- **Fix:** a root `eslint.config.mjs` over `scripts/**` built on `baseConfig`, run by `task ui:lint` (or a `check:scripts` task) and CI, with any existing overruns on a suppressions baseline.
+- **Regression test:** a function over 20 lines in `scripts/` fails lint.
