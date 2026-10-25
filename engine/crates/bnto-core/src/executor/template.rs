@@ -64,7 +64,7 @@ fn has_placeholder(s: &str) -> bool {
 
 /// If the string is exactly one `{{namespace.key}}` placeholder, return (prefix, key).
 /// prefix is "fields", "env", "ctx", or the full "node.<id>" part.
-fn extract_sole_placeholder(s: &str) -> Option<(&str, &str)> {
+pub(crate) fn extract_sole_placeholder(s: &str) -> Option<(&str, &str)> {
     let trimmed = s.trim();
     if !trimmed.starts_with("{{") || !trimmed.ends_with("}}") {
         return None;

@@ -1,20 +1,14 @@
 // Which writes read the file another write's destination already holds.
 //
 // A result file that is a `Path` is read when its write runs, so a write
-// whose destination is that file must wait. Files are matched by identity
-// (`FileData::is_at`), so another spelling of the same file counts: another
-// case on a case-insensitive filesystem, a hard link, a symlink.
+// whose destination is that file must wait. The lookup is shared with
+// file-copy (`bnto_file::readers`); this adds which writes replace nothing.
 
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
 
 use bnto_core::PipelineFileResult;
 use bnto_core::processor::FileData;
-
-/// Size and modified time: one file has one stamp, whatever path reaches
-/// it, so only sources sharing a destination's stamp need the identity check.
-pub(super) type Stamp = (u64, Option<SystemTime>);
+use bnto_file::readers::readers_of;
 
 /// `waits_kept` with only files already at their destination left as is.
 #[cfg(test)]
@@ -30,47 +24,13 @@ pub fn waits_kept(
     paths: &[PathBuf],
     kept: &[bool],
 ) -> Vec<Vec<usize>> {
-    let replaced = replaced_stamps(paths, kept);
-    // The usual run writes into an empty folder: no source stats needed.
-    if replaced.iter().all(Option::is_none) {
-        return vec![Vec::new(); paths.len()];
-    }
-    let sources = sources_by_stamp(files);
-    let readers_of = |(i, at): (usize, Option<Stamp>)| {
-        let candidates = at.and_then(|at| sources.get(&at)).into_iter().flatten();
-        let reads_dest = |j: &&usize| **j != i && files[**j].data.is_at(&paths[i]);
-        candidates.filter(reads_dest).copied().collect()
-    };
-    replaced.into_iter().enumerate().map(readers_of).collect()
-}
-
-/// For each write, the stamp of the file it would replace: `None` when its
-/// destination is empty, or the write leaves it as is (its own source,
-/// ISS-36, or a held file already holding the result's bytes).
-fn replaced_stamps(paths: &[PathBuf], kept: &[bool]) -> Vec<Option<Stamp>> {
-    let pairs = paths.iter().zip(kept);
-    pairs
-        .map(|(dest, &kept)| if kept { None } else { stamp(dest) })
-        .collect()
-}
-
-/// The writes reading a file on disk, grouped by that file's stamp.
-fn sources_by_stamp(files: &[PipelineFileResult]) -> HashMap<Stamp, Vec<usize>> {
-    let mut by_stamp: HashMap<Stamp, Vec<usize>> = HashMap::new();
-    for (j, file) in files.iter().enumerate() {
-        if let FileData::Path(src) = &file.data
-            && let Some(at) = stamp(src)
-        {
-            by_stamp.entry(at).or_default().push(j);
-        }
-    }
-    by_stamp
-}
-
-/// The stamp of the file at `path`, following links; `None` when nothing is there.
-pub(super) fn stamp(path: &Path) -> Option<Stamp> {
-    let meta = std::fs::metadata(path).ok()?;
-    Some((meta.len(), meta.modified().ok()))
+    let sources: Vec<&FileData> = files.iter().map(|f| &f.data).collect();
+    let replaced: Vec<Option<&Path>> = paths
+        .iter()
+        .zip(kept)
+        .map(|(dest, &kept)| (!kept).then_some(dest.as_path()))
+        .collect();
+    readers_of(&sources, &replaced)
 }
 
 #[cfg(test)]

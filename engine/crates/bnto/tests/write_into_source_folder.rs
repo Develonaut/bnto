@@ -4,8 +4,9 @@
 // copy onto itself (ISS-36). A write never replaces an input a later write
 // still reads (ISS-48), in a final or a progressive write. Destinations that
 // are one file on disk (a link, a folder link, a filesystem that treats two
-// names as one) are refused before anything is written. Every run uses the
-// sandboxed HOME.
+// names as one) are refused before anything is written. A `file-copy` that
+// would replace a file another file of its batch reads is refused (ISS-52).
+// Every run uses the sandboxed HOME.
 
 mod helpers;
 
@@ -356,4 +357,116 @@ fn test_two_new_names_one_file_by_unicode_normalization_are_refused() {
     assert!(stderr.contains("nothing was written"), "{stderr}");
     let left = std::fs::read_dir(out.path()).unwrap().count();
     assert_eq!(left, 0, "nothing is written: {stderr}");
+}
+
+// --- file-copy into the inputs' folder (ISS-52) ---
+
+/// a → b, then `file-copy` into `dir` with `conflict`, writing no output.
+fn rename_then_copy(dir: &Path, conflict: &str) -> serde_json::Value {
+    let copy = json!({
+        "id": "cp", "type": "file-copy",
+        "parameters": { "destination": dir.to_str().unwrap(), "conflict": conflict }
+    });
+    let mut recipe = recipe(dir, &[a_to_b(), copy]);
+    recipe["nodes"][3]["parameters"] = json!({ "mode": "none" });
+    recipe
+}
+
+/// `a.txt` and `b.txt` as `two_inputs` left them.
+fn untouched() -> Vec<(String, String)> {
+    [("a.txt", "AAAA"), ("b.txt", "BBBB")]
+        .iter()
+        .map(|(n, c)| (n.to_string(), c.to_string()))
+        .collect()
+}
+
+/// The run failed with file-copy's refusal and left both inputs as they were.
+fn assert_copy_refused(dir: &Path, output: &Output) {
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(
+        stderr.contains("File copy refused, nothing copied"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("b.txt"),
+        "the refusal names the file: {stderr}"
+    );
+    assert_eq!(contents(dir), untouched(), "stderr: {stderr}");
+}
+
+#[test]
+fn test_file_copy_overwriting_an_input_another_file_reads_is_refused() {
+    // RED (ISS-52): `a` renamed to `b.txt` and copied over `b.txt` before
+    // (or after) `b`'s own copy read it: BBBB was lost.
+    let (dir, [a, b]) = two_inputs();
+    let output = run(&rename_then_copy(dir.path(), "overwrite"), &[&a, &b], &[]);
+    assert_copy_refused(dir.path(), &output);
+}
+
+#[test]
+fn test_file_copy_newer_onto_an_input_another_file_reads_is_refused() {
+    // RED (ISS-52): `newer` replaces an older destination, so `a` (newer)
+    // replaced `b.txt` (older) the same way.
+    let (dir, [a, b]) = two_inputs();
+    let hour_ago = std::time::SystemTime::now() - std::time::Duration::from_secs(3600);
+    let file = std::fs::File::options().write(true).open(&b).unwrap();
+    file.set_modified(hour_ago).unwrap();
+    let output = run(&rename_then_copy(dir.path(), "newer"), &[&a, &b], &[]);
+    assert_copy_refused(dir.path(), &output);
+}
+
+#[test]
+fn test_a_file_copy_dry_run_is_refused_too() {
+    let (dir, [a, b]) = two_inputs();
+    let recipe = rename_then_copy(dir.path(), "overwrite");
+    let output = run(&recipe, &[&a, &b], &["--dry-run"]);
+    assert_copy_refused(dir.path(), &output);
+}
+
+#[test]
+fn test_file_copy_skip_and_rename_onto_an_input_still_run() {
+    // Guard: neither replaces a file, so neither is refused. `rename` gives
+    // each copy a free name, `b`'s own included.
+    let renamed: Vec<(String, String)> = [
+        ("a.txt", "AAAA"),
+        ("b.txt", "BBBB"),
+        ("b_1.txt", "AAAA"),
+        ("b_2.txt", "BBBB"),
+    ]
+    .iter()
+    .map(|(n, c)| (n.to_string(), c.to_string()))
+    .collect();
+    for (conflict, expected) in [("skip", untouched()), ("rename", renamed)] {
+        let (dir, [a, b]) = two_inputs();
+        let output = run(&rename_then_copy(dir.path(), conflict), &[&a, &b], &[]);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(output.status.success(), "{conflict}: {stderr}");
+        assert_eq!(contents(dir.path()), expected, "{conflict}: {stderr}");
+    }
+}
+
+#[test]
+fn test_file_copy_hands_on_each_files_metadata() {
+    // RED (ISS-52 review): as a batch node, file-copy dropped what earlier
+    // steps attached, so a later `{{item.*}}` had nothing to read.
+    let (dir, a) = folder();
+    let out = temp_output_dir();
+    let steps = [
+        json!({ "id": "insp", "type": "file-inspect", "parameters": {} }),
+        json!({ "id": "cp", "type": "file-copy",
+            "parameters": { "destination": out.path().to_str().unwrap(), "conflict": "overwrite" } }),
+        json!({ "id": "rep", "type": "report",
+            "parameters": { "message": "ext={{item.extension}} {{file}}" } }),
+    ];
+    let mut recipe = recipe(dir.path(), &steps);
+    recipe["nodes"][4]["parameters"] = json!({ "mode": "none" });
+    let output = run(&recipe, &[&a], &[]);
+    let all = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(output.status.success(), "{all}");
+    assert!(all.contains("ext=txt a.txt"), "{all}");
 }

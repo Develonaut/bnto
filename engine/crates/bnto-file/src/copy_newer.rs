@@ -46,6 +46,19 @@ pub(crate) fn process_newer(
     Ok(passthrough_output(input, outcome))
 }
 
+/// Whether a `newer` copy of `input` replaces the file at `dest_path`: a
+/// source on disk newer than the target. Anything that would fail the copy
+/// counts as no; the file's own copy reports it.
+pub(crate) fn replaces(input: &NodeInput, dest_path: &Path) -> bool {
+    let FileData::Path(src) = &input.data else {
+        return false;
+    };
+    let Ok(tolerance) = tolerance_ms(&input.params) else {
+        return false;
+    };
+    matches!(decide(src, dest_path, tolerance), Ok(Outcome::Copied))
+}
+
 /// The keys `outcome_metadata` sets; file-copy declares them as count keys,
 /// so its node record adds them up into per-run totals.
 pub(crate) const OUTCOME_KEYS: [&str; 3] = ["copied", "up_to_date", "skipped_newer"];

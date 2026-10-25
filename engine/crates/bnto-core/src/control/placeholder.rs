@@ -1,5 +1,5 @@
-// `{{<namespace>.KEY}}` placeholders a batch node (assert, report, edit-fields)
-// fills itself, and the per-file `{{file}}`.
+// `{{<namespace>.KEY}}` placeholders a batch node (assert, report, edit-fields,
+// file-copy) fills itself, and the per-file `{{file}}`.
 //
 // The executor resolves a batch node's params once, with no item, so the
 // placeholders it can't fill there (`{{item.*}}`, `{{file}}`, report's
@@ -9,7 +9,7 @@
 use serde_json::{Map, Value};
 
 /// The per-file namespace: `{{item.KEY}}` reads the incoming file's metadata.
-pub(crate) const ITEM: &str = "item";
+pub const ITEM: &str = "item";
 
 /// The per-file name token: `{{file}}` reads the incoming file's name, as
 /// file-render and shell-run's `each` read it.
@@ -23,13 +23,13 @@ fn open(namespace: &str) -> String {
 }
 
 /// Whether `text` reads any `{{<namespace>.KEY}}`.
-pub(crate) fn reads(text: &str, namespace: &str) -> bool {
+pub fn reads(text: &str, namespace: &str) -> bool {
     text.contains(&open(namespace))
 }
 
 /// `text` with every `{{<namespace>.KEY}}` replaced from `values`, or the
 /// first key `values` doesn't have.
-pub(crate) fn resolve(
+pub fn resolve(
     text_in: &str,
     namespace: &str,
     values: &Map<String, Value>,
@@ -48,6 +48,28 @@ pub(crate) fn resolve(
     }
     out.push_str(rest);
     Ok(out)
+}
+
+/// The key when `text` is exactly one `{{<namespace>.KEY}}` (surrounding
+/// whitespace allowed), as the executor decides whether a filled value keeps
+/// its JSON type.
+pub fn sole_key<'a>(text: &'a str, namespace: &str) -> Option<&'a str> {
+    let (prefix, key) = crate::executor::template::extract_sole_placeholder(text)?;
+    (prefix == namespace).then_some(key)
+}
+
+/// Why `{{item.KEY}}` can't be filled: no value for `file`, and the keys
+/// `item` does have. The executor and nodes that fill items themselves share it.
+pub fn no_value(key: &str, file: Option<&str>, item: Option<&Map<String, Value>>) -> String {
+    let target = file.map(|f| format!(" for {f}")).unwrap_or_default();
+    let available = match item {
+        Some(item) if !item.is_empty() => {
+            let keys: Vec<&str> = item.keys().map(String::as_str).collect();
+            format!("it has: {}", keys.join(", "))
+        }
+        _ => "it has no item values".to_string(),
+    };
+    format!("{{{{item.{key}}}}} has no value{target} ({available})")
 }
 
 /// Whether `text` reads the file it is filled for: `{{file}}` or `{{item.*}}`.

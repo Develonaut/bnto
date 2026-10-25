@@ -24,7 +24,8 @@ pub mod rename;
 pub mod collect;
 
 /// File-copy node — write output files to a destination directory with
-/// conflict resolution. CLI-only (requires filesystem access).
+/// conflict resolution, checking every copy before any runs. CLI-only
+/// (requires filesystem access).
 pub mod copy;
 
 /// File-delete node — delete the files flowing into it, each under a base
@@ -40,6 +41,10 @@ pub mod list;
 /// The `newer` conflict mode of file-copy (time-compared, in-place copy).
 mod copy_newer;
 
+/// file-copy's batch: per-file `{{item.*}}` params, and the check that no
+/// copy replaces a file another file of the batch is read from.
+mod copy_batch;
+
 /// File-move node — move files into folders under a destination by the path
 /// in each name, refusing the whole run if a move would replace a file.
 /// CLI-only (requires filesystem access).
@@ -48,6 +53,10 @@ pub mod r#move;
 /// Checks and runs a batch of file moves so none replaces a file. Shared by
 /// file-move and the CLI's `output` overwrite mode.
 pub mod relocate;
+
+/// Which files of a batch are read from a file a write would replace. Shared
+/// by file-copy and the CLI's output write.
+pub mod readers;
 
 /// File-decode node — decode each file's content from a text encoding
 /// (base64) into its bytes. Browser-compatible.

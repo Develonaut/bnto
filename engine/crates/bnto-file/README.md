@@ -18,7 +18,7 @@ File operation nodes. Rename, filter, sort, decode, collect, copy, delete, inspe
 | `FileRender`  | `file-render`  | Write one in-memory text file (Markdown table, report) from a template: header, one row per item filled from `{{item.KEY}}` / `{{file}}`, footer; `{{count}}` anywhere; `escape: markdown` escapes values; a key an item lacks fails the run; `rows` in node metadata                                                                                                                                                                                            | browser, cli |
 | `FileJoin`    | `file-join`    | Join the files flowing in into one file named by `filename`, in arrival order (upstream steps choose and order them; files from several incoming edges arrive in edge order), `separator` (default none) between them; raw bytes; disk files stream into a temp file, never loaded whole; a disk file that's gone fails the run, naming it; zero files give an empty file; `joined` in node metadata                                                             | browser, cli |
 | `FileCollect` | `file-collect` | Traverse the directory its input references (a path reference, e.g. a folder from `file-list`, or a CLI dir) and collect files matching a glob pattern, named relative to it. Skips any `.bnto-staged-*` folder: files a CLI or TUI write set aside for a swap, left when it failed or was interrupted                                                                                                                                                           | cli          |
-| `FileCopy`    | `file-copy`    | Place output files in a destination directory; conflict: skip, overwrite, rename, newer (`newer` flags each file `copied` / `up_to_date` / `skipped_newer` and records the node's totals)                                                                                                                                                                                                                                                                        | cli          |
+| `FileCopy`    | `file-copy`    | Place output files in a destination directory; conflict: skip, overwrite, rename, newer (`newer` flags each file `copied` / `up_to_date` / `skipped_newer` and records the node's totals). Runs as a batch: a copy that would replace a file another file of the batch is read from refuses the batch before anything is copied; `{{item.KEY}}` in params is filled per file                                                                                     | cli          |
 | `FileDelete`  | `file-delete`  | Delete the files flowing in (path references, e.g. from `file-list` / `file-filter`); each must resolve under `base` (no `..` or link escapes), a folder or in-memory item refuses the whole run before anything is deleted, a missing file is skipped; items pass through flagged `deleted` / `skipped`, totals in node metadata                                                                                                                                | cli          |
 | `FileList`    | `file-list`    | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder, each with its `full_path`; missing paths skipped and counted, and `entries` lists every path in order with its `full_path` and `status` (`found` / `missing`)                                                                                                                                                                           | cli          |
 | `FileMove`    | `file-move`    | Move files into folders under a destination by the path in each name; rename only, refuses any run that would replace a file                                                                                                                                                                                                                                                                                                                                     | cli          |
@@ -64,7 +64,12 @@ src/
 ├── collect/          # FileCollect processor (file-collect, native-only)
 │   ├── mod.rs              # NodeProcessor impl, parameter schema, MIME guess
 │   └── walker.rs           # Directory walk; entry types from read_dir, links followed
-├── copy.rs           # FileCopy processor + metadata (native-only)
+├── copy.rs           # FileCopy processor + metadata (native-only, batch)
+├── copy_batch/       # file-copy as a batch (native-only)
+│   ├── mod.rs              # Per-file inputs, copy each in order
+│   ├── fill.rs             # `{{item.KEY}}` filled per file, a sole placeholder keeps its type
+│   ├── refusal.rs          # Refuse a copy over a file another file of the batch reads
+│   └── output.rs           # Inherited metadata, files handed over on failure, totals
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
 ├── delete/           # FileDelete processor (file-delete, native-only)
 │   ├── mod.rs              # NodeProcessor impl (batch), check-all-then-delete, outputs + counts
@@ -80,6 +85,7 @@ src/
 │   ├── params.rs           # Parameter schema + typed reads
 │   ├── plan.rs             # Names → moves; refuses absolute, `..`, bad names
 │   └── root.rs             # Destination resolution, folder/link/drive checks
+├── readers.rs        # Which files a batch reads from a destination (file-copy, output write)
 ├── relocate/         # Conflict check + ordered rename runner (file-move, output overwrite)
 └── wasm_bridge.rs    # #[wasm_bindgen] bridge functions
 ```

@@ -12,9 +12,9 @@
 use std::path::{Path, PathBuf};
 
 use bnto_core::processor::FileData;
+use bnto_file::readers::stamp;
 
 use super::landing::landing_key;
-use super::readers::stamp;
 
 /// `shared_kept` with only files already at their destination left as is.
 #[cfg(test)]
