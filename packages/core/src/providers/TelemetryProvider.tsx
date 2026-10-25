@@ -37,10 +37,13 @@ export function TelemetryProvider({ apiKey, host, pathname, children }: Telemetr
     initializedRef.current = true;
   }, [apiKey, host]);
 
-  // Track page views on pathname changes
+  // Track page views on pathname changes. `$current_url` must be the absolute
+  // URL, the value PostHog sets on every other event (a bare pathname here
+  // overrode it and broke URL filters). It's passed explicitly, though PostHog
+  // would set the same value, so the E2E telemetry hook can assert on it.
   useEffect(() => {
     if (!pathname) return;
-    core.telemetry.capture("$pageview", { $current_url: pathname });
+    core.telemetry.capture("$pageview", { $current_url: window.location.href });
   }, [pathname]);
 
   return <>{children}</>;
