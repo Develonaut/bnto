@@ -23,7 +23,7 @@ Invoke `/frontend-engineer` and `/nextjs-expert`. Lighthouse audits span compone
 
 ### Local mode (default)
 
-Run the full Lighthouse CI audit locally. This builds the app and runs Lighthouse against all 10 public routes.
+Run the full Lighthouse CI audit locally. This builds the app and runs Lighthouse against every public route (the static pages plus one per recipe).
 
 ```bash
 task seo:audit
@@ -31,8 +31,10 @@ task seo:audit
 
 This executes:
 
-1. `pnpm --filter @bnto/web build` — full production build
-2. `lhci autorun --config=lighthouserc.json --collect.numberOfRuns=1` — starts the production server, audits all URLs
+1. `task check:lighthouse-config` — the config generator's tests
+2. `pnpm --filter @bnto/web build` — full production build
+3. `scripts/generate-lighthouserc.ts --with-server` — writes `lighthouserc.json` for a free port the OS picks, so audits in several worktrees can run at once
+4. `lhci autorun --config=lighthouserc.json --collect.numberOfRuns=1` — starts the production server on that port, audits all URLs
 
 **Stop if the build fails.** Fix build errors before proceeding.
 

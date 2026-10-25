@@ -52,6 +52,8 @@ tasks:
       - task: ui:lint
       - echo "=== turbo cache inputs ==="
       - task: check:turbo-inputs
+      - echo "=== lighthouse config ==="
+      - task: check:lighthouse-config
       - echo "=== theme codegen check ==="
       - task: theme:check
       - echo "=== docs validation ==="
@@ -139,6 +141,10 @@ tasks:
     cmds:
       - pnpm exec tsx --test scripts/turbo/missingLintInputs.test.ts
       - pnpm exec tsx scripts/turbo/checkLintInputs.ts
+
+  check:lighthouse-config:
+    desc: Test the Lighthouse config generator (a free port the server and the audited URLs share)
+    cmds: [pnpm exec tsx --test scripts/generate-lighthouserc.test.ts]
 
   # Dogfood recipes (recipes/): repo chores done by bnto itself
   check:recipes:
@@ -243,9 +249,14 @@ tasks:
   # SEO audit
   seo:audit:
     desc: Run Lighthouse CI audit locally against all public routes
+    # The config picks a free port for the server, so audits in several
+    # checkouts can run at once. It's generated after the build, just before
+    # lhci starts the server, to keep the window in which something else
+    # could take the port to a second or two.
     cmds:
-      - pnpm exec tsx scripts/generate-lighthouserc.ts --with-server
+      - task: check:lighthouse-config
       - pnpm --filter @bnto/web build
+      - pnpm exec tsx scripts/generate-lighthouserc.ts --with-server
       - pnpm --filter @bnto/web exec lhci autorun --config=../../lighthouserc.json --collect.numberOfRuns=1
 
   # SEO search engine notifications

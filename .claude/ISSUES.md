@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-89**.
+- **IDs never get reused.** The next one is **ISS-90**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -45,7 +45,6 @@
 | ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 | ISS-68 | `FormStoreContext.tsx` exports four hooks and a provider from one `.tsx` file                         | form        | Open                                             |
 | ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
-| ISS-71 | Two `task seo:audit` runs at once collide on port 3000                                                | tooling     | Open                                             |
 | ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
@@ -60,6 +59,7 @@
 | ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
 | ISS-87 | `file-move`/`file-delete` hand over nothing when a move or delete fails partway                       | engine      | Open                                             |
 | ISS-88 | `FileUpload` context errors and two web comments name dot-notation components                         | ui          | Open                                             |
+| ISS-89 | In a fresh worktree, `task seo:audit` fails at the first URL with no hint: there's no `.env.local`    | tooling     | Open                                             |
 
 ---
 
@@ -368,15 +368,6 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 - **Fix:** record per-file downloads (a `trigger` of their own, e.g. `"file"`), and either give the recipe page a "Download all" button or delete the unused action.
 - **Regression test:** a unit test that `downloadResult` sends `result_downloaded`, and a check that every action in `RecipeStepperActions` has a caller.
 
-### ISS-71: Two `task seo:audit` runs at once collide on port 3000
-
-**Found:** October 25, 2026 (running `task seo:audit` for ISS-28 while another worktree's agent ran it).
-
-`scripts/generate-lighthouserc.ts:24,60` points every audit at `http://localhost:3000` and starts the server with `pnpm --filter @bnto/web start`, Next's default port. Two checkouts auditing at once share that port: one run's Lighthouse loads the other checkout's server, or a server that is shutting down. On October 25 the ISS-28 run failed at `/pricing` with `CHROME_INTERSTITIAL_ERROR` ("Chrome prevented page load with an interstitial") while port 3000 belonged to `next-server` in another worktree. The E2E runs already avoid this with `E2E_PORT` (`apps/web/playwright.config.ts`).
-
-- **Fix:** the URLs can already move: the generator takes `--base-url` (line 24). What's fixed is `startServerCommand` (line 60, Next's default port) and the `seo:audit` task, which passes no `--base-url` (`Taskfile.yml:246`). Take a port from an env var (as `E2E_PORT` does) and use it for both `--base-url` and `next start --port`.
-- **Regression test:** two `task seo:audit` runs with different ports at the same time both pass.
-
 ### ISS-73: The web runner starts a run with a required param left empty
 
 **Found:** October 25, 2026 (cold review of the ISS-25 fix).
@@ -506,3 +497,12 @@ Two `apps/web` comments do the same: `app/editor/layout.tsx:12` ("`AppShell.Main
 
 - **Fix:** use the flat names (`FileUploadDropzone`, `FileUploadItem`, `AppShellMain`, `AuthGateAction`).
 - **Regression test:** a `@bnto/ui` test that rendering `FileUploadDropzone` outside `FileUpload` throws an error naming `FileUploadDropzone`.
+
+### ISS-89: In a fresh worktree, `task seo:audit` fails at the first URL with no hint: there's no `.env.local`
+
+**Found:** October 25, 2026 (proving the ISS-71 fix in a new worktree).
+
+`apps/web/.env.local` is gitignored, so a new worktree has none. `pnpm --filter @bnto/web build` passes without it, but the built server answers every page with a 500 (`Error: Missing environment variable NEXT_PUBLIC_CONVEX_URL`, from `next start`), and the audit stops at its first URL with Lighthouse's `ERRORED_DOCUMENT_REQUEST`. Neither the task's output nor the docs say why. Copying the main checkout's `apps/web/.env.local` fixes it.
+
+- **Fix:** have `seo:audit` refuse before the build when `NEXT_PUBLIC_CONVEX_URL` is unset, naming `apps/web/.env.local` and [environment-variables.md](environment-variables.md).
+- **Regression test:** `task seo:audit` in a checkout with no `apps/web/.env.local` fails before building, naming the file.
