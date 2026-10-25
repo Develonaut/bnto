@@ -6,6 +6,10 @@
  * writes all its links from the repo root (`.claude/rules/…`), where agents
  * read it, so its links resolve from the root. Only the file is checked, not
  * the `#anchor`.
+ *
+ * Checked: inline links and images, and reference definitions (`[ref]: path`).
+ * Not checked: `<angle-bracket>` targets and HTML `href`/`src`, which no doc
+ * uses today.
  */
 
 import { posix } from "node:path";
@@ -23,9 +27,11 @@ export interface BrokenLink {
 /** The one file whose links resolve from the repo root. */
 const ROOT_RELATIVE_FILE = ".claude/CLAUDE.md";
 
-// `[text](target)` or `![alt](target)`, with an optional `"title"`.
-const LINK = /\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
-const FENCE = /^\s*(`{3,}|~{3,})/;
+// `[text](target)` or `![alt](target)`, with an optional `"title"` or `'title'`.
+const INLINE_LINK = /\[[^\]]*\]\(([^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'))?\)/g;
+// `[ref]: target`, at the start of a line.
+const REFERENCE = /^ {0,3}\[[^\]]+\]:\s*([^\s<]\S*)/g;
+const FENCE = /^\s*(`{3,}|~{3,})(.*)$/;
 const CODE_SPAN = /`[^`]*`/g;
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
@@ -47,18 +53,34 @@ function resolveTarget(file: string, target: string): string {
   return posix.join(posix.dirname(file), path);
 }
 
+/**
+ * The fence open after `text`, given the one `open` before it, or `undefined`
+ * if `text` doesn't open or close one. As in CommonMark, only a bare fence of
+ * the same character, at least as long as the opening one, closes a block.
+ */
+function nextFence(open: string | null, text: string): string | null | undefined {
+  const match = FENCE.exec(text);
+  if (!match) return undefined;
+  const [, marker, rest] = match;
+  if (!open) return marker;
+  const closes = marker[0] === open[0] && marker.length >= open.length && !rest.trim();
+  return closes ? null : undefined;
+}
+
 /** Each line outside fenced code blocks, with code spans removed, and its 1-based number. */
 function proseLines(source: string): [number, string][] {
   let fence: string | null = null;
   const lines: [number, string][] = [];
   source.split("\n").forEach((text, i) => {
-    const marker = FENCE.exec(text)?.[1];
-    if (marker && !fence) fence = marker[0];
-    else if (marker && marker[0] === fence) fence = null;
+    const next = nextFence(fence, text);
+    if (next !== undefined) fence = next;
     else if (!fence) lines.push([i + 1, text.replace(CODE_SPAN, "")]);
   });
   return lines;
 }
+
+const linkTargets = (text: string) =>
+  [...text.matchAll(INLINE_LINK), ...text.matchAll(REFERENCE)].map((match) => match[1]);
 
 /**
  * Links in `source` (the Markdown file at repo-relative `file`) whose target
@@ -70,8 +92,7 @@ export function brokenLinks(
   exists: (path: string) => boolean,
 ): BrokenLink[] {
   return proseLines(source).flatMap(([line, text]) =>
-    [...text.matchAll(LINK)]
-      .map((match) => match[1])
+    linkTargets(text)
       .filter((target) => isLocal(target) && !exists(resolveTarget(file, target)))
       .map((target) => ({ file, line, target })),
   );

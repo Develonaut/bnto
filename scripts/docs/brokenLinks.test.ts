@@ -89,6 +89,27 @@ describe("brokenLinks", () => {
     ]);
   });
 
+  it("closes a fenced block only on a bare fence at least as long as the opening one", () => {
+    const gone = [{ file: "README.md", line: 5, target: "gone.md" }];
+    const infoString = "```\n```js\n[a](missing.md)\n```\n[b](gone.md)";
+    assert.deepEqual(brokenLinks("README.md", infoString, repo()), gone);
+    const shorter = "````\n```\n[a](missing.md)\n````\n[b](gone.md)";
+    assert.deepEqual(brokenLinks("README.md", shorter, repo()), gone);
+  });
+
+  it("checks reference definitions", () => {
+    const source = "See [the plan][plan].\n\n[plan]: plans/gone.md";
+    assert.deepEqual(brokenLinks(".claude/PLAN.md", source, repo()), [
+      { file: ".claude/PLAN.md", line: 3, target: "plans/gone.md" },
+    ]);
+  });
+
+  it("checks a link with a single-quoted title", () => {
+    assert.deepEqual(brokenLinks("README.md", "[x](gone.md 'Gone')", repo()), [
+      { file: "README.md", line: 1, target: "gone.md" },
+    ]);
+  });
+
   it("checks links again after a fenced block closes", () => {
     const source = "```\n[a](missing.md)\n```\n[b](gone.md)";
     assert.deepEqual(brokenLinks("README.md", source, repo()), [

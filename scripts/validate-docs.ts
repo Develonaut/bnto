@@ -174,30 +174,32 @@ function checkLinks(): string[] {
 
 // --- Main ---
 
+function report(errors: string[]): void {
+  if (errors.length === 0) {
+    console.log("Documentation validation passed.");
+    return;
+  }
+  console.error("\nDocumentation validation failed:\n");
+  for (const err of errors) {
+    console.error(err);
+    console.error();
+  }
+  console.error(`${errors.length} error(s) found.`);
+  process.exit(1);
+}
+
 function main(): void {
   const catalog = readCatalog();
   const members = readWorkspaceMembers();
   const processorTypes = getProcessorNodeTypes(catalog);
 
-  const allErrors = [
+  report([
     ...checkCrateReadmes(members),
     ...checkProcessorCoverage(processorTypes),
     ...checkEngineRegistry(processorTypes),
     ...checkNodeDocs(catalog),
     ...checkLinks(),
-  ];
-
-  if (allErrors.length > 0) {
-    console.error("\nDocumentation validation failed:\n");
-    for (const err of allErrors) {
-      console.error(err);
-      console.error();
-    }
-    console.error(`${allErrors.length} error(s) found.`);
-    process.exit(1);
-  }
-
-  console.log("Documentation validation passed.");
+  ]);
 }
 
 main();
