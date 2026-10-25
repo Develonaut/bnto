@@ -9,7 +9,9 @@
  * the same syntax for scoped prefix queries.
  */
 
-import type { Locator } from "@playwright/test";
+// Makes this file a module, so the block below augments @playwright/test
+// instead of declaring a new module that hides it.
+export {};
 
 declare module "@playwright/test" {
   interface Locator {

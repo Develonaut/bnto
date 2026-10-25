@@ -1,0 +1,9 @@
+{
+  // `tsc` runs this before `next build`, whose type-check drops every error in
+  // a *.spec.*, *.test.* or __tests__ file (the E2E specs and unit tests).
+  // Next's generated route types (.next*/) stay out: `next build` checks them,
+  // and a dev server or E2E build can leave them stale.
+  "extends": "./tsconfig.json",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "_archive", ".next", ".next-e2e"]
+}

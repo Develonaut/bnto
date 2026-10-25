@@ -73,7 +73,7 @@ export async function exportRecipe(page: Page) {
   const downloadPath = await download.path();
   expect(downloadPath).toBeTruthy();
 
-  const fs = await import("fs");
+  const fs = await import("node:fs");
   const buffer = fs.readFileSync(downloadPath!);
   return { buffer, filename: download.suggestedFilename() };
 }

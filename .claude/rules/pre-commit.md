@@ -118,7 +118,8 @@ cd apps/web && pnpm exec playwright test --update-snapshots && pnpm exec playwri
 **E2e test conventions:**
 
 - Always import `{ test, expect }` from `./fixtures` (NOT from `@playwright/test`)
-- Always set `test.use({ reducedMotion: "reduce" })` to disable animations
+- Motion is already reduced for every spec (`use.contextOptions.reducedMotion` in `playwright.config.ts`). `reducedMotion` isn't a `test.use` option, so don't add one
+- Specs are type-checked (the web's `build`) and linted (`task ui:lint`) like the rest of the app
 - Use shared helpers from `helpers.ts` (`uploadFiles`, `runAndComplete`, `downloadAndVerify`, `navigateToRecipe`, `assertBrowserExecution`)
 - Use `data-testid` markers for reliable state detection
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes

@@ -21,8 +21,6 @@ const BELOW_THE_FOLD_MASCOTS = [
 ];
 
 test.describe("homepage loading @browser", () => {
-  test.use({ reducedMotion: "reduce" });
-
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
   });

@@ -2,7 +2,7 @@
  * Content verification assertions — EXIF stripping and byte-identical preservation.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 import { expect } from "../fixtures";
 
 /**

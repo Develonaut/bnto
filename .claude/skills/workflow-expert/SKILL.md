@@ -121,7 +121,7 @@ Phase 4: VERIFY  -> Download output, validate content (file size, magic bytes, d
 **Test structure for a multi-node custom recipe:**
 
 ```typescript
-import path from "path";
+import path from "node:path";
 import { test, expect } from "../../fixtures";
 import {
   navigateToEditor,
@@ -132,8 +132,6 @@ import {
   getResultCount,
 } from "../../helpers/editor";
 import { IMAGE_FIXTURES_DIR, MAGIC } from "../../helpers";
-
-test.use({ reducedMotion: "reduce" });
 
 test.describe("custom: web-ready image pipeline @editor @browser", () => {
   test("build 3-node pipeline: resize -> convert -> compress", async ({ page }) => {

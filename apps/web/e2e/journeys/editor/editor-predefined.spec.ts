@@ -1,5 +1,5 @@
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import fs from "node:fs";
 import { test, expect } from "../../fixtures";
 import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR, MAGIC } from "../../helpers";
 import { navigateToEditor, runEditorWithFiles, openRunPanel } from "../../helpers/editor";

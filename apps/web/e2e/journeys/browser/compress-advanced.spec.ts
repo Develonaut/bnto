@@ -1,5 +1,5 @@
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import fs from "node:fs";
 import type { Page } from "@playwright/test";
 import { test, expect } from "../../fixtures";
 import {
@@ -19,6 +19,12 @@ import {
  * the compression parameter (not just a pass-through). Batch test verifies
  * 5+ files across all three codecs process successfully.
  */
+
+/** What the progress test keeps on the page's `window` between evaluates. */
+type ProgressWindow = Window & {
+  __progressSamples?: number[];
+  __progressObserver?: MutationObserver;
+};
 
 /** Preset names by index. */
 const PRESET_LABELS = ["Draft", "Balanced", "Maximum"] as const;
@@ -100,12 +106,13 @@ test.describe("compress-images — batch processing @browser", () => {
 
     // Start a browser-side observer BEFORE clicking Run
     await page.evaluate(() => {
-      (window as any).__progressSamples = [] as number[];
+      const win = window as ProgressWindow;
+      win.__progressSamples = [];
       const observer = new MutationObserver(() => {
         const el = document.querySelector('[data-testid="toolbar-progress"][data-overall-percent]');
         if (el) {
           const val = Number(el.getAttribute("data-overall-percent"));
-          if (!isNaN(val)) (window as any).__progressSamples.push(val);
+          if (!isNaN(val)) win.__progressSamples?.push(val);
         }
       });
       observer.observe(document.body, {
@@ -113,15 +120,16 @@ test.describe("compress-images — batch processing @browser", () => {
         attributes: true,
         attributeFilter: ["data-overall-percent", "data-status", "data-step"],
       });
-      (window as any).__progressObserver = observer;
+      win.__progressObserver = observer;
     });
 
     await runAndComplete(page, { timeout: 60_000 });
 
     // Collect and disconnect
     const samples = await page.evaluate(() => {
-      (window as any).__progressObserver?.disconnect();
-      return (window as any).__progressSamples as number[];
+      const win = window as ProgressWindow;
+      win.__progressObserver?.disconnect();
+      return win.__progressSamples ?? [];
     });
 
     expect(

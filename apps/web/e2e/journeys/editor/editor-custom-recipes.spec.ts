@@ -1,4 +1,4 @@
-import path from "path";
+import path from "node:path";
 import { test, expect } from "../../fixtures";
 import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR, getWebPDimensions } from "../../helpers";
 import {

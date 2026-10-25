@@ -5,7 +5,7 @@
  * and file content from editor execution results.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 import type { Page } from "@playwright/test";
 import { expect } from "../fixtures";
 import { MAGIC } from "../helpers";

@@ -213,7 +213,7 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 - [ ] **E2E tests for unit-testable logic** — if a function can be tested with a pure input/output test, don't spin up a browser for it
 - [ ] **Flaky screenshot assertions** — screenshots of animated content, dynamic timestamps, or randomly ordered lists. Mask dynamic content, disable animations, sort lists
 - [ ] **Testing every state transition** — screenshot the initial state and final state. Intermediate transient states are flaky
-- [ ] **Missing `reducedMotion: "reduce"`** — animations make screenshots non-deterministic
+- [ ] **`test.use({ reducedMotion: "reduce" })`** — not a `test.use` option, so it does nothing and fails the type-check. `playwright.config.ts` already reduces motion for every spec
 - [ ] **Missing error capture** — not using the shared fixture from `fixtures.ts` that captures console/page errors
 - [ ] **Page Object Model prematurely** — with 5 spec files, direct semantic selectors are cleaner. Add POM when duplication across 5+ specs demands it
 
