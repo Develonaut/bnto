@@ -87,21 +87,18 @@ impl Runner {
     }
 
     /// Break a cycle: move one file to a free temporary name in its folder.
-    /// Registered before the rename, so no moment has it parked unregistered
-    /// (the report skips a name nothing is at).
+    /// The rename and its registration happen together (`parked::park`), so
+    /// the process's end names every parked file or none was made.
     fn park(&mut self, src_key: &str) -> Result<(), String> {
         let mut m = self
             .pending
             .remove(src_key)
             .expect("cycle keys are pending");
         let temp = temp_path(&m.src);
-        parked::register(&temp);
-        let renamed = guarded_rename(&m.src, &temp);
+        let renamed = parked::park(&temp, || guarded_rename(&m.src, &temp));
         if renamed.is_ok() {
             self.parked.push(temp.clone());
             m.src = temp;
-        } else {
-            parked::unregister(&temp);
         }
         self.pending.insert(key(&m.src), m);
         renamed
