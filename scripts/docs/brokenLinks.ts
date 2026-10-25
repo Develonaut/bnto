@@ -9,7 +9,9 @@
  *
  * Checked: inline links and images, and reference definitions (`[ref]: path`).
  * Not checked: `<angle-bracket>` targets and HTML `href`/`src`. Today the
- * only such link is README.md's logo `<img src>`, which resolves.
+ * only such link is README.md's logo `<img src>`, which resolves. Also not
+ * parsed: the outer target of a linked image (`[![alt](img)](target)`) and a
+ * link whose text holds a `]`; no doc has either today.
  */
 
 import { posix } from "node:path";
