@@ -20,7 +20,6 @@
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
-| ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
 | ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
@@ -110,15 +109,6 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - The file lands in `./{{env.SOME_KEY}}/note.txt`; the folder `SOME_KEY` names stays empty.
 
 `resolve_effective_output_dir` (`engine/crates/bnto/src/run.rs`) and the TUI's copy (`tui/bridge.rs:247-249`) fill only `{{ctx.*}}` and `{{node.*}}`, and an unknown `{{ctx.*}}` key becomes `""`. So `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`. With `SOME_KEY` unset, the run is refused, but the folder is created first (`progressive_dir`, `run.rs`). Fill every namespace a run has (`env` from declared secrets, as `file-copy`'s `destination` does), refuse any placeholder left over before consent and before any folder is made (as `{{fields.*}}` are refused since #741 and #742), and have `bnto check` flag the ones no run can fill (`{{item.*}}`, a processing step's `{{node.*}}`). ISS-21, the TUI wipe this could have pointed at a real folder, is fixed (#750).
-
-### ISS-25: Watermark Images runs with an empty overlay and fails every time
-
-**Found:** October 24, 2026 (PostHog review of bnto.io, July 26 to October 24, 2026).
-
-- **What PostHog shows:** `recipe_run_failed` for `watermark-images`, 2 of 2 runs, from 2 people (August 27 and September 20, 2026). Both failed with "Failed to decode overlay image: The image format could not be determined", and the page had 2 rage clicks on October 11.
-- **Why:** the bundled recipe defaults `"overlay": ""` (`engine/crates/bnto-engine/recipes/watermark-images.bnto.json:64`). `check_overlay` (`engine/crates/bnto-image/src/overlay/validate.rs:22-27`) only rejects a _missing_ `overlay`, so an empty string passes and fails later at decode (`overlay/processor.rs:116-121`), even though the param is `required`.
-- **Fix:** validation refuses an empty `overlay`, naming the param. The web runner then shouldn't start the run until an overlay is chosen.
-- **Regression test:** every test today supplies an overlay (the E2E spec uploads one at `apps/web/e2e/journeys/browser/watermark-images.spec.ts:24`, the golden fixtures embed one), so nothing ran the recipe as shipped. Test the class, not just this recipe: for every bundled recipe, a `required` param left at its shipped default is refused before the run, naming the param.
 
 ### ISS-29: Errors on bnto.io go unseen: exception capture is off
 

@@ -426,6 +426,8 @@ fn process(&self, ...) -> Result<...> {
 
 **The reverse holds too: every param `process()` or `validate()` reads MUST be in `metadata()`.** `bnto check` reports, and a run's pre-flight refuses, any param a recipe gives that the node doesn't declare (`bnto-core/src/undeclared_params.rs`), so a typo or a renamed param fails loudly instead of being ignored. The one exception is a run's injected input (`url`, `text`: `bnto_core::input_mode::INJECTED_PARAMS`). `bnto-engine/tests/declared_params.rs` fails a registered processor left on the placeholder `metadata()`, which would take any param.
 
+**`required: true` is enforced, not just shown.** A run's pre-flight refuses a step whose required param is left out with no `default`, or given as null or blank text, naming the node and the param (`bnto-core/src/required_params.rs`), and `bnto check` reports it even when the node's `validate()` lets it through: as a note for `-p` when a run can give it, else as a problem. Blank and left out count the same. A bundled recipe writes a required param it can't fill as `""`, since the web catalog's schemas need the key. `bnto-engine/tests/required_params.rs` holds every required param of every bundled recipe to this (ISS-25: Watermark Images shipped `"overlay": ""` and failed at decode on every run).
+
 **Test requirement:** Every parameterized node MUST have a test that verifies different parameter values produce measurably different outputs.
 
 ---

@@ -90,18 +90,24 @@ fn test_a_file_outside_base_refuses_the_run_and_deletes_nothing() {
 }
 
 #[test]
-fn test_check_reports_file_delete_with_an_empty_base() {
-    let recipe = custom_recipe_path("check/file-delete-bad");
+fn test_check_leaves_an_empty_file_delete_base_for_run_time() {
+    // A required param given "" is left out, as a run's pre-flight treats it.
+    let recipe = custom_recipe_path("check/file-delete-empty-base");
     let output = Command::new(bnto_bin())
         .args(["check", &recipe])
         .output()
         .unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(!output.status.success(), "stdout: {stdout}");
+    assert!(output.status.success(), "stdout: {stdout}");
     let lines: Vec<&str> = stdout.lines().collect();
-    assert_eq!(lines.last(), Some(&"Check: FAIL (1 finding)"), "{stdout}");
+    assert_eq!(
+        lines.last(),
+        Some(&"Check: PASS (1 recipe, 1 note)"),
+        "{stdout}"
+    );
     assert!(
-        lines[0].contains("\"empty-base\"") && lines[0].contains("'base' is required"),
+        lines[0].contains("\"empty-base\"")
+            && lines[0].contains("param \"base\": left for run time"),
         "{stdout}"
     );
 }

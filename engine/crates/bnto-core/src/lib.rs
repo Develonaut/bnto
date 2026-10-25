@@ -136,6 +136,9 @@ pub mod slash_path;
 /// Params a recipe gives a node that the node doesn't declare.
 pub mod undeclared_params;
 
+/// Required params a recipe leaves without a value.
+pub mod required_params;
+
 /// `{{fields.*}}` references no field value fills.
 pub mod missing_fields;
 

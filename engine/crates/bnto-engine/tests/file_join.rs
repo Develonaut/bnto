@@ -133,14 +133,16 @@ fn test_a_file_gone_before_the_join_fails_the_run_naming_it() {
 }
 
 #[test]
-fn test_check_refuses_a_file_join_with_an_empty_filename() {
-    // Left out, the filename is a note: `bnto run -p join:filename=…` gives it.
+fn test_check_leaves_an_empty_file_join_filename_for_run_time() {
+    // Empty or left out, the filename is a note: `bnto run -p join:filename=…`
+    // gives it, and a run without it is refused before any step.
     let definition: bnto_core::PipelineDefinition = serde_json::from_value(json!({
         "nodes": [{ "id": "join", "type": "file-join", "parameters": { "filename": "" } }]
     }))
     .unwrap();
-    let findings = bnto_core::check_pipeline(&definition, &bnto_engine::create_registry()).findings;
-    assert_eq!(findings.len(), 1, "{findings:?}");
-    assert_eq!(findings[0].node_id, "join");
-    assert!(findings[0].message.contains("'filename' is required"));
+    let report = bnto_core::check_pipeline(&definition, &bnto_engine::create_registry());
+    assert_eq!(report.findings, Vec::new());
+    assert_eq!(report.run_time.len(), 1, "{:?}", report.run_time);
+    assert_eq!(report.run_time[0].node_id, "join");
+    assert_eq!(report.run_time[0].param, "filename");
 }

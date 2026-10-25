@@ -85,7 +85,11 @@ fn test_run_without_the_param_fails_naming_it() {
     let output = run(&[&custom_recipe_path("check/file-delete-run-time"), "--yes"]);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "stderr: {stderr}");
-    assert!(stderr.contains("'base' is required"), "stderr: {stderr}");
+    // Pre-flight refuses it before any step runs.
+    assert!(
+        stderr.contains("Node 'clean': param \"base\" (Base Folder) is required"),
+        "stderr: {stderr}"
+    );
 }
 
 #[test]
@@ -106,5 +110,8 @@ fn test_run_without_the_table_fails_naming_it() {
     let output = run(&[&recipe, &csv, "-o", out.path().to_str().unwrap()]);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "stderr: {stderr}");
-    assert!(stderr.contains("'table' is required"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("Node 'lookup': param \"table\" (Table) is required"),
+        "stderr: {stderr}"
+    );
 }

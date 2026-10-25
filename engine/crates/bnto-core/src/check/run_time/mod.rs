@@ -1,17 +1,20 @@
 // Params a recipe leaves out for `bnto run -p` to give.
 //
-// A left-out param is needed when the node's `validate` refuses the recipe
-// without it and stops refusing once it has a value. A needed param is left
-// for run time when `-p nodeId:key=value` can give it. The rule mirrors how
-// the CLI applies one (`bnto/src/input.rs`): it sets the first node with that
-// id, searching nodes in order and each container's children before the next
-// node; it sets a declared field of that name instead of the param; and its
-// value is text, a number or true/false. A needed param it can't give that
-// way no run can give, since `--vars` only fills `{{vars.*}}` the recipe has.
+// A left-out param (no key, or a required one given blank text or null) is
+// needed when the run refuses the recipe without it (the node's `validate`,
+// or a required param with no value) and stops refusing once it has a value.
+// A needed param is left for run time when `-p nodeId:key=value` can give
+// it. The rule mirrors how the CLI applies one (`bnto/src/input.rs`): it sets
+// the first node with that id, searching nodes in order and each container's
+// children before the next node; it sets a declared field of that name
+// instead of the param; and its value is text, a number or true/false. A
+// needed param it can't give that way no run can give, since `--vars` only
+// fills `{{vars.*}}` the recipe has.
 
 use crate::metadata::{ParameterDef, ParameterType};
 use crate::pipeline::PipelineNode;
 use crate::processor::NodeProcessor;
+use crate::required_params::{is_blank, missing_required};
 
 type Params = serde_json::Map<String, serde_json::Value>;
 
@@ -54,8 +57,10 @@ pub(super) struct Subject<'a> {
     pub params: &'a Params,
 }
 
-/// Sort the needed params `subject` leaves out, given `written`, what its
-/// `validate` refuses as written.
+/// Sort the needed params `subject` leaves out, given `written`, what the
+/// run refuses as written. A required param given as blank text or null is
+/// left out too: the run's pre-flight treats it so, and the web's catalog
+/// needs a required param's key present, so a bundled recipe writes `""`.
 pub(super) fn left_out(
     subject: &Subject<'_>,
     written: Vec<String>,
@@ -64,9 +69,7 @@ pub(super) fn left_out(
     let mut left = LeftOut::default();
     let mut given = subject.params.clone();
     let declared = subject.processor.metadata().parameters;
-    let absent = declared
-        .iter()
-        .filter(|d| !subject.params.contains_key(&d.name));
+    let absent = declared.iter().filter(|d| is_left_out(subject.params, d));
     for def in absent.filter(|d| is_needed(subject, d, &written)) {
         match unreachable_reason(subject.node, def, root) {
             Some(reason) => left.blocked.push((def.name.clone(), reason)),
@@ -76,16 +79,55 @@ pub(super) fn left_out(
             }
         }
     }
-    let after = subject.processor.validate(&given);
+    let after = refusals(subject.processor, &given);
     left.problems = written.into_iter().filter(|m| after.contains(m)).collect();
     left
 }
 
+/// True when `params` gives `def` nothing: no key, or a required param
+/// given blank text or null.
+fn is_left_out(params: &Params, def: &ParameterDef) -> bool {
+    let required = def.constraints.as_ref().is_some_and(|c| c.required);
+    params
+        .get(&def.name)
+        .is_none_or(|value| required && is_blank(value))
+}
+
+/// What a run refuses in `params`: what `validate` refuses, plus each
+/// required param with no value that `validate` lets through, which the
+/// run's pre-flight refuses.
+pub(super) fn refusals(processor: &dyn NodeProcessor, params: &Params) -> Vec<String> {
+    let validated = processor.validate(params);
+    let declared = processor.declared_params().unwrap_or_default();
+    let unrefused: Vec<String> = missing_required(params, &declared)
+        .into_iter()
+        .filter(|m| {
+            let def = declared.iter().find(|d| d.name == m.param);
+            !def.is_some_and(|def| refused_without(processor, params, &validated, def))
+        })
+        .map(|m| m.message)
+        .collect();
+    [validated, unrefused].concat()
+}
+
 /// True when giving `def` a value takes away something `validate` refused.
+fn refused_without(
+    processor: &dyn NodeProcessor,
+    params: &Params,
+    validated: &[String],
+    def: &ParameterDef,
+) -> bool {
+    let mut given = params.clone();
+    given.insert(def.name.clone(), stand_in(def));
+    let after = processor.validate(&given);
+    validated.iter().any(|m| !after.contains(m))
+}
+
+/// True when giving `def` a value takes away something the run refused.
 fn is_needed(subject: &Subject<'_>, def: &ParameterDef, written: &[String]) -> bool {
     let mut given = subject.params.clone();
     given.insert(def.name.clone(), stand_in(def));
-    let after = subject.processor.validate(&given);
+    let after = refusals(subject.processor, &given);
     written.iter().any(|m| !after.contains(m))
 }
 

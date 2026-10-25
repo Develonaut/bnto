@@ -322,11 +322,14 @@ test.describe("watermark-images — engine output @browser", () => {
     expect(Buffer.compare(buf1, buf2)).not.toBe(0);
   });
 
-  test("run without overlay fails gracefully", async ({ page }) => {
+  test("run without overlay is refused, naming the overlay", async ({ page }) => {
     await navigateToRecipe(page, "watermark-images");
     await uploadFiles(page, [path.join(OVERLAY_DIR, "square-1x1.jpg")]);
 
-    // Engine requires an overlay — running without one should fail, not crash
+    // The engine's pre-flight refuses a required param with no value before
+    // any step runs, and says which one (ISS-25: it used to fail at decode).
     await runAndComplete(page, { expectStep: "failed" });
+    await expect(page.getByText(/param "overlay" \(Overlay Image\) is required/)).toBeVisible();
+    await expect(page.getByText(/Failed to decode overlay image/)).toHaveCount(0);
   });
 });

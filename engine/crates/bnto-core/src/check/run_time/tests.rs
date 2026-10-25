@@ -68,6 +68,32 @@ impl NodeProcessor for Needy {
     }
 }
 
+/// Requires a text `path` in its metadata, but its `validate` never refuses.
+struct Lax;
+
+impl NodeProcessor for Lax {
+    fn name(&self) -> &str {
+        "lax"
+    }
+
+    fn metadata(&self) -> NodeMetadata {
+        NodeMetadata {
+            node_type: "lax".to_string(),
+            parameters: vec![required("path", ParameterType::String)],
+            ..Needy.metadata()
+        }
+    }
+
+    fn process(
+        &self,
+        _input: NodeInput,
+        _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        unreachable!("check never runs a node")
+    }
+}
+
 fn required(name: &str, param_type: ParameterType) -> ParameterDef {
     ParameterDef {
         name: name.to_string(),
@@ -85,6 +111,7 @@ fn check(def: Value) -> CheckReport {
     let definition: PipelineDefinition = serde_json::from_value(def).unwrap();
     let mut registry = NodeRegistry::new();
     registry.register("needy", Box::new(Needy));
+    registry.register("lax", Box::new(Lax));
     check_pipeline(&definition, &registry)
 }
 
@@ -137,15 +164,64 @@ fn test_a_sound_recipe_leaves_nothing_for_run_time() {
     assert_eq!(report, CheckReport::default());
 }
 
-// --- No run can give it ---
+// --- Required in metadata, whatever `validate` says ---
+// A run's pre-flight refuses a required param with no value, so check
+// reports one even when the node's `validate` lets it through.
 
 #[test]
-fn test_an_empty_value_is_not_left_out() {
+fn test_a_required_param_validate_allows_left_out_is_left_for_run_time() {
+    let report = check(json!({ "nodes": [
+        { "id": "save", "type": "lax", "parameters": {} }
+    ] }));
+    assert_eq!(report.findings, Vec::new());
+    let mut expected = note("save", "path");
+    expected.node_type = "lax".to_string();
+    assert_eq!(report.run_time, vec![expected]);
+}
+
+#[test]
+fn test_a_required_param_validate_allows_left_empty_is_left_for_run_time() {
+    let report = check(json!({ "nodes": [
+        { "id": "save", "type": "lax", "parameters": { "path": "" } }
+    ] }));
+    assert_eq!(report.findings, Vec::new());
+    let mut expected = note("save", "path");
+    expected.node_type = "lax".to_string();
+    assert_eq!(report.run_time, vec![expected]);
+}
+
+#[test]
+fn test_a_blank_required_param_no_run_can_give_fails_naming_it() {
+    let report = check(json!({ "nodes": [
+        { "id": "a:b", "type": "lax", "parameters": { "path": "" } }
+    ] }));
+    let messages: Vec<&str> = report.findings.iter().map(|f| f.message.as_str()).collect();
+    assert_eq!(messages.len(), 2, "{messages:?}");
+    assert_eq!(messages[0], "param \"path\" is required");
+    assert!(messages[1].contains("no run can give it"), "{messages:?}");
+    assert_eq!(report.findings[1].param.as_deref(), Some("path"));
+}
+
+// --- Empty values ---
+// A required param given blank text is left out, as the run's pre-flight
+// treats it; the web catalog needs the key, so a bundled recipe writes `""`.
+
+#[test]
+fn test_an_empty_required_value_is_left_for_run_time() {
     let report = check(json!({ "nodes": [needy("clean", json!({ "base": "" }))] }));
+    assert_eq!(report.findings, Vec::new());
+    assert_eq!(report.run_time, vec![note("clean", "base")]);
+}
+
+#[test]
+fn test_an_empty_optional_value_is_not_left_out() {
+    let report = check(json!({ "nodes": [needy("clean", json!({ "base": ".", "mode": "" }))] }));
     assert_eq!(report.findings.len(), 1, "{:?}", report.findings);
-    assert_eq!(report.findings[0].message, "'base' is required");
+    assert!(report.findings[0].message.contains("mode must be"));
     assert_eq!(report.run_time, Vec::new());
 }
+
+// --- No run can give it ---
 
 #[test]
 fn test_a_left_out_object_param_fails() {

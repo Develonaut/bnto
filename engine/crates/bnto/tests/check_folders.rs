@@ -179,7 +179,18 @@ fn test_a_trailing_separator_on_a_folder_is_not_doubled() {
 #[test]
 fn test_check_passes_the_bundled_recipes_folder() {
     let recipes: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR")).join("../bnto-engine/recipes");
-    let (ok, lines) = run_check(&[recipes.to_string_lossy().into_owned()]);
+    let dir = recipes.to_string_lossy().into_owned();
+    let (ok, lines) = run_check(std::slice::from_ref(&dir));
     assert!(ok, "stdout: {lines:?}");
-    assert_eq!(lines, [format!("Check: PASS ({BUNDLED_RECIPES} recipes)")]);
+    // Watermark Images leaves its overlay for the run (ISS-25).
+    assert_eq!(
+        lines,
+        [
+            format!(
+                "{dir}/watermark-images.bnto.json: note: node \"overlay\" (image-overlay), \
+                 param \"overlay\": left for run time; give it with bnto run -p overlay:overlay=<value>"
+            ),
+            format!("Check: PASS ({BUNDLED_RECIPES} recipes, 1 note)"),
+        ]
+    );
 }
