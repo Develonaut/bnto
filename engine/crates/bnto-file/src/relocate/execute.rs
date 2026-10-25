@@ -3,9 +3,9 @@
 // A move waits until the move vacating its target has run (a→b, b→c runs
 // b→c first). A cycle (a→b, b→a) is broken by parking one file under a
 // temporary name, registered (`parked`) until its final rename so a process
-// that ends first can name it. Each move re-checks its target first, by file identity,
-// so a file that appeared after planning is never replaced. Every move is a
-// rename: across drives it fails rather than copying.
+// that ends first can name it. Each move re-checks its target first, by file
+// identity, so a file that appeared after planning is never replaced. Every
+// move is a rename: across drives it fails rather than copying.
 
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};

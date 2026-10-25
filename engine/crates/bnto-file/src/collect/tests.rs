@@ -438,6 +438,21 @@ fn test_collect_skips_a_file_parked_by_a_stopped_move() {
 }
 
 #[test]
+fn test_collect_skips_a_folder_parked_by_a_stopped_move() {
+    // RED (ISS-53): `file-move` moves folders too, so a swap of two folders
+    // parks one whole folder; a later run must not take what's inside it.
+    let dir = setup_test_dir();
+    let parked = dir
+        .path()
+        .join(format!("{}0-photos", crate::PARKED_NAME_PREFIX));
+    fs::create_dir(&parked).unwrap();
+    fs::write(parked.join("inside.txt"), b"parked").unwrap();
+
+    let names = collect_names(dir.path(), &[("pattern", serde_json::json!("*.txt"))]);
+    assert_eq!(names, ["document.txt", "readme.txt"]);
+}
+
+#[test]
 fn test_collect_pattern_applies_at_every_depth() {
     let dir = setup_test_dir();
     let deep = dir.path().join("subfolder").join("deeper");

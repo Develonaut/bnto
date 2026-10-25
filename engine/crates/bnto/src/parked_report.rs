@@ -1,7 +1,8 @@
 // Names the files a stopped move left under a temporary name.
 //
 // `bnto_file::relocate` (overwrite-mode output, `file-move`) breaks a swap
-// by parking one file under a `.bnto-rename-*` name until its final rename.
+// by parking one file (or a folder `file-move` moves) under a
+// `.bnto-rename-*` name until its final rename.
 // Ctrl+C in `bnto run` (`process::exit` skips cleanup) or quitting the TUI
 // mid-run can land in between. The parked file holds the only copy of its
 // content, so it is named on stderr, never deleted. `file-collect` skips the
@@ -25,7 +26,7 @@ pub fn report_parked_files() {
 fn parked_lines(files: &[PathBuf]) -> Vec<String> {
     let line = |f: &PathBuf| {
         format!(
-            "a move didn't finish; a file is kept under a temporary name: {}",
+            "a move didn't finish; a file or folder is kept under a temporary name: {}",
             f.display()
         )
     };

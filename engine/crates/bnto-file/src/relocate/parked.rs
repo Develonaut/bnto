@@ -1,7 +1,7 @@
 // Files a run of moves has parked under a temporary name right now.
 //
-// A swap parks one file under a `PARKED_NAME_PREFIX` name until its final
-// rename. A host that ends the process mid-run (the CLI's Ctrl+C runs
+// A swap parks one file (or folder, for `file-move`) under a
+// `PARKED_NAME_PREFIX` name until its final rename. A host that ends the process mid-run (the CLI's Ctrl+C runs
 // `process::exit`, skipping cleanup) takes this list and names what is still
 // there; the parked file is the only copy of its content, so it is never
 // deleted. A failed run keeps its entries: its error names them, but the
