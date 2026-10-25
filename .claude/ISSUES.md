@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-76**.
+- **IDs never get reused.** The next one is **ISS-77**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -35,7 +35,6 @@
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
-| ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect                          | engine      | Open                                             |
 | ISS-54 | The `scripts/seo` tests never run                                                                     | tooling     | Scheduled ([plan](strategy/changelog.md))        |
 | ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
@@ -56,6 +55,7 @@
 | ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
+| ISS-76 | A TUI whose terminal restore fails skips the kept-files report                                        | tui         | Open                                             |
 
 ---
 
@@ -274,15 +274,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 - **Fix:** run the same import scan over each package's test and build sources against `test` and `build` inputs. Runtime `readFileSync` reads stay a documented manual step.
 - **Regression test:** a package test that imports an unlisted root file fails the check.
 
-### ISS-53: An interrupted move can leave `.bnto-rename-*` files that later runs collect
-
-**Found:** October 24, 2026 (fixing the output node's write, which now reports its swap staging folder on Ctrl+C and has `file-collect` skip it).
-
-`bnto_file::relocate` parks a file under a temporary `.bnto-rename-<n>-<leaf>` name while it runs a chain or swap of renames (`engine/crates/bnto-file/src/relocate/execute.rs:139`). An overwrite-mode output or `file-move` interrupted at that point (Ctrl+C runs `process::exit`, which skips cleanup) leaves the parked file under that name, with nothing reporting it. `file-collect` doesn't skip `.bnto-rename-*`, so a later run over the folder picks it up as an input.
-
-- **Fix:** as the output node's write does for its staging folders (`engine/crates/bnto/src/ordered_write/staging.rs`): register parked names so the Ctrl+C handler names them, and have `file-collect` skip `.bnto-rename-*`.
-- **Regression test:** a parked `.bnto-rename-*` file isn't collected, and an interrupted relocate prints where its parked files are.
-
 ### ISS-54: The `scripts/seo` tests never run
 
 **Found:** October 24, 2026 (planning the changelog, [changelog.md](strategy/changelog.md)).
@@ -476,3 +467,12 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 - **What happens:** `bnto check` notes Watermark Images' overlay as `left for run time; give it with bnto run -p overlay:overlay=<value>`, but the value must be the image as base64 text. `bnto run watermark-images photo.jpg --yes -o out -p overlay:overlay=photo.jpg` fails with `Invalid base64 in overlay parameter` (`engine/crates/bnto-image/src/overlay/params.rs:69`). Nothing in `engine/crates/bnto/src` reads a file-type param from a path, so the recipe is out of reach from the CLI in practice; `check/run_time/mod.rs:180` documents that "a file param takes its base64 text".
 - **Fix:** let `-p` give a `File` param as a path that the CLI reads and encodes, and say so in the note. ISS-74's `-p` hint should then name a path, not a blob.
 - **Regression test:** a CLI test: `bnto run watermark-images photo.jpg -p overlay:overlay=<logo.png path>` writes a watermarked image.
+
+### ISS-76: A TUI whose terminal restore fails skips the kept-files report
+
+**Found:** October 25, 2026 (cold review of the ISS-53 fix).
+
+`launch_tui` (`engine/crates/bnto/src/tui/mod.rs:80`) runs `terminal::restore(&mut terminal)?` before `exit_report::report_kept_on_exit()`. If the restore fails, the `?` returns early: no warning names a staging folder a stopped write kept or a file a stopped move parked, though either may hold the only copy of a file. The run loop's own `result` is dropped too, so the user sees only the restore error.
+
+- **Fix:** run the report whatever the restore returns (after it, so the warning lands on the normal screen), then return the restore error, or the run's error first if both failed.
+- **Regression test:** with a restore that fails, the kept-files report still runs.

@@ -29,6 +29,7 @@ mod dispatch;
 mod doctor;
 pub mod dry_run;
 mod dry_run_hint;
+mod exit_report;
 mod field_owner;
 mod host_support;
 mod info;
@@ -120,14 +121,15 @@ fn main() {
 /// Ctrl+C no longer reaches them on its own. A write in progress then stops
 /// at its next step, before anything it may read goes: the run scratch dirs
 /// (which `process::exit` would otherwise leave behind) are deleted only
-/// after. Last, any output folder's staged swap copies are named, kept since
-/// one may be the only copy.
+/// after. Last, any output folder's staged swap copies, and any file a move
+/// parked under a temporary name, are named, kept since one may be the only
+/// copy.
 fn install_signal_handler() {
     let _ = ctrlc::set_handler(|| {
         process_registry::global().terminate_all();
         ordered_write::GATE.stop_and_wait(|| eprintln!("\n  Finishing the current file..."));
         scratch::remove_live_dirs();
-        ordered_write::report_kept_staging();
+        exit_report::report_kept_on_exit();
         process::exit(130);
     });
 }

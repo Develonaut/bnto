@@ -89,6 +89,13 @@ pub mod wasm_bridge;
 /// run's input, so `file-collect` skips any folder with this prefix.
 pub const STAGED_COPIES_PREFIX: &str = ".bnto-staged-";
 
+/// Name prefix of a file (or a folder `file-move` moves) that `relocate`
+/// parked to break a swap of renames (hidden on Unix, not on Windows):
+/// `.bnto-rename-<n>-<original name>`, in its own folder until its final
+/// rename. One a stopped run left must not become a later run's input, so
+/// `file-collect` skips any file or folder with it.
+pub const PARKED_NAME_PREFIX: &str = ".bnto-rename-";
+
 pub use collect::FileCollect;
 pub use copy::FileCopy;
 pub use decode::FileDecode;
