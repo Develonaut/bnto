@@ -30,6 +30,11 @@ test.describe("PostHog telemetry @browser", () => {
     const events = await getTelemetryEvents(page);
     const pageviews = filterEvents(events, "$pageview");
     expect(pageviews.length).toBeGreaterThanOrEqual(1);
+
+    // An absolute URL, as PostHog sets on every other event. A bare path here
+    // replaced PostHog's own value and broke URL filters (ISS-26).
+    const origin = new URL(page.url()).origin;
+    expect(pageviews[0].properties?.$current_url).toBe(`${origin}/`);
   });
 
   test("captures pageview on SPA navigation", async ({ page }) => {
@@ -54,5 +59,9 @@ test.describe("PostHog telemetry @browser", () => {
     const events = await getTelemetryEvents(page);
     const pageviews = filterEvents(events, "$pageview");
     expect(pageviews.length).toBeGreaterThanOrEqual(2);
+
+    // The navigation's pageview carries the new page's absolute URL.
+    const origin = new URL(page.url()).origin;
+    expect(pageviews.at(-1)?.properties?.$current_url).toBe(`${origin}/compress-images`);
   });
 });

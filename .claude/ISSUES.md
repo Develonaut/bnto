@@ -23,7 +23,6 @@
 | ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                                              | docs        | Open                                             |
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
 | ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
-| ISS-26 | The site's custom `$pageview` overwrites `$current_url` with a bare path                              | web         | Open                                             |
 | ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
@@ -131,16 +130,6 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - **Why:** the bundled recipe defaults `"overlay": ""` (`engine/crates/bnto-engine/recipes/watermark-images.bnto.json:64`). `check_overlay` (`engine/crates/bnto-image/src/overlay/validate.rs:22-27`) only rejects a _missing_ `overlay`, so an empty string passes and fails later at decode (`overlay/processor.rs:116-121`), even though the param is `required`.
 - **Fix:** validation refuses an empty `overlay`, naming the param. The web runner then shouldn't start the run until an overlay is chosen.
 - **Regression test:** every test today supplies an overlay (the E2E spec uploads one at `apps/web/e2e/journeys/browser/watermark-images.spec.ts:24`, the golden fixtures embed one), so nothing ran the recipe as shipped. Test the class, not just this recipe: for every bundled recipe, a `required` param left at its shipped default is refused before the run, naming the param.
-
-### ISS-26: The site's custom `$pageview` overwrites `$current_url` with a bare path
-
-**Found:** October 24, 2026 (PostHog review).
-
-- **What PostHog shows:** all 250 bnto.io `$pageview` events in 90 days have a relative `$current_url` (`/compress-and-rename`), while every other bnto.io event has an absolute URL.
-- **Why:** `packages/core/src/providers/TelemetryProvider.tsx:43` captures `$pageview` with `{ $current_url: pathname }`.
-- **Effect:** `$pathname` and `$host` are still correct, but URL filters, entry-URL and full-URL breakdowns are wrong.
-- **Fix:** drop the override. Better, drop the manual hook and let posthog-js track App Router navigation (`capture_pageview: "history_change"`).
-- **Regression test:** the telemetry E2E specs (`apps/web/e2e/telemetry/`) never assert on `$pageview`'s properties. Assert the captured `$pageview` has an absolute `$current_url`.
 
 ### ISS-28: `result_downloaded` is never sent for the automatic download
 
