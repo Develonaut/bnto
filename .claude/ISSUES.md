@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-66**.
+- **IDs never get reused.** The next one is **ISS-67**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -50,6 +50,7 @@
 | ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
+| ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
 
 ---
 
@@ -408,3 +409,12 @@ ESLint runs per workspace package (`turbo run lint`), and the workspaces are `pa
 
 - **Fix:** a root `eslint.config.mjs` over `scripts/**` built on `baseConfig`, run by `task ui:lint` (or a `check:scripts` task) and CI, with any existing overruns on a suppressions baseline.
 - **Regression test:** a function over 20 lines in `scripts/` fails lint.
+
+### ISS-66: Down past the last home recipe hides the selection until you press Up as many times
+
+**Found:** October 25, 2026 (fixing ISS-32: a journey that pressed Down too often ran off the Recipes pane).
+
+On the home screen, `CursorDown` in the Recipes pane adds 1 to `recipes_cursor` with no upper bound (`engine/crates/bnto/src/tui/screens/home.rs:133-139`). Its comment says "app.rs clamps if needed", but nothing does: the only other write is `saturating_sub(1)` on Up. Past the last recipe no row matches the cursor (`render_home_panes.rs:84`), so the `▸` marker disappears and the pane scrolls back to the top. The user has to press Up once for every extra Down before a recipe is selected again. Enter still opens the last recipe, because only the confirm path clamps (`app_helpers/home_detail.rs:57`).
+
+- **Fix:** stop at the last recipe in `CursorDown`, the way the Library pane bounds its cursor (it wraps with `%`; pick one behaviour for both panes), and correct the comment.
+- **Regression test:** a `home.rs` unit test pressing Down more times than there are recipes keeps the cursor on the last one, and a render check that the marker stays on screen.

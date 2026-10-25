@@ -19,8 +19,9 @@ const WAIT_SECS: u64 = 30;
 const POLL: Duration = Duration::from_millis(25);
 
 /// Held while a session opens its pty and spawns `bnto tui`. Journeys run in
-/// parallel, and concurrent `openpty` calls in one process fail on macOS
-/// (`failed to openpty: Unknown error: -6`).
+/// parallel, and on macOS some of many concurrent launches in one process
+/// failed with `failed to openpty: Unknown error: -6` (likely `ptsname`'s
+/// shared buffer); one at a time, none did.
 static OPEN_PTY: Mutex<()> = Mutex::new(());
 
 /// The wait budget, from `BNTO_TUI_WAIT_SECS` when it's set to a number.
