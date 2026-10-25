@@ -2,17 +2,19 @@
 //
 // CLI-only processor: writes files to the filesystem. Supports conflict
 // resolution (skip/overwrite/rename/newer) and optional directory creation.
-// File data passes through unchanged — this is a placement node.
+// File data passes through unchanged — this is a placement node. It runs as a
+// batch, so every copy is checked before any runs (`copy_batch`).
 
+use crate::copy_batch::{copy_each, per_file, refuse_replacing_read_files};
 use crate::copy_newer::{DEFAULT_TOLERANCE_MS, OUTCOME_KEYS, process_newer};
 use bnto_core::metadata::{
-    Constraints, NodeCategory, NodeMetadata, OptionEntry, ParamCondition, ParamConditionEntry,
-    ParameterDef, ParameterType,
+    Constraints, InputCardinality, NodeCategory, NodeMetadata, OptionEntry, ParamCondition,
+    ParamConditionEntry, ParameterDef, ParameterType,
 };
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// File-copy processor — write files to a destination directory.
 pub struct FileCopy;
@@ -44,7 +46,7 @@ impl NodeProcessor for FileCopy {
             accepts: vec![],
             platforms: vec!["cli".to_string(), "desktop".to_string()],
             parameters: build_copy_params(),
-            input_cardinality: Default::default(), // PerFile
+            input_cardinality: InputCardinality::Batch,
             requires: vec![],
         }
     }
@@ -52,6 +54,24 @@ impl NodeProcessor for FileCopy {
     /// `newer` mode's per-file outcome flags, added up over the node's files.
     fn count_keys(&self) -> &'static [&'static str] {
         &OUTCOME_KEYS
+    }
+
+    /// `{{item.*}}` in its params is filled per file (`copy_batch`), as it
+    /// was when this was a per-file node.
+    fn resolves_items(&self) -> bool {
+        true
+    }
+
+    /// Check every copy, then run them in order (`process` copies one file).
+    fn process_batch(
+        &self,
+        input: BatchInput,
+        progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        let files = per_file(input)?;
+        refuse_replacing_read_files(&files)?;
+        copy_each(files, |input| self.process(input, progress, ctx))
     }
 
     #[expect(clippy::too_many_lines)]
@@ -63,26 +83,15 @@ impl NodeProcessor for FileCopy {
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Copying file...");
 
-        // Read destination from params (required).
-        let destination = input
-            .params
-            .get("destination")
-            .and_then(|v| v.as_str())
-            .unwrap_or(".");
-
         let create_dirs = input
             .params
             .get("createDirs")
             .and_then(|v| v.as_bool())
             .unwrap_or(true);
 
-        let conflict = input
-            .params
-            .get("conflict")
-            .and_then(|v| v.as_str())
-            .unwrap_or("skip");
-
-        let dest_dir = Path::new(destination);
+        let conflict = conflict_mode(&input.params);
+        let dest_path = dest_path(&input);
+        let dest_dir = Path::new(destination(&input.params));
 
         // A dry run decides each file against the destination as it stands, so two
         // inputs sharing a destination name both decide against the empty slot
@@ -107,9 +116,6 @@ impl NodeProcessor for FileCopy {
                 )));
             }
         }
-
-        // Build the full output path.
-        let dest_path = dest_dir.join(&input.filename);
 
         if conflict == "newer" {
             let output = process_newer(input, &dest_path, dry_run)?;
@@ -166,7 +172,35 @@ impl NodeProcessor for FileCopy {
     }
 }
 
+/// The `destination` folder, `.` when unset.
+fn destination(params: &serde_json::Map<String, serde_json::Value>) -> &str {
+    params
+        .get("destination")
+        .and_then(|v| v.as_str())
+        .unwrap_or(".")
+}
+
+/// Where `input` lands before conflict handling: its name under `destination`.
+pub(crate) fn dest_path(input: &NodeInput) -> PathBuf {
+    Path::new(destination(&input.params)).join(&input.filename)
+}
+
+/// The `conflict` mode, `skip` when unset.
+pub(crate) fn conflict_mode(params: &serde_json::Map<String, serde_json::Value>) -> &str {
+    params
+        .get("conflict")
+        .and_then(|v| v.as_str())
+        .unwrap_or("skip")
+}
+
 // --- Parameter Definitions ---
+
+/// The `conflict` param's description, kept out of `build_copy_params`.
+const CONFLICT_DESCRIPTION: &str = "What to do when a file with the same name already \
+    exists. \"newer\" copies only when the destination is missing or older than the source \
+    (path input only), keeps the source's modified time, and never deletes. A copy that would \
+    replace a file another incoming file is read from is refused before anything is copied \
+    (inside a loop, each iteration's files are checked on their own).";
 
 #[expect(clippy::too_many_lines)]
 fn build_copy_params() -> Vec<ParameterDef> {
@@ -191,11 +225,7 @@ fn build_copy_params() -> Vec<ParameterDef> {
         ParameterDef {
             name: "conflict".to_string(),
             label: "Conflict Resolution".to_string(),
-            description:
-                "What to do when a file with the same name already exists. \"newer\" copies \
-                          only when the destination is missing or older than the source (path \
-                          input only), keeps the source's modified time, and never deletes."
-                    .to_string(),
+            description: CONFLICT_DESCRIPTION.to_string(),
             param_type: ParameterType::Enum {
                 options: vec![
                     OptionEntry {

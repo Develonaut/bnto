@@ -6,7 +6,8 @@ pub mod assert;
 pub mod report;
 
 mod pass_through;
-pub(crate) mod placeholder;
+/// `{{item.*}}` and `{{file}}` filled per file by a node that fills its own.
+pub mod placeholder;
 
 pub use assert::Assert;
 pub use report::Report;

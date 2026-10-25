@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-58**.
+- **IDs never get reused.** The next one is **ISS-61**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -42,12 +42,14 @@
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
-| ISS-52 | **`file-copy` with `conflict: overwrite` can replace an input the run hasn't read** (fix first)       | engine      | Open                                             |
 | ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect                          | engine      | Open                                             |
 | ISS-54 | The `scripts/seo` tests never run                                                                     | tooling     | Scheduled ([plan](strategy/changelog.md))        |
 | ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
+| ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
+| ISS-59 | **Inside a loop, `file-copy` can still replace an input another iteration reads**                     | engine      | Open                                             |
+| ISS-60 | A batch node can't see the run's time limit and keeps starting work past it                           | engine      | Open                                             |
 
 ---
 
@@ -331,15 +333,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 - **Fix:** run the same import scan over each package's test and build sources against `test` and `build` inputs. Runtime `readFileSync` reads stay a documented manual step.
 - **Regression test:** a package test that imports an unlisted root file fails the check.
 
-### ISS-52: `file-copy` with `conflict: overwrite` can replace an input the run hasn't read
-
-**Found:** October 24, 2026 (fixing the output node's write, which could replace an input the run hadn't read). **Severity: data loss; fix first.**
-
-`F/a.txt` = `AAAA`, `F/b.txt` = `BBBB`, a `file-rename` (`find: a`, `replace: b`) then `file-copy` into `F` with `conflict: overwrite`, run on both files: `BBBB` is lost. With `main` at #745, `b.txt` ends up empty (the copy onto itself, ISS-36's bug). With #752, it ends up `AAAA`. The node copies one file at a time (`bnto-file/src/copy.rs:137`), so it can't see that a later file reads the destination. `skip` (the default) and `rename` keep every file.
-
-- **Fix:** plan the whole batch before copying, as the output node's write does (`engine/crates/bnto/src/ordered_write/`). Move that ordering into a shared crate both use, or refuse an overwrite whose destination is another input still to be read.
-- **Regression test:** the repro above keeps `BBBB` under `conflict: overwrite` (or is refused before anything is copied).
-
 ### ISS-53: An interrupted move can leave `.bnto-rename-*` files that later runs collect
 
 **Found:** October 24, 2026 (fixing the output node's write, which now reports its swap staging folder on Ctrl+C and has `file-collect` skip it).
@@ -384,3 +377,30 @@ On Windows, `format_command_line` (`engine/crates/bnto/src/dry_run/shell.rs`) qu
 
 - **Fix:** match `OOM` only as a whole, upper-case word (`/out of memory/i` or `/\bOOM\b/`).
 - **Regression test:** the message above isn't `out_of_memory`, and neither is `"zoom"` or `"Classroom"`, while `"out of memory"` and `"OOM"` still are.
+
+### ISS-58: Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration
+
+**Found:** October 25, 2026 (fixing ISS-52, which makes `file-copy` a batch node; see [file-copy-batch.md](decisions/file-copy-batch.md)).
+
+A per-file node inside a loop gets `{{item.*}}` from the file's current metadata, with the loop's item on top (`file_item`, `bnto-core/src/executor/primitive.rs`). A batch node gets it from the loop's item only: `resolve_node_params` resolves it there before the node runs, and refuses a key the loop's item lacks. The loop's item is the file's metadata when the iteration started (`build_loop_context`, `executor/container.rs`). So a key that a step inside the iteration adds (say `file-inspect`, then `file-copy` with `destination: "out/{{item.extension}}"`) fills for a per-file node but fails a batch one with "has no value". `file-copy` was per-file before ISS-52, so this used to work for it. `assert`, `report`, `edit-fields` and `file-render` behave the same way.
+
+- **Fix:** for a node that fills items itself (`resolves_items`), inside a loop, fill only the loop's keys and leave the rest as written, so the node fills them from each file's metadata. Not for `shell-run`, which also declares `resolves_items` but fills only inside `each` groups: a leftover `{{item.*}}` elsewhere in its command must still be refused.
+- **Regression test:** inside a loop, `file-inspect` then `file-copy` with `destination: "<dir>/{{item.extension}}"` copies each file into its extension's folder.
+
+### ISS-59: Inside a loop, `file-copy` can still replace an input another iteration reads
+
+**Found:** October 25, 2026 (cold review of the ISS-52 fix; reproduced by the reviewer). **Severity: data loss.**
+
+The ISS-52 fix refuses a `file-copy` over a file another file of its batch is read from. Inside an explicit `loop`, each iteration hands the node one file, so it never sees the others. `F/a.txt` = `AAAA`, `F/b.txt` = `BBBB`, and a loop holding `file-rename` (`a` → `b`) and `file-copy` into `F` with `conflict: overwrite`, run on both files, still leaves `b.txt` = `AAAA`. The same recipe without the loop, flat or with `settings.iteration: "auto"`, is refused. `main` behaved the same before the fix, so this isn't a regression.
+
+- **Fix:** give the node the run's other inputs to check against: the loop's whole batch, or every `Path` the run holds. That needs a way for the executor to pass more than the iteration's files to a node (a `ProcessContext` method, say). Or refuse an `overwrite`/`newer` copy over any file the run read as an input.
+- **Regression test:** the repro above inside a `loop` keeps `BBBB` (or is refused before anything is copied).
+
+### ISS-60: A batch node can't see the run's time limit and keeps starting work past it
+
+**Found:** October 25, 2026 (second cold review of the ISS-52 fix, which makes `file-copy` a batch node).
+
+The executor checks the run's `timeout` before each step, loop iteration and per-file node's file (`bnto-core/src/executor/time_limit.rs`, `primitive.rs`), so nothing new starts once it has passed. A batch node gets the whole batch in one call, and `ProcessContext` has no deadline, so it can't stop between files. After the limit, `file-copy` keeps starting copies until the CLI's watchdog ends the process about 2 s later (`bnto/src/run_watchdog.rs`). A copy cut off then can leave its destination truncated: `overwrite` copies with `std::fs::copy`, and `newer` truncates the target and writes in place (`copy_newer.rs`). `file-move` and `file-delete` have the same gap, though a rename or a delete cut off can't leave a half-written file.
+
+- **Fix:** let a node ask whether the run's time is up (a `ProcessContext` method the executor provides, defaulting to "no"), and have `file-copy`, `file-move` and `file-delete` check it before each file, failing with the run's timeout and handing over what they finished.
+- **Regression test:** a `file-copy` batch whose run passes its limit after the first file copies no more files and fails with the timeout.

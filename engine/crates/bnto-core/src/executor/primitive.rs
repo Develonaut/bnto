@@ -145,18 +145,9 @@ fn require_filled_items(
     let Some(key) = unfilled.first() else {
         return Ok(());
     };
-    let target = file.map(|f| format!(" for {f}")).unwrap_or_default();
-    let available = match item {
-        Some(item) if !item.is_empty() => {
-            format!(
-                "it has: {}",
-                item.keys().cloned().collect::<Vec<_>>().join(", ")
-            )
-        }
-        _ => "it has no item values".to_string(),
-    };
+    let why = crate::control::placeholder::no_value(key, file, item.as_ref());
     Err(BntoError::InvalidInput(format!(
-        "Node '{}': {{{{item.{key}}}}} has no value{target} ({available})",
+        "Node '{}': {why}",
         node.id
     )))
 }
