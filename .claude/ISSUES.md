@@ -278,7 +278,6 @@ In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.co
 - **Fix:** give `dry-run` the same `--vars` (shared argument struct with `run`), and fill vars before the preview.
 - **Regression test:** a sandboxed `bnto dry-run --vars` shows the filled value where `bnto run` would use it.
 
-
 ### ISS-43: The TUI labels overwrite results with the first file's folder only
 
 **Found:** October 24, 2026 (fixing ISS-21).
