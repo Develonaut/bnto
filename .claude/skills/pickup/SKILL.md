@@ -307,8 +307,8 @@ Write the code to make your tests pass. Follow the rules in `CLAUDE.md` and `.cl
 
 #### Layered Code Organization
 
-- **Pure functions -> hooks -> components** — extract business logic into pure testable functions (< 20 lines), hooks are thin reactive wrappers (< 30 lines), components just render
-- **Hook decomposition** — if a hook does fetching + transformation + subscription + side effects, split it into focused sub-hooks. Signs it's too big: >30 lines, multiple unrelated state, hard to name without "and"
+- **Pure functions -> hooks -> components** — extract business logic into pure testable functions, hooks are thin reactive wrappers, components just render. Functions and hooks alike are held to the 20-line function limit (`.claude/rules/code-standards.md`, enforced by ESLint)
+- **Hook decomposition** — if a hook does fetching + transformation + subscription + side effects, split it into focused sub-hooks. ESLint rejects one over 20 lines. Below that, split it when it holds unrelated state or its name needs "and"
 - **Bento Box Principle** — every file < 250 lines, every function < 20 lines. No utility grab bags, no god objects. See `.claude/rules/code-standards.md` for the full checklist
 
 #### Other Standards
