@@ -80,13 +80,15 @@ bnto dry-run backup.bnto.json --vars machine.json
 
 # Check recipe files without running them: unknown node types, parameters a
 # node refuses (e.g. a file-filter regex that doesn't compile), malformed
-# {{…}} placeholders, and every edge problem at every level (cycles, edges to
-# unknown or other-level nodes, unwired nodes). A required param left out (or
-# given as "") for `bnto run -p node:param=value` to give is a note, not a
-# finding, and `bnto run` refuses it before any step runs; one no `-p`
-# can give (an object, or a node `-p` can't name) is a finding. Prints one line
-# per finding, then a line per note, then `Check: PASS (<n> recipes)` (exit 0)
-# or `Check: FAIL (<n> findings)` (exit 1), with `, <n> notes` added if any
+# {{…}} placeholders, placeholders in the output folder no run can fill (an
+# {{item.*}}, an undeclared {{env.*}}), and every edge problem at every level
+# (cycles, edges to unknown or other-level nodes, unwired nodes). A required
+# param left out (or given as "") for `bnto run -p node:param=value` to give
+# is a note, not a finding, and `bnto run` refuses it before any step runs;
+# one no `-p` can give (an object, or a node `-p` can't name) is a finding.
+# Prints one line per finding, then a line per note, then
+# `Check: PASS (<n> recipes)` (exit 0) or `Check: FAIL (<n> findings)`
+# (exit 1), with `, <n> notes` added if any
 bnto check backup.bnto.json recipes/*.bnto.json
 
 # A folder checks every .bnto.json under it, recursively, sorted by path, so a
@@ -221,7 +223,7 @@ src/
 +-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
 +-- ordered_write/         # Orders the final write so no copy replaces an input still to be read
 +-- exit_report.rs         # At the end of a stopped run, names kept staging folders and parked files
-+-- recipe_output_dir.rs   # A recipe's own output folder, templates resolved (run + TUI)
++-- recipe_output_dir.rs   # A recipe's own output folder, filled or refused (run + TUI)
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (pipeline events -> lines)
 +-- progress_line.rs       # A step's live line: bar of files, or spinner + running message

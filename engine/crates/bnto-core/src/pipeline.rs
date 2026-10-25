@@ -297,37 +297,20 @@ fn find_first_processing_in_nodes(nodes: &[PipelineNode]) -> Option<String> {
 }
 
 // =============================================================================
-// Helper: Resolve output directory from recipe definition
+// Helper: Find the output node
 // =============================================================================
 
-/// Read the output node's `directory` parameter from a pipeline definition.
-///
-/// Returns `Some(value)` if a non-empty directory string is found,
-/// `None` otherwise. The caller is responsible for resolving any
-/// `{{ctx.*}}` templates in the returned value.
-pub fn resolve_output_directory(def: &PipelineDefinition) -> Option<String> {
-    find_output_directory_in_nodes(&def.nodes)
-}
-
-fn find_output_directory_in_nodes(nodes: &[PipelineNode]) -> Option<String> {
+/// The first output node, depth first, after the containers around it
+/// (outermost first), so its field scope can be read along the path. Its
+/// `directory` is filled by `fill_output_directory`.
+pub(crate) fn output_node_path(nodes: &[PipelineNode]) -> Option<Vec<&PipelineNode>> {
     for node in nodes {
         if node.node_type == "output" {
-            let dir = node
-                .params
-                .get("directory")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            return if dir.is_empty() {
-                None
-            } else {
-                Some(dir.to_string())
-            };
+            return Some(vec![node]);
         }
-        // Recurse into container children
-        if let Some(children) = &node.children
-            && let Some(dir) = find_output_directory_in_nodes(children)
-        {
-            return Some(dir);
+        if let Some(mut path) = node.children.as_deref().and_then(output_node_path) {
+            path.insert(0, node);
+            return Some(path);
         }
     }
     None
@@ -1418,52 +1401,28 @@ mod tests {
         assert!(!is_container_node("output"));
     }
 
-    // --- resolve_output_directory Tests ---
+    // --- output_node_path Tests ---
+
+    fn path_ids(def: &PipelineDefinition) -> Option<Vec<&str>> {
+        output_node_path(&def.nodes).map(|path| path.iter().map(|n| n.id.as_str()).collect())
+    }
 
     #[test]
-    fn test_resolve_output_directory_found() {
+    fn test_output_node_path_top_level() {
         let def = parse_definition(
             r#"{
                 "nodes": [
                     { "id": "in", "type": "input", "params": {} },
                     { "id": "proc", "type": "image-compress", "params": {} },
-                    { "id": "out", "type": "output", "params": { "directory": "{{ctx.date}}-output" } }
+                    { "id": "out", "type": "output", "params": { "directory": "x" } }
                 ]
             }"#,
         );
-        assert_eq!(
-            resolve_output_directory(&def),
-            Some("{{ctx.date}}-output".to_string())
-        );
+        assert_eq!(path_ids(&def), Some(vec!["out"]));
     }
 
     #[test]
-    fn test_resolve_output_directory_none_when_missing() {
-        let def = parse_definition(
-            r#"{
-                "nodes": [
-                    { "id": "in", "type": "input", "params": {} },
-                    { "id": "out", "type": "output", "params": { "mode": "write" } }
-                ]
-            }"#,
-        );
-        assert_eq!(resolve_output_directory(&def), None);
-    }
-
-    #[test]
-    fn test_resolve_output_directory_none_when_empty_string() {
-        let def = parse_definition(
-            r#"{
-                "nodes": [
-                    { "id": "out", "type": "output", "params": { "directory": "" } }
-                ]
-            }"#,
-        );
-        assert_eq!(resolve_output_directory(&def), None);
-    }
-
-    #[test]
-    fn test_resolve_output_directory_no_output_node() {
+    fn test_output_node_path_no_output_node() {
         let def = parse_definition(
             r#"{
                 "nodes": [
@@ -1472,11 +1431,11 @@ mod tests {
                 ]
             }"#,
         );
-        assert_eq!(resolve_output_directory(&def), None);
+        assert_eq!(path_ids(&def), None);
     }
 
     #[test]
-    fn test_resolve_output_directory_nested() {
+    fn test_output_node_path_nested_lists_its_containers_first() {
         let def = parse_definition(
             r#"{
                 "nodes": [
@@ -1491,10 +1450,7 @@ mod tests {
                 ]
             }"#,
         );
-        assert_eq!(
-            resolve_output_directory(&def),
-            Some("nested-dir".to_string())
-        );
+        assert_eq!(path_ids(&def), Some(vec!["group-1", "out"]));
     }
 
     // --- resolve_output_mode Tests ---

@@ -32,7 +32,7 @@ mod field_values;
 mod flow;
 mod flow_closing;
 mod guard;
-mod interpolate;
+pub(crate) mod interpolate;
 mod leaf_output;
 pub mod loop_config;
 pub mod node_outputs;

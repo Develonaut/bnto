@@ -116,7 +116,7 @@ fn resolve_placeholder(prefix: &str, key: &str, ctx: &TemplateContext) -> Option
 ///
 /// Old flat names (`work_dir`, `temp_dir`) are kept as backward-compat aliases.
 #[expect(clippy::too_many_lines)]
-fn resolve_ctx(
+pub(crate) fn resolve_ctx(
     key: &str,
     process_ctx: &dyn ProcessContext,
     run_started_ms: Option<u64>,
@@ -154,24 +154,20 @@ fn resolve_ctx(
     }
 }
 
-/// Resolve only `{{ctx.*}}` variables in a string.
-///
-/// The environment (CLI, TUI) calls this to expand template variables in
-/// the output directory path before deciding where to write files.
-/// Only resolves ctx namespace — ignores fields, env, item, node placeholders.
-pub fn resolve_ctx_templates(s: &str, ctx: &dyn ProcessContext) -> String {
-    if !s.contains("{{ctx.") {
-        return s.to_string();
-    }
-    interpolate(s, |inner| {
-        let key = inner.strip_prefix("ctx.")?;
-        Some(
-            resolve_ctx(key, ctx, None)
-                .map(|v| value_to_string(&v))
-                .unwrap_or_default(),
-        )
-    })
-}
+/// Every `{{ctx.*}}` key `resolve_ctx` fills before a run starts: all but
+/// `started`, which is the run's own start.
+pub(crate) const CTX_KEYS_BEFORE_RUN: &[&str] = &[
+    "paths.home_dir",
+    "paths.output_dir",
+    "paths.work_dir",
+    "work_dir",
+    "paths.temp_dir",
+    "temp_dir",
+    "platform",
+    "date",
+    "time",
+    "timestamp",
+];
 
 /// The platform name a platform guard compares (`HostPlatform::as_str`),
 /// or "unknown" on an OS bnto has no name for.
@@ -193,7 +189,7 @@ fn resolve_node_ref(
 }
 
 /// Convert a JSON value to a string for interpolation.
-fn value_to_string(value: &Value) -> String {
+pub(crate) fn value_to_string(value: &Value) -> String {
     match value {
         Value::String(s) => s.clone(),
         Value::Number(n) => n.to_string(),
@@ -289,24 +285,6 @@ pub fn build_input_metadata(filename: &str) -> Value {
         "filename_stem": stem,
         "filename_title": crate::case::deslug_title(stem),
         "filename_ext": ext,
-    })
-}
-
-/// Resolve `{{node.*}}` placeholders in a plain string.
-///
-/// Used outside the full template system — e.g. for output directory paths
-/// that need node-derived values before pipeline execution starts.
-pub fn resolve_node_templates(s: &str, node_outputs: &BTreeMap<String, Value>) -> String {
-    if !s.contains("{{node.") {
-        return s.to_string();
-    }
-    interpolate(s, |inner| {
-        let (node_id, prop) = inner.strip_prefix("node.")?.rsplit_once('.')?;
-        Some(
-            resolve_node_ref(node_id, prop, node_outputs)
-                .map(|v| value_to_string(&v))
-                .unwrap_or_default(),
-        )
     })
 }
 
@@ -674,38 +652,13 @@ mod tests {
     }
 
     #[test]
-    fn resolve_ctx_templates_public_function() {
+    fn every_ctx_key_listed_as_known_before_a_run_fills_without_one() {
         let mock = MockContext::new();
-        let result = resolve_ctx_templates("{{ctx.date}}-output", &mock);
-        assert!(
-            !result.contains("{{"),
-            "Should not contain unresolved placeholder"
-        );
-        assert!(result.ends_with("-output"), "Suffix should be preserved");
-        assert!(result.len() > "-output".len(), "Date should be prepended");
-    }
-
-    #[test]
-    fn resolve_ctx_templates_no_placeholders() {
-        let mock = MockContext::new();
-        let result = resolve_ctx_templates("plain-string", &mock);
-        assert_eq!(result, "plain-string");
-    }
-
-    #[test]
-    fn resolve_ctx_templates_empty_string() {
-        let mock = MockContext::new();
-        let result = resolve_ctx_templates("", &mock);
-        assert_eq!(result, "");
-    }
-
-    #[test]
-    fn resolve_ctx_templates_paths_namespace() {
-        let mock = MockContext::new();
-        let result = resolve_ctx_templates("{{ctx.paths.output_dir}}/{{ctx.date}}-compress", &mock);
-        assert!(result.starts_with("/mock/home/.bnto/output/"));
-        assert!(result.ends_with("-compress"));
-        assert!(!result.contains("{{"));
+        for key in CTX_KEYS_BEFORE_RUN {
+            assert!(resolve_ctx(key, &mock, None).is_some(), "{key}");
+        }
+        assert_eq!(resolve_ctx("started", &mock, None), None);
+        assert!(!CTX_KEYS_BEFORE_RUN.contains(&"started"));
     }
 
     // --- {{ctx.paths.*}} organized namespace ---
@@ -1233,44 +1186,6 @@ mod tests {
         assert_eq!(outputs["input"]["filename"], json!("first.csv"));
     }
 
-    // --- resolve_node_templates (public function) ---
-
-    #[test]
-    fn resolve_node_templates_resolves_placeholders() {
-        let mut outputs = BTreeMap::new();
-        outputs.insert("input".to_string(), build_input_metadata("data-set.csv"));
-        let result = resolve_node_templates("/downloads/{{node.input.filename_title}}", &outputs);
-        assert_eq!(result, "/downloads/Data Set");
-    }
-
-    #[test]
-    fn resolve_node_templates_no_placeholders() {
-        let outputs = BTreeMap::new();
-        let result = resolve_node_templates("plain-string", &outputs);
-        assert_eq!(result, "plain-string");
-    }
-
-    #[test]
-    fn resolve_node_templates_empty_string() {
-        let outputs = BTreeMap::new();
-        let result = resolve_node_templates("", &outputs);
-        assert_eq!(result, "");
-    }
-
-    #[test]
-    fn resolve_node_templates_multiple_placeholders() {
-        let mut outputs = BTreeMap::new();
-        outputs.insert(
-            "input".to_string(),
-            build_input_metadata("vehicles-and-monsters.csv"),
-        );
-        let result = resolve_node_templates(
-            "/downloads/{{node.input.filename_title}}/{{node.input.filename_ext}}",
-            &outputs,
-        );
-        assert_eq!(result, "/downloads/Vehicles And Monsters/csv");
-    }
-
     // --- {{node.input.*}} through full resolve_templates ---
 
     #[test]
@@ -1371,15 +1286,6 @@ mod tests {
         let ctx = interp_ctx(&fields, &mock, &outputs, &item);
         let params = make_params(&[("a", json!("x={{item.k}}"))]);
         assert_eq!(resolve_templates(&params, &ctx)["a"], "x={{item.k}}");
-    }
-
-    #[test]
-    fn test_a_self_referencing_node_value_terminates() {
-        let outputs = BTreeMap::from([("n".to_string(), json!({ "p": "{{node.n.p}}" }))]);
-        assert_eq!(
-            resolve_node_templates("d/{{node.n.p}}", &outputs),
-            "d/{{node.n.p}}"
-        );
     }
 
     #[test]
