@@ -302,7 +302,8 @@ mod tests {
 
     #[test]
     fn store_load_missing_file_returns_default() {
-        let store = TrustStore::load(Path::new("/nonexistent/path/trusted.json"));
+        let tmp = tempfile::tempdir().unwrap();
+        let store = TrustStore::load(&tmp.path().join("trusted.json"));
         assert!(store.approvals.is_empty());
     }
 

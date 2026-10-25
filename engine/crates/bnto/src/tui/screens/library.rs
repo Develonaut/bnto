@@ -559,7 +559,8 @@ mod tests {
 
     #[test]
     fn load_library_entries_missing_dir() {
-        assert!(load_library_entries(Path::new("/nonexistent/path")).is_empty());
+        let tmp = tempfile::tempdir().unwrap();
+        assert!(load_library_entries(&tmp.path().join("missing")).is_empty());
     }
 
     #[test]

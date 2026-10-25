@@ -36,7 +36,6 @@
 | ISS-38 | CI and release skip jobs for root files those jobs read                                               | ci          | Open                                             |
 | ISS-39 | The pre-commit hook in a worktree replays stale Turbo lint results                                    | tooling     | Open                                             |
 | ISS-40 | `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled                                     | cli         | Open                                             |
-| ISS-41 | About two dozen engine tests point at `/nonexistent`                                                  | cli test    | Open                                             |
 | ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
@@ -278,15 +277,6 @@ In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.co
 
 - **Fix:** give `dry-run` the same `--vars` (shared argument struct with `run`), and fill vars before the preview.
 - **Regression test:** a sandboxed `bnto dry-run --vars` shows the filled value where `bnto run` would use it.
-
-### ISS-41: About two dozen engine tests point at `/nonexistent`
-
-**Found:** October 24, 2026 (fixing ISS-11).
-
-24 uses of `"/nonexistent` in `engine/` tests on `main` (`git grep -n '"/nonexistent' -- engine/`), about 18 of them `RecipeCatalog::load(Path::new("/nonexistent"))` in the `bnto` crate: `list.rs:281`, `info.rs:139`, `install.rs:556, 585`, `catalog.rs:289, 325`, `doctor.rs:239`, `install_trust.rs:47`, `tui/app.rs:280, 1527, 1710`, `trust.rs:305`, `context.rs:841` and the `tui/screens` and `detail_loader.rs` tests, plus `bnto-core/src/editor/mod.rs:429` and `bnto-file/src/collect/tests.rs:264`. That's the pattern gotchas.md's Windows section forbids: `/nonexistent` is `C:\nonexistent` on Windows, and could exist. Most only read, so they pass today.
-
-- **Fix:** an empty temp dir, or a test helper that builds a catalog with no library.
-- **Regression test:** a grep check in `task check` for `"/nonexistent"` in `engine/`.
 
 ### ISS-43: The TUI labels overwrite results with the first file's folder only
 

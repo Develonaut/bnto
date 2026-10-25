@@ -137,6 +137,12 @@ jobs:
         working-directory: .
         run: ./engine/target/debug/bnto run recipes/rust-file-size.bnto.json --yes
 
+      # gotchas.md: no made-up absolute paths like "/nonexistent" in engine
+      # code (C:\nonexistent on Windows, which can exist).
+      - name: Made-up paths (recipes/nonexistent-paths.bnto.json)
+        working-directory: .
+        run: ./engine/target/debug/bnto run recipes/nonexistent-paths.bnto.json --yes
+
       - name: WASM integration tests (bnto-wasm)
         run: wasm-pack test --node crates/bnto-wasm
 

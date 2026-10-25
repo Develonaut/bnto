@@ -101,6 +101,17 @@ impl RecipeCatalog {
     }
 }
 
+#[cfg(test)]
+impl RecipeCatalog {
+    /// The bundled recipes alone, for tests: the library is an empty temp
+    /// dir, never a made-up path like `/nonexistent`, which on Windows is
+    /// `C:\nonexistent` and could hold recipes.
+    pub(crate) fn bundled_only() -> Self {
+        let empty = tempfile::tempdir().expect("create an empty library dir");
+        Self::load(empty.path())
+    }
+}
+
 /// Load all engine-embedded recipes as catalog entries.
 fn load_bundled() -> Vec<CatalogEntry> {
     bnto_engine::recipes::builtin_recipes()
@@ -286,7 +297,8 @@ mod tests {
 
     #[test]
     fn catalog_missing_library_dir_still_has_bundled() {
-        let catalog = RecipeCatalog::load(Path::new("/nonexistent/path"));
+        let tmp = tempfile::tempdir().unwrap();
+        let catalog = RecipeCatalog::load(&tmp.path().join("missing"));
         assert_eq!(catalog.all().len(), 22);
     }
 
@@ -322,7 +334,7 @@ mod tests {
 
     #[test]
     fn catalog_definitions_parses_every_bundled_recipe() {
-        let catalog = RecipeCatalog::load(Path::new("/nonexistent/path"));
+        let catalog = RecipeCatalog::bundled_only();
         assert_eq!(catalog.definitions().len(), 22);
     }
 

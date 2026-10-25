@@ -838,7 +838,8 @@ mod tests {
 
     #[test]
     fn load_dotenv_file_missing_returns_empty() {
-        let vars = super::load_dotenv_file(Path::new("/nonexistent/.env"));
+        let tmp = tempfile::tempdir().unwrap();
+        let vars = super::load_dotenv_file(&tmp.path().join(".env"));
         assert!(vars.is_empty());
     }
 
