@@ -44,7 +44,6 @@
 | ISS-46 | The TUI's Open action uses the first folder for overwrite results                                     | tui         | Open                                             |
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
-| ISS-50 | `bnto dry-run` shows shell commands with broken quoting                                               | cli         | Open                                             |
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
 | ISS-52 | **`file-copy` with `conflict: overwrite` can replace an input the run hasn't read** (fix first)       | engine      | Open                                             |
 | ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect                          | engine      | Open                                             |
@@ -352,15 +351,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 - **Fix:** keep the E2E server's generated types out of the app's `tsconfig.json` (Next writes them for its own type-check), or have the isolated run clear `.next-e2e` when it starts.
 - **Regression test:** a truncated `.next-e2e/dev/types/routes.d.ts` doesn't fail `pnpm --filter @bnto/web build`.
-
-### ISS-50: `bnto dry-run` shows shell commands with broken quoting
-
-**Found:** October 24, 2026 (second cold review of the ISS-11 fix; reproduced by the reviewer).
-
-`format_command_line` (`engine/crates/bnto/src/dry_run/shell.rs:111-121`) quotes only arguments that contain a space or `{`, and never escapes `'`. A dry run of `-p "msg=a b \$HOME;*'"` displays `$ echo 'a b $HOME;*''`, which isn't what runs and won't paste. The ISS-11 fix adds a correct quoter (`dry_run_hint.rs`, per-OS); the two now disagree.
-
-- **Fix:** display commands with the `dry_run_hint` quoter, so there's one shell-quoting rule in the crate. Quote the footer's `Run with: bnto run <recipe>` the same way (`dry_run/format.rs:127`).
-- **Regression test:** a dry run whose argument holds a space, `$`, `;`, `*` and `'` displays a line that, pasted into `sh -c`, passes the same argument.
 
 ### ISS-51: The Turbo-inputs check guards lint only, not test or build reads
 

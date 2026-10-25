@@ -63,6 +63,7 @@ mod run_output;
 mod run_verdict;
 mod run_watchdog;
 mod scratch;
+mod shell_word;
 pub mod storage;
 pub mod telemetry;
 mod trust;

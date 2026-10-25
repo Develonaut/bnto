@@ -120,7 +120,9 @@ fn a_declined_runs_suggestion_pastes_into_a_shell_as_printed() {
     let line = suggested.replacen("bnto ", "\"$BNTO\" ", 1);
     let output = sandbox.sh(&line).stdin(Stdio::null()).output().unwrap();
     assert!(output.status.success(), "{line}: {}", stderr(&output));
-    assert!(stdout(&output).contains("1.2 it's"), "{}", stdout(&output));
+    // The preview shows the value as one sh word (ISS-50).
+    let shown = r"$ echo '1.2 it'\''s'";
+    assert!(stdout(&output).contains(shown), "{}", stdout(&output));
 }
 
 #[test]

@@ -4,6 +4,7 @@ use colored::Colorize;
 
 use super::DryRunResult;
 use super::shell::format_command_line;
+use crate::shell_word::shell_word;
 
 /// Print dry-run results to stdout with colored formatting.
 pub fn print_dry_run(recipe_arg: &str, result: &DryRunResult) {
@@ -124,7 +125,7 @@ fn print_footer(recipe_arg: &str, result: &DryRunResult) {
 
     println!(
         "\n{}",
-        format!("Run with: bnto run {recipe_arg} <input>").dimmed()
+        format!("Run with: bnto run {} <input>", shell_word(recipe_arg)).dimmed()
     );
 }
 

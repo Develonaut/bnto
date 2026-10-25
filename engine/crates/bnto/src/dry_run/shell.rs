@@ -12,6 +12,8 @@ use bnto_core::executor::template::{TemplateContext, resolve_templates};
 use bnto_core::pipeline::{is_container_node, is_io_node};
 use bnto_core::{FieldDef, PipelineDefinition, PipelineNode};
 
+use crate::shell_word::shell_word;
+
 /// A resolved shell-run node ready for display.
 #[derive(Debug)]
 pub struct ShellCommandInfo {
@@ -107,17 +109,10 @@ fn override_target(
     Ok(node_id.map(|nid| (nid, full_key.to_string())))
 }
 
-/// Format a command and its args as a shell-like command line.
+/// A command and its args as a line that pastes into a shell, each one word.
 pub fn format_command_line(cmd: &ShellCommandInfo) -> String {
-    let mut parts = vec![cmd.command.clone()];
-    parts.extend(cmd.args.iter().map(|a| {
-        if a.contains(' ') || a.contains('{') {
-            format!("'{a}'")
-        } else {
-            a.clone()
-        }
-    }));
-    parts.join(" ")
+    let words = std::iter::once(&cmd.command).chain(&cmd.args);
+    words.map(|w| shell_word(w)).collect::<Vec<_>>().join(" ")
 }
 
 // --- Internal helpers ---
@@ -325,6 +320,38 @@ mod tests {
         };
         let formatted = format_command_line(&cmd);
         assert!(formatted.contains("'{{output_dir}}/out.mp4'"));
+    }
+
+    /// `printf` with the one arg `arg`.
+    fn printf_with(arg: &str) -> ShellCommandInfo {
+        ShellCommandInfo {
+            node_id: "n1".into(),
+            node_name: "Test".into(),
+            command: "printf".into(),
+            args: vec![arg.into()],
+            output_mode: "stdout".into(),
+            unresolved: vec![],
+            skipped: None,
+        }
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn an_awkward_arg_is_quoted_for_sh() {
+        let line = format_command_line(&printf_with("a b $HOME;*'x"));
+        assert_eq!(line, r"printf 'a b $HOME;*'\''x'");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn an_awkward_arg_is_quoted_for_powershell() {
+        let line = format_command_line(&printf_with("a b $HOME;*'x"));
+        assert_eq!(line, "printf 'a b $HOME;*''x'");
+    }
+
+    #[test]
+    fn an_empty_arg_stays_a_word() {
+        assert_eq!(format_command_line(&printf_with("")), "printf ''");
     }
 
     #[test]
