@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-93**.
+- **IDs never get reused.** The next one is **ISS-95**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -16,7 +16,6 @@
 | ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`                                      | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-10 | `task check` skips the crate publish checks CI runs                                                   | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-12 | Released CLIs send no telemetry: the PostHog key is never set                                         | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines                                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
@@ -58,6 +57,8 @@
 | ISS-90 | `@bnto/form` exports `FormStoreProvider` and four hooks nothing outside it uses                       | form        | Open                                             |
 | ISS-91 | 28 TS files use `React.*` namespace types the import rule bans                                        | web         | Open                                             |
 | ISS-92 | Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked                                 | tooling     | Open                                             |
+| ISS-93 | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
+| ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
 
 ---
 
@@ -84,12 +85,6 @@ CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scri
 **Found:** October 24, 2026 (planning ISS-7).
 
 `engine/crates/bnto/src/telemetry/mod.rs:57` reads the key from the `BNTO_POSTHOG_KEY` env var at run time, and telemetry is inactive without one (`:60`). Nothing sets it: there's no `option_env!`, no build script, and nothing in `release.yml` (`grep -rn BNTO_POSTHOG_KEY` finds only `mod.rs` and a test). So shipped CLIs collect nothing, while the first-run notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`mod.rs:134`). Needs Ryan's decision: ship the key, or say telemetry is off.
-
-### ISS-16: `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines
-
-**Found:** October 21, 2026 (dogfood sessions); checked October 24, 2026.
-
-`packages/@bnto/nodes/eslint.config.mjs:6` ignores `scripts/**`, so `scripts/generate-from-catalog.ts` reached 1,381 lines against the 250-line cap, and its functions against the 20-line one, with nothing flagging it. Codegen stays in TypeScript (decided October 24, 2026).
 
 ### ISS-17: The `/workflow-expert` skill's node inventory is stale
 
@@ -486,3 +481,21 @@ The root `scripts/` folder and `packages/@bnto/nodes/scripts/` and `packages/@bn
 
 - **Fix:** a `tsconfig.json` per scripts folder (or a root one over `scripts/**`) and a `tsc --noEmit` over each in `task check:scripts`, the packages' `build`, and CI.
 - **Regression test:** a type error in a `scripts/` file fails `task check`.
+
+### ISS-93: `@bnto/nodes`'s README lists `src/` files and folders that don't exist
+
+**Found:** October 25, 2026 (fixing ISS-16).
+
+`packages/@bnto/nodes/README.md`'s "Directory Structure" tree and its "Generated vs Hand-Written" table describe an older layout. They list `src/generated/catalog.ts` and `src/generated/schemas.ts` (the monolithic files codegen now deletes on every run, `scripts/codegen/paths.ts` `LEGACY_FILES`), a `src/recipes/` folder of hand-written recipes (recipes are generated into `src/generated/recipes.ts`), `src/recipe.ts`, and `src/schemas/imageCompress.ts`, `inferFieldType.ts` and other per-operation configs. None of these exist. The generated `catalog/`, `schemas/`, `paramFieldInfo.ts` and the node CRUD files (`addNode.ts`, `moveNode.ts`, …) aren't listed. The `/technical-writer` skill owns package READMEs.
+
+- **Fix:** rewrite the tree and the table from the package as it is.
+- **Regression test:** none (docs); every path the README names exists.
+
+### ISS-94: Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`
+
+**Found:** October 26, 2026 (cold review of the ISS-16 split; the bug predates it).
+
+Codegen writes `catalog/iterationModes.ts` only when the definition schema has an iteration enum (`packages/@bnto/nodes/scripts/codegen/catalog/writeCatalogFiles.ts`), and nothing cleans the `catalog/` root, unlike `nodeTypes/` and `processors/` (`writePerItemFolder`). With the enum gone, the old file stays on disk with an outdated version header while `catalog/index.ts` stops exporting it. Reproduced with old and new scripts by deleting `definitionSchema` from a scratch snapshot. The old script built an `expectedCatalogFiles` set for this and never used it; the split dropped that dead set.
+
+- **Fix:** remove `iterationModes.ts` when there are no modes (or clean the `catalog/` root against the files written).
+- **Regression test:** codegen on a snapshot without the enum, after one with it, leaves no `catalog/iterationModes.ts`.

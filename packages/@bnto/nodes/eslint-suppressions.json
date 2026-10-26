@@ -1,4 +1,9 @@
 {
+  "scripts/generate-from-catalog.ts": {
+    "check-file/filename-naming-convention": {
+      "count": 1
+    }
+  },
   "src/validate.ts": {
     "max-lines-per-function": {
       "count": 2

@@ -44,7 +44,13 @@ src/
 ├── findEdgeCycle.ts            # Cycle finder for a level's edges
 └── index.ts                    # Public exports
 scripts/
-└── generate-from-catalog.ts    # Codegen script
+├── generate-from-catalog.ts    # Codegen entry: runs each generator in order
+└── codegen/                    # One module per generated output
+    ├── catalog/                # src/generated/catalog/ (node types, processors, lookups)
+    ├── schemas/                # src/generated/schemas/ (Zod schema per node type)
+    ├── fields/                 # engineSchemaEntries, paramFieldInfo, enumConstants
+    ├── files/                  # definitionSchema, formatVersion, recipes, Convex labels, i18n strings
+    └── docs/                   # docs/<type>.md node READMEs
 ```
 
 ## Generated vs Hand-Written
