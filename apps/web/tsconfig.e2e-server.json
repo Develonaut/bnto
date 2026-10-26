@@ -1,0 +1,7 @@
+{
+  // The isolated E2E server's tsconfig (next.config.ts sets it when
+  // NEXT_DIST_DIR is set). Next adds its dist dir's route types to the
+  // tsconfig it's given, but never edits one that extends another, so the
+  // E2E server's .next-e2e types stay out of tsconfig.json and the build.
+  "extends": "./tsconfig.json"
+}

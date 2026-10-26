@@ -19,6 +19,13 @@ const nextConfig: NextConfig = {
   // Allow e2e tests to use a separate build directory so they don't
   // corrupt the dev server's .next cache (set via NEXT_DIST_DIR env var).
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+  // Next adds its dist dir's route types to the tsconfig it's given, and
+  // `next build` type-checks everything tsconfig.json includes. A stopped E2E
+  // run's half-written .next-e2e types would then fail the build (ISS-49), so
+  // the E2E server gets its own tsconfig, one Next doesn't edit.
+  ...(process.env.NEXT_DIST_DIR
+    ? { typescript: { tsconfigPath: "tsconfig.e2e-server.json" } }
+    : {}),
   // PostHog's API uses trailing slashes (e.g. /e/). Without this, Next.js
   // redirects /d/e/ → /d/e which breaks event capture.
   skipTrailingSlashRedirect: true,
