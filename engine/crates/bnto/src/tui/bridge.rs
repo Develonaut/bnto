@@ -139,8 +139,7 @@ fn try_run_bridge(
         .then(|| run_message(&result, recipe_output_label(&job.definition_json)))
         .flatten();
     io::write_results_with_mode(&result, &mode, &output_dir, false)?;
-    let in_place = mode == "overwrite";
-    send_done(tx, output_dir, in_place, result, file_metadata, message);
+    send_done(tx, output_dir, &mode, result, file_metadata, message);
     Ok(())
 }
 
@@ -281,18 +280,18 @@ fn send_preview_done(
     }));
 }
 
-/// Report a finished, written run.
+/// Report a finished, written run. Overwrite mode wrote each file in place.
 fn send_done(
     tx: &mpsc::Sender<BridgeEvent>,
     output_dir: String,
-    in_place: bool,
+    mode: &str,
     result: bnto_core::pipeline::PipelineResult,
     file_metadata: Vec<FileResultMeta>,
     message: Option<RunMessage>,
 ) {
     let _ = tx.send(BridgeEvent::Done(RunDone {
         output_dir,
-        in_place,
+        in_place: mode == "overwrite",
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
         file_metadata,
