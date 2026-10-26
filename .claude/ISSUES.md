@@ -23,7 +23,6 @@
 | ISS-34 | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                | engine      | Open                                             |
 | ISS-35 | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
 | ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
-| ISS-38 | CI and release skip jobs for root files those jobs read                                               | ci          | Open                                             |
 | ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
@@ -165,19 +164,6 @@ On a trace of `https://www.bnto.io/` (mobile viewport, 4x CPU, Slow 4G) the HTML
 - **Not this:** `experimental.inlineCss`, which drops all CSS under Turbopack on Next 16.1.6: a built page loaded with zero stylesheets.
 - **Lighthouse misleads here:** its simulated mobile run blames a 4.3 s "render delay" on the hero's text, which is server-rendered and unanimated; the real delay is the stylesheet.
 - **Regression test:** a JS budget for the homepage, enforced the way `task check:budgets` (`recipes/size-budget.bnto.json`) enforces other sizes, so the bundle can't grow back unnoticed.
-
-### ISS-38: CI and release skip jobs for root files those jobs read
-
-**Found:** October 24, 2026 (fixing ISS-13, which adds `turbo.json` and `pnpm-workspace.yaml` to the TypeScript job's triggers).
-
-A PR that changes only one of these files skips the jobs that read it, and the CI Gate accepts the skip:
-
-- **Rust jobs:** `ci.yml`'s `engine` filter is `engine/**`, `recipes/**` and the workflow. The engine's tests read `test-fixtures/` at the repo root (e.g. `engine/crates/bnto-spreadsheet/tests/common/mod.rs:19`, `include_bytes!("../../../../../test-fixtures/csv/simple.csv")`), so a fixture-only change runs no Rust job.
-- **TypeScript job:** the `web` filter misses `eslint.config.base.mjs`, which every package's `eslint.config.mjs` imports (`packages/core/eslint.config.mjs:1`), and the root files ISS-9's fix adds as task inputs (`README.md`, `.prettierrc`, `engine/Cargo.toml`, `engine/catalog.snapshot.json`, `engine/crates/bnto-core/src/lib.rs`). A lint-rule-only change runs no lint.
-- **Release:** `release.yml`'s change detection is narrower than CI's: `engine` is `^engine/` (no `recipes/`, no `test-fixtures/`) and `web` is `^(apps/|packages/|engine/|turbo\.json$|pnpm-workspace\.yaml$)` since #747 (no `pnpm-lock.yaml`, `package.json`, `tsconfig*.json`). A dependency-only release skips the TypeScript job and the web deploy.
-
-- **Fix:** derive the filters from what the jobs read, and keep `ci.yml` and `release.yml` from drifting: one list both use (a shared script, or the release job calling the same filter).
-- **Regression test:** a check (in `task check`) that every root file a task or test reads is in the matching filter, the same way ISS-9's fix checks Turbo's inputs.
 
 ### ISS-43: The TUI labels overwrite results with the first file's folder only
 
