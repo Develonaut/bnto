@@ -41,8 +41,6 @@ jobs:
               # The TypeScript job's task graph and package list.
               - 'turbo.json'
               - 'pnpm-workspace.yaml'
-              # Tested by the TypeScript job's "Lighthouse config" step.
-              - 'scripts/generate-lighthouserc*.ts'
 
   # ── Rust CI (only when engine files changed) ──
   rust:
@@ -290,11 +288,9 @@ jobs:
       - name: "Check: sherif (package.json consistency)"
         run: pnpm sherif -p @bnto/package.json
 
+      # Its tests run in the Scripts job, with every other scripts/ test.
       - name: "Check: Turbo lint inputs (scripts/turbo/checkLintInputs.ts)"
-        run: pnpm exec tsx --test scripts/turbo/missingLintInputs.test.ts && pnpm exec tsx scripts/turbo/checkLintInputs.ts
-
-      - name: "Check: Lighthouse config (scripts/generate-lighthouserc.test.ts)"
-        run: pnpm exec tsx --test scripts/generate-lighthouserc.test.ts
+        run: pnpm exec tsx scripts/turbo/checkLintInputs.ts
 
       - name: Lint
         run: pnpm turbo run lint
@@ -319,8 +315,35 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The link checker's tests run in the Scripts job.
       - name: Validate documentation
-        run: pnpm exec tsx --test scripts/docs/brokenLinks.test.ts && pnpm exec tsx scripts/validate-docs.ts
+        run: pnpm exec tsx scripts/validate-docs.ts
+
+  # ── The repo's own scripts/ (lint + every test), what `task check:scripts` runs ──
+  # Always runs: the scripts read files from all over the repo (the web
+  # app's recipes, ESLint configs, Markdown), so no path filter fits them.
+  scripts:
+    name: Scripts (lint + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (root eslint.config.mjs)
+        run: pnpm exec eslint scripts
+
+      # Quoted: Node expands the glob, so a test in any subfolder runs.
+      - name: Test (scripts/**/*.test.ts)
+        run: pnpm exec tsx --test 'scripts/**/*.test.ts'
 
   # ── Validate release workflow matches workspace crates ──
   crate-publish-check:
@@ -352,6 +375,7 @@ jobs:
         typescript,
         crate-publish-check,
         docs,
+        scripts,
       ]
     if: always()
     steps:
@@ -365,6 +389,7 @@ jobs:
           ts="${{ needs.typescript.result }}"
           crates="${{ needs.crate-publish-check.result }}"
           docs="${{ needs.docs.result }}"
+          scripts="${{ needs.scripts.result }}"
           engine="${{ needs.detect-changes.outputs.engine }}"
           web="${{ needs.detect-changes.outputs.web }}"
 
@@ -381,6 +406,12 @@ jobs:
           # Documentation validation is always required
           if [ "$docs" != "success" ]; then
             echo "FAILED: Documentation Validation = $docs"
+            failed=1
+          fi
+
+          # Scripts lint + tests are always required
+          if [ "$scripts" != "success" ]; then
+            echo "FAILED: Scripts = $scripts"
             failed=1
           fi
 
@@ -425,6 +456,7 @@ jobs:
           echo "CI Gate passed."
           echo "  Detect:     $detect"
           echo "  Docs:       $docs"
+          echo "  Scripts:    $scripts"
           echo "  Crates:     $crates"
           echo "  Rust:       $rust (engine_changed: $engine)"
           echo "  Rust (Win): $rust_windows (engine_changed: $engine)"

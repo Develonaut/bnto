@@ -64,7 +64,7 @@ The changelog is written in plain words for users. Internal PRs are left out unl
   1. `## What's new`, then the entry (a pre-release has none);
   2. the "Deployed" and "Surfaces" block, unchanged;
   3. GitHub's appended "What's Changed" list, as now.
-- **Script tests** run in CI, in the "Crate Publish List" job (`ci.yml:315-327`, already required by the CI Gate). They're also in a new `task check:scripts`, which `task check` runs. `scripts/tests/` doesn't exist yet; this PR adds it.
+- **Script tests** run in `task check:scripts`, which `task check` runs, and in CI's Scripts job, which the CI Gate requires. Both already exist (the ISS-54 and ISS-65 fix added them, running every `scripts/**/*.test.ts`), so this PR adds `bash scripts/tests/changelog.sh` to each rather than creating them. `scripts/tests/` doesn't exist yet; this PR adds it.
 
 ### Files (~7 new, ~6 modified)
 
@@ -83,8 +83,8 @@ The changelog is written in plain words for users. Internal PRs are left out unl
 - `scripts/bump-version.sh`: adds the stub
 - `scripts/check-release-version.sh`: uses `release-version.sh`, then runs `check-changelog.sh`
 - `.github/workflows/release.yml`: `create-release` job (l.619). A new "Write the release body" step after "Summarize deploy results" (l.629-647), failing the job when the file is missing or empty; `body:` (l.656-670) becomes `body_path: release-body.md`
-- `.github/workflows/ci.yml`: two steps in `crate-publish-check` (l.315-327), "Changelog script tests" and "Changelog has the release version's entry"
-- `Taskfile.yml`: `check:scripts`, added to `check` (l.36-64)
+- `.github/workflows/ci.yml`: a "Changelog script tests" step in the `scripts` job, and a "Changelog has the release version's entry" step in `crate-publish-check`
+- `Taskfile.yml`: `bash scripts/tests/changelog.sh` in the existing `check:scripts`
 - `.claude/scopes/process/releases.md`: "How to Cut a Release" and "One number everywhere" say the bump PR writes the entry
 
 ### Key functions
@@ -154,7 +154,7 @@ The page is a statically generated server component. `readChangelog()` reads `..
   - Lighthouse (`scripts/generate-lighthouserc.ts:29`);
   - `scripts/seo/collectUrls.ts:11`.
 
-### Files (~9 new, ~9 modified)
+### Files (~9 new, ~7 modified)
 
 **New:**
 
@@ -174,9 +174,6 @@ The page is a statically generated server component. `readChangelog()` reads `..
 - `scripts/generate-lighthouserc.ts`
 - `scripts/seo/collectUrls.ts`
 - `scripts/seo/collectUrls.test.ts`: asserts `https://bnto.io/changelog`, beside the existing page asserts (l.13-16)
-- `.github/workflows/ci.yml`: a "Check: SEO URL list" step after the Turbo lint inputs step (l.285-286) in the TypeScript job, running `pnpm exec tsx --test scripts/seo/collectUrls.test.ts scripts/seo/indexNowOutcome.test.ts` the same way. Nothing runs `scripts/seo` tests today (ISS-54)
-- `Taskfile.yml`: the same command in PR 1's `check:scripts`
-- `.claude/ISSUES.md`: ISS-54's row and section deleted, since this step fixes it
 - `apps/web/turbo.json`: `$TURBO_ROOT$/engine/crates/bnto/CHANGELOG.md` in both the `build` and `test` inputs, beside `$TURBO_ROOT$/engine/Cargo.toml`. The page, the feed and the live-file test read it from outside `apps/web`, and Turbo hashes only a package's own files (gotchas.md, "Turbo Hashes Only a Package's Own Files"). Without it, a changelog-only edit would replay a cached build
 - `apps/web/components/blocks/Footer/FooterLinks.tsx`
 - `apps/web/e2e/pages/site-navigation.spec.ts`: `/changelog` in `PUBLIC_ROUTES` (l.12-24), and the footer link (`footer-link-changelog`, from `FooterSectionColumn.tsx:36`)
@@ -229,7 +226,7 @@ pnpm turbo run build --filter=@bnto/web | grep changelog   # /changelog and /cha
 task e2e && task seo:audit && task check
 ```
 
-`collectUrls.test.ts` is a top-level `node:assert` script, so `tsx --test` fails the file when an assert throws.
+`collectUrls.test.ts` is a top-level `node:assert` script, so `tsx --test` fails the file when an assert throws. No CI or Taskfile change is needed for it: `task check:scripts` and CI's Scripts job already run every `scripts/**/*.test.ts` (the ISS-54 and ISS-65 fix).
 
 To check the Turbo input: run `pnpm turbo run test --filter=@bnto/web` twice, edit `engine/crates/bnto/CHANGELOG.md`, and run it again. The third run must not replay the cache.
 

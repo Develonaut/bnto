@@ -18,8 +18,8 @@
  *   npx tsx scripts/generate-theme.ts --validate-only
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { dirname, resolve } from "path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 
 import { differenceEuclidean, formatRgb, oklch as toOklch, parse } from "culori";
 import { parse as parseTOML } from "smol-toml";
