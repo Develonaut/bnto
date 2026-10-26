@@ -1,5 +1,6 @@
 // The one shell-quoting rule for every command line bnto prints to be pasted:
-// a declined run's `bnto dry-run` hint and the commands a dry run shows.
+// a declined run's `bnto dry-run` hint, a dry run's commands and its
+// `Run with:` footer.
 
 /// `arg` as one shell word: bare when every char is plain, else single-quoted.
 ///

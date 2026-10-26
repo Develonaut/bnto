@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-96**.
+- **IDs never get reused.** The next one is **ISS-97**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -54,6 +54,7 @@
 | ISS-93 | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
 | ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
 | ISS-95 | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
+| ISS-96 | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
 
 ---
 
@@ -448,3 +449,12 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** return a distinct status when the download or `cargo package` fails, and report it like an unreachable crates.io.
 - **Regression test:** with the download URL failing (a proxy that lets the index through, or a stubbed `curl`), the script doesn't print "changed since".
+
+### ISS-96: A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none
+
+**Found:** October 26, 2026 (cold review of the ISS-64 fix; the bug predates it).
+
+`DryRunHint::run_command` (`engine/crates/bnto/src/dry_run_hint.rs`) always ends the footer with `<input>`. For a recipe whose input node has `"mode": "none"`, the suggested `bnto run … <input>` fails once a value replaces the placeholder: `Error: This recipe takes no input; got 1 argument(s)`. `bnto info` already picks the ending by input mode (`run_hint` in `engine/crates/bnto/src/info.rs`: none, `<url>`, `<text>` or `<files...>`).
+
+- **Fix:** end the footer by the recipe's input mode, as `run_hint` does, from one shared function.
+- **Regression test:** a dry run of a `mode: "none"` recipe ends `Run with: bnto run <path>` with no placeholder; a file recipe ends `<files...>`.
