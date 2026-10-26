@@ -291,8 +291,8 @@ jobs:
         run: pnpm sherif -p @bnto/package.json
 
       # Its tests run in the Scripts job, with every other scripts/ test.
-      - name: "Check: Turbo lint inputs (scripts/turbo/checkLintInputs.ts)"
-        run: pnpm exec tsx scripts/turbo/checkLintInputs.ts
+      - name: "Check: Turbo task inputs (scripts/turbo/checkTaskInputs.ts)"
+        run: pnpm exec tsx scripts/turbo/checkTaskInputs.ts
 
       - name: Lint
         run: pnpm turbo run lint

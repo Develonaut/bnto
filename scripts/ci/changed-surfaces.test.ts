@@ -99,7 +99,7 @@ describe("changed-surfaces.sh", () => {
 
   it("runs each gated CI job for the scripts and recipes it runs", () => {
     const jobs = gatedJobs();
-    assert.ok(jobs.some((job) => job.paths.includes("scripts/turbo/checkLintInputs.ts")));
+    assert.ok(jobs.some((job) => job.paths.includes("scripts/turbo/checkTaskInputs.ts")));
     for (const { name, flags, paths } of jobs) {
       for (const path of paths) {
         const result = surfaces([path]);

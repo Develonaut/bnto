@@ -28,7 +28,6 @@
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
 | ISS-46 | The TUI's Open action uses the first folder for overwrite results                                     | tui         | Open                                             |
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
-| ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
 | ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
@@ -211,15 +210,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 - **Fix:** as on the homepage (#753): lazy below-the-fold images, `fetchPriority="high"` on the hero.
 - **Regression test:** extend `e2e/pages/homepage-loading.spec.ts`'s checks to a recipe page; the Lighthouse `lcp-discovery-insight` assertion already covers every recipe URL once its LCP is the image.
-
-### ISS-51: The Turbo-inputs check guards lint only, not test or build reads
-
-**Found:** October 24, 2026 (second cold review of the ISS-9 fix). Applies once that fix (#756) merges: the check it describes arrives with it.
-
-`task check:turbo-inputs` (`scripts/turbo/checkLintInputs.ts`) fails when an ESLint config imports a file outside its package that the `lint` task doesn't hash. Nothing checks `test` or `build`. Their root reads (`README.md`, `.prettierrc`, `engine/Cargo.toml`, the catalog snapshot) are listed by hand, so a new one goes stale silently. `@bnto/nodes`' tests import `engine/catalog.snapshot.json` statically (`catalogValidation.test.ts:30`, `nodeTypes.test.ts:9`), which the check's `ts.preProcessFile` code would already catch if it scanned test sources.
-
-- **Fix:** run the same import scan over each package's test and build sources against `test` and `build` inputs. Runtime `readFileSync` reads stay a documented manual step.
-- **Regression test:** a package test that imports an unlisted root file fails the check.
 
 ### ISS-55: A printed command line with a word that starts with `=` fails in zsh
 
