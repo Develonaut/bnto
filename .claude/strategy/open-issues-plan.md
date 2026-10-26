@@ -501,6 +501,7 @@ The bundled `optimize-svg` recipe and `tests/fixtures/explicit/optimize-svg.bnto
 
 **Branch:** `fix/lint-nodes-scripts` from `main`
 **One sentence:** `@bnto/nodes`'s ESLint config stops ignoring `scripts/`.
+**Status:** Built (October 25, 2026), together with PR 13 in one PR on `refactor/split-node-codegen`. Splitting in the same PR left one baseline entry: the entry script's kebab-case file name (`generate-from-catalog.ts`), kept because the generated `nodes.json` names it in `_generatedBy`.
 
 **What:** `packages/@bnto/nodes/eslint.config.mjs:6` ignores `scripts/**`, so `scripts/generate-from-catalog.ts` grew to 1,381 lines (limit 250) unseen. Lint the folder, and record today's `max-lines` and `max-lines-per-function` findings in `eslint-suppressions.json`, the same ratchet as #739. New violations fail at once.
 
@@ -522,6 +523,7 @@ The bundled `optimize-svg` recipe and `tests/fixtures/explicit/optimize-svg.bnto
 
 **Branch:** `refactor/split-node-codegen` from `main`, after PR 12
 **One sentence:** The 1,381-line codegen script becomes one module per generated artifact, and its output doesn't change.
+**Status:** Built (October 25, 2026), with PR 12, as one PR. The modules are grouped by output under `scripts/codegen/` (`catalog/`, `schemas/`, `fields/`, `files/`, `docs/`), every file under 250 lines and every function under 20, with no function on the baseline. Old and new scripts produced byte-identical output on the real snapshot and on 30 mutated snapshots, and `task nodes:generate` changes no generated file.
 
 **What:** codegen stays in TypeScript (Ryan's call: dogfooding.md's "Not dogfooded, on purpose" stands). Split the script by output: catalog, schemas, `paramFieldInfo`, definition schema, docs, Convex labels, i18n and format version. Each file stays under 250 lines, and its suppressions are pruned. Probably two PRs if a single diff passes about 400 lines; decide on the day.
 

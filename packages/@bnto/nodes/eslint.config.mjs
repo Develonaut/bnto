@@ -3,6 +3,6 @@ import { baseConfig } from "../../../eslint.config.base.mjs";
 export default [
   ...baseConfig,
   {
-    ignores: ["src/generated/**", "scripts/**"],
+    ignores: ["src/generated/**"],
   },
 ];
