@@ -5,7 +5,7 @@
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, it } from "node:test";
@@ -29,7 +29,9 @@ function fixture(): string {
 
 describe("check-crate-publish-list.sh", () => {
   it("reports every mismatch, not just the first", () => {
-    const result = spawnSync("bash", [SCRIPT], { cwd: fixture(), encoding: "utf-8" });
+    const root = fixture();
+    const result = spawnSync("bash", [SCRIPT], { cwd: root, encoding: "utf-8" });
+    rmSync(root, { recursive: true, force: true });
     assert.equal(result.status, 1);
     assert.match(result.stdout, /MISSING from release workflow: a/);
     assert.match(result.stdout, /MISSING from release workflow: b/);

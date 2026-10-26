@@ -59,10 +59,11 @@ fetch_index() {
     "https://index.crates.io/$(index_path "$1")" 2>/dev/null || true
 }
 
-# Offline, nothing can be compared. Locally that's a warning, so `task check`
-# still runs on a plane; in CI the check must run, so it fails.
+# Without an answer from crates.io (offline, or an error status), nothing can
+# be compared. Locally that's a warning, so `task check` still runs on a
+# plane; in CI the check must run, so it fails.
 unreachable() {
-  echo "WARNING: couldn't reach crates.io to check $1: skipped. CI runs this check." >&2
+  echo "WARNING: couldn't check $1 on crates.io (HTTP $2): skipped. CI runs this check." >&2
   if [[ -n ${CI:-} ]]; then failed=1; fi
 }
 
@@ -76,7 +77,7 @@ for manifest in crates/*/Cargo.toml; do
   case $status in
     200) ;;
     404) echo "$name isn't on crates.io yet: it will publish."; continue ;;
-    *) unreachable "$name"; continue ;;
+    *) unreachable "$name" "$status"; continue ;;
   esac
   if ! grep -q "\"vers\":\"$version\"" "$work/index"; then
     echo "$name $version isn't on crates.io yet: it will publish."

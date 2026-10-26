@@ -21,13 +21,13 @@ describe("check-own-version-crates.sh offline", () => {
   it("warns that it skipped, and doesn't claim the crate will publish", () => {
     const result = offlineRun(false);
     assert.equal(result.status, 0);
-    assert.match(result.stderr, /couldn't reach crates\.io.*skipped/);
+    assert.match(result.stderr, /couldn't check tonkotsu on crates\.io \(HTTP 000\): skipped/);
     assert.doesNotMatch(result.stdout, /will publish/);
   });
 
   it("fails in CI, where the check must run", () => {
     const result = offlineRun(true);
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /couldn't reach crates\.io/);
+    assert.match(result.stderr, /couldn't check tonkotsu on crates\.io/);
   });
 });
