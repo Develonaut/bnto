@@ -1,10 +1,11 @@
-// The `bnto dry-run` command line a declined run suggests: the recipe and the
-// run's `-p` values and `--vars` files, each quoted so the line pastes into a
-// shell as printed.
+// The command lines bnto suggests from what a run or dry run was given: the
+// `bnto dry-run` a declined run suggests, and the `bnto run` a dry run's
+// footer suggests. Each repeats the recipe and the `-p` values and `--vars`
+// files, each quoted so the line pastes into a shell as printed.
 
 use crate::shell_word::shell_word;
 
-/// What a run or dry run was given that its suggested `bnto dry-run` repeats.
+/// What a run or dry run was given that its suggested commands repeat.
 pub struct DryRunHint<'a> {
     /// The recipe slug or path, as typed.
     pub recipe_arg: &'a str,
@@ -25,7 +26,18 @@ impl<'a> DryRunHint<'a> {
     /// `bnto dry-run <recipe_arg> -p <param>… --vars <file>…`, each argument
     /// one shell word.
     pub fn command(&self) -> String {
-        let mut line = format!("bnto dry-run {}", shell_word(self.recipe_arg));
+        format!("bnto dry-run {}", self.given())
+    }
+
+    /// `bnto run <recipe_arg> -p <param>… --vars <file>… <input>`, the run a
+    /// dry run previews.
+    pub fn run_command(&self) -> String {
+        format!("bnto run {} <input>", self.given())
+    }
+
+    /// `<recipe_arg> -p <param>… --vars <file>…`, each one shell word.
+    fn given(&self) -> String {
+        let mut line = shell_word(self.recipe_arg);
         let flagged = self.params.iter().map(|p| ("-p", p));
         let vars = self.var_files.iter().map(|f| ("--vars", f));
         for (flag, value) in flagged.chain(vars) {
@@ -79,6 +91,22 @@ mod tests {
             line,
             "bnto dry-run backup.bnto.json -p mode=fast --vars machine.json --vars 'my vars.json'"
         );
+    }
+
+    #[test]
+    fn the_run_command_repeats_the_params_and_vars_before_the_input() {
+        let (version, vars) = (params(&["version=1.2.3"]), params(&["my vars.json"]));
+        let hint = DryRunHint::new("drive.bnto.json", &version, &vars);
+        assert_eq!(
+            hint.run_command(),
+            "bnto run drive.bnto.json -p version=1.2.3 --vars 'my vars.json' <input>"
+        );
+    }
+
+    #[test]
+    fn the_run_command_for_a_bare_slug_is_just_the_slug() {
+        let hint = DryRunHint::new("download-video", &[], &[]);
+        assert_eq!(hint.run_command(), "bnto run download-video <input>");
     }
 
     #[test]

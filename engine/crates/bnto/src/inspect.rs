@@ -34,15 +34,15 @@ pub fn show_dry_run(args: &DryRunArgs, catalog: &RecipeCatalog) {
     // checks and its consent see the values the run would use.
     let json = or_exit(vars::apply(&json, &args.vars.files));
     or_exit(refuse_unfilled(&json, params));
+    let given = DryRunHint::new(recipe_arg, params, &args.vars.files);
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
     if !args.inputs.is_empty() {
-        let given = DryRunHint::new(recipe_arg, params, &args.vars.files);
         check_trust(&json, &given, args.yes, catalog);
         dry_run::print_shell_note(&json);
     }
     let result = dry_run::dry_run_recipe(recipe_arg, &json, &args.inputs, params);
-    dry_run::print_dry_run(recipe_arg, &or_exit(result));
+    dry_run::print_dry_run(&given, &or_exit(result));
 }
 
 /// The recipe's JSON (a slug, else a path), or exit: "Unknown recipe" when

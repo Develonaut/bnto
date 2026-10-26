@@ -4,17 +4,18 @@ use colored::Colorize;
 
 use super::DryRunResult;
 use super::shell::format_command_line;
-use crate::shell_word::shell_word;
+use crate::dry_run_hint::DryRunHint;
 
-/// Print dry-run results to stdout with colored formatting.
-pub fn print_dry_run(recipe_arg: &str, result: &DryRunResult) {
+/// Print dry-run results to stdout with colored formatting. `given` is what
+/// the dry run was given, which the `Run with:` footer repeats.
+pub fn print_dry_run(given: &DryRunHint, result: &DryRunResult) {
     println!("\n{}", result.name.bold());
     println!("{}\n", result.description);
 
     print_dependencies(result);
     print_shell_commands(result);
     print_file_previews(result);
-    print_footer(recipe_arg, result);
+    print_footer(given, result);
 }
 
 fn print_dependencies(result: &DryRunResult) {
@@ -107,7 +108,7 @@ fn print_file_previews(result: &DryRunResult) {
     }
 }
 
-fn print_footer(recipe_arg: &str, result: &DryRunResult) {
+fn print_footer(given: &DryRunHint, result: &DryRunResult) {
     if let Some(output_dir) = &result.output_dir {
         println!("\n  {}  {output_dir}", "Output:".dimmed());
     }
@@ -125,7 +126,7 @@ fn print_footer(recipe_arg: &str, result: &DryRunResult) {
 
     println!(
         "\n{}",
-        format!("Run with: bnto run {} <input>", shell_word(recipe_arg)).dimmed()
+        format!("Run with: {}", given.run_command()).dimmed()
     );
 }
 
