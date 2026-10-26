@@ -128,9 +128,9 @@ Don't use `globalDependencies`, which would invalidate every task's cache. `task
 
 ## CI Picks Jobs by the Paths a Change Touches
 
-CI and release run the Rust and TypeScript jobs only when a change touches a path those jobs read, and the CI Gate accepts the skip. Both workflows decide it with one list, `scripts/ci/changed-surfaces.sh` (ISS-38). A job that starts reading a new file outside its folders (a root config, a shared fixture) needs that path on the list, or a change to only that file skips the job and passes.
+CI runs its Rust and TypeScript jobs only when a change touches a path those jobs read, and the CI Gate accepts the skip. A release always runs its Rust jobs, but publishes crates, runs the TypeScript job and deploys the site and Convex only for the surfaces that changed since the last shipped release. Both workflows decide it with one list, `scripts/ci/changed-surfaces.sh` (ISS-38); a release passes `--release`, which leaves out CI's own files. A job that starts reading a new file outside its folders (a root config, a shared fixture) needs that path on the list, or a change to only that file skips the job and passes.
 
-`scripts/ci/changed-surfaces.test.ts` (in `task check:scripts` and CI) fails when a `$TURBO_ROOT$` input in any `turbo.json` isn't on the web list, or a root path the engine's Rust code reads through a `../` literal isn't on the engine list. Other reads (a TypeScript test's `readFileSync` of a root file) are a manual step: add the path to the list in the same PR.
+`scripts/ci/changed-surfaces.test.ts` (in `task check:scripts` and CI) fails when a `$TURBO_ROOT$` input in any `turbo.json` isn't on the web list, a root path the engine's Rust code reads through a `../` literal isn't on the engine list, or a `scripts/` or `recipes/` path a gated `ci.yml` job runs isn't on that job's list. Other reads (a TypeScript test's `readFileSync` of a root file) are a manual step: add the path to the list in the same PR.
 
 ## Turbopack + Node.js Subpath Imports on Vercel
 

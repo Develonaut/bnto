@@ -12,8 +12,8 @@ import { engineRootReads } from "./engineRootReads";
 
 type Surfaces = Record<string, string>;
 
-function surfaces(paths: string[]): Surfaces {
-  const out = execFileSync("sh", ["scripts/ci/changed-surfaces.sh"], {
+function surfaces(paths: string[], ...args: string[]): Surfaces {
+  const out = execFileSync("sh", ["scripts/ci/changed-surfaces.sh", ...args], {
     input: paths.join("\n"),
     encoding: "utf-8",
   });
@@ -34,6 +34,27 @@ function turboRootInputs(): string[] {
     [...readFileSync(file, "utf-8").matchAll(/"\$TURBO_ROOT\$\/([^"]+)"/g)].map((m) => m[1]),
   );
   return [...new Set(inputs)];
+}
+
+interface GatedJob {
+  name: string;
+  flags: string[];
+  paths: string[];
+}
+
+// ci.yml's jobs that run only on some surfaces, with the repo scripts and
+// recipes their steps name.
+function gatedJobs(): GatedJob[] {
+  const jobs = readFileSync(".github/workflows/ci.yml", "utf-8").split(/^ {2}(?=[a-z][\w-]*:$)/m);
+  return jobs.slice(1).flatMap((body) => {
+    const flags = [...body.matchAll(/detect-changes\.outputs\.(\w+)/g)].map((m) => m[1]);
+    const code = body
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("#"))
+      .join("\n");
+    const paths = [...code.matchAll(/(?:scripts|recipes)\/[\w./-]+/g)].map((m) => m[0]);
+    return flags.length > 0 ? [{ name: body.slice(0, body.indexOf(":")), flags, paths }] : [];
+  });
 }
 
 describe("changed-surfaces.sh", () => {
@@ -58,6 +79,31 @@ describe("changed-surfaces.sh", () => {
       web: "false",
       convex: "false",
     });
+  });
+
+  it("leaves CI's own files out for a release", () => {
+    const ciOnly = [".github/workflows/ci.yml", "scripts/ci/changed-surfaces.sh"];
+    assert.deepEqual(surfaces(ciOnly, "--release"), {
+      engine: "false",
+      web: "false",
+      convex: "false",
+    });
+    assert.deepEqual(surfaces(ciOnly), { engine: "true", web: "true", convex: "false" });
+    assert.deepEqual(surfaces([], "--release"), { engine: "false", web: "false", convex: "false" });
+  });
+
+  it("runs each gated CI job for the scripts and recipes it runs", () => {
+    const jobs = gatedJobs();
+    assert.ok(jobs.some((job) => job.paths.includes("scripts/turbo/checkLintInputs.ts")));
+    for (const { name, flags, paths } of jobs) {
+      for (const path of paths) {
+        const result = surfaces([path]);
+        assert.ok(
+          flags.some((flag) => result[flag] === "true"),
+          `${name} runs ${path}`,
+        );
+      }
+    }
   });
 
   it("runs the TypeScript job for every root file a Turbo task reads", () => {

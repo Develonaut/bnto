@@ -61,8 +61,13 @@ jobs:
           CHANGED=$(git diff --name-only "$PREV_TAG"..HEAD)
           echo "$CHANGED"
 
-          # The same list ci.yml uses (scripts/ci/changed-surfaces.sh).
-          eval "$(echo "$CHANGED" | scripts/ci/changed-surfaces.sh)"
+          # The same list ci.yml uses (scripts/ci/changed-surfaces.sh). The
+          # assignment fails the step if the script does, and every flag must
+          # be set, so a broken list can't skip the publish and deploy jobs.
+          # A change to ci.yml or the list itself is CI's concern, not a release's.
+          surfaces=$(echo "$CHANGED" | sh scripts/ci/changed-surfaces.sh --release)
+          eval "$surfaces"
+          : "${engine:?}" "${web:?}" "${convex:?}"
           # Engine changes reach the web app through the WASM bundle, so they
           # run the TypeScript job and redeploy the site too.
           if [ "$engine" = true ]; then web=true; fi

@@ -25,19 +25,23 @@ jobs:
           fetch-depth: 0 # The base commit, to diff against
 
       # The same list release.yml uses (scripts/ci/changed-surfaces.sh). A PR
-      # diffs against its base; a push against the commit before it. A push
-      # with no usable base (a new branch) runs everything.
+      # run checks out the merge commit, whose first parent is main: diffing
+      # against it is exactly the PR's change. A push diffs against the commit
+      # before it, and with no usable base (a new branch) runs everything.
+      # `shell: bash` adds pipefail, so a failed diff or script fails this job
+      # and the CI Gate, instead of writing no flags and skipping every job.
       - name: Determine changed surfaces
         id: filter
+        shell: bash
         env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || github.event.before }}
         run: |
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
             echo "No base commit: running every job"
             printf 'engine=true\nweb=true\nconvex=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git diff --name-only "$BASE" HEAD | scripts/ci/changed-surfaces.sh | tee -a "$GITHUB_OUTPUT"
+          git diff --name-only "$BASE" HEAD | sh scripts/ci/changed-surfaces.sh | tee -a "$GITHUB_OUTPUT"
 
   # ── Rust CI (only when engine files changed) ──
   rust:
