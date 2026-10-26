@@ -141,6 +141,7 @@ task check
 
 **Branch:** `fix/check-crates` from `main`
 **One sentence:** `task check` runs CI's crate publish-list and own-version checks.
+**Status:** Built (October 26, 2026). Offline, the own-version check also fails when `CI` is set, so a crates.io outage can't pass CI's job silently. The `((errors++))` exit only happens on bash 4.1+ (CI's Ubuntu); macOS's bash 3.2 survives it, so the fixture test turns red only in CI.
 
 ### What
 

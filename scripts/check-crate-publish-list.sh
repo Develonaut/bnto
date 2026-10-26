@@ -60,7 +60,7 @@ for crate in "${publishable[@]}"; do
   done
   if ! $found; then
     echo "MISSING from release workflow: $crate"
-    ((errors++))
+    errors=$((errors + 1))
   fi
 done
 
@@ -72,7 +72,7 @@ for wf_crate in "${workflow_crates[@]}"; do
   done
   if ! $found; then
     echo "STALE in release workflow: $wf_crate (not a publishable workspace member)"
-    ((errors++))
+    errors=$((errors + 1))
   fi
 done
 

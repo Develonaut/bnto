@@ -11,13 +11,15 @@
 task wasm:lint          # clippy (Rust linter) -- must pass clean
 task wasm:test          # Rust unit tests + WASM integration tests -- must pass
 task cli:test           # CLI integration + golden tests -- must pass
+task tui:test           # TUI snapshots + journeys -- must pass
 
 # Frontend checks
 task ui:build           # TypeScript compilation -- must pass
 task ui:test            # Frontend tests -- must pass
+task ui:lint            # ESLint -- must pass
 ```
 
-Or run `task check` to execute all of the above in one command.
+Or run `task check`, which runs all of the above plus the repo-wide checks: Turbo cache inputs, `scripts/` lint and tests, the crate publish checks (`check:crates`, CI's Crate Publish List job), theme codegen, docs validation and the dogfood recipes. `check:crates` compares tonkotsu with crates.io, so it needs network; offline it warns and skips, and CI still runs it.
 
 If any check fails: fix the errors, re-run from the top.
 

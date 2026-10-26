@@ -55,6 +55,8 @@ tasks:
       # Runs every scripts/ test, the Lighthouse config's among them.
       - echo "=== scripts/ lint + tests ==="
       - task: check:scripts
+      - echo "=== crate publish checks ==="
+      - task: check:crates
       - echo "=== theme codegen check ==="
       - task: theme:check
       - echo "=== docs validation ==="
@@ -155,6 +157,13 @@ tasks:
       # Quoted, so Node expands the glob, not the shell (a shell without
       # globstar reads `**` as `*` and misses the tests directly in scripts/).
       - pnpm exec tsx --test 'scripts/**/*.test.ts'
+
+  check:crates:
+    desc: CI's Crate Publish List checks — release.yml publishes every crate, and own-version crates (tonkotsu) were bumped when changed
+    cmds:
+      - ./scripts/check-crate-publish-list.sh
+      # Needs network: it compares with the version on crates.io (skips with a warning offline).
+      - ./scripts/check-own-version-crates.sh
 
   # Dogfood recipes (recipes/): repo chores done by bnto itself
   check:recipes:
