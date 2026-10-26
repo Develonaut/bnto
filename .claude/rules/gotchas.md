@@ -124,6 +124,8 @@ A file one package reads goes in that package's own `turbo.json`, which extends 
 
 Don't use `globalDependencies`, which would invalidate every task's cache. `task check:turbo-inputs` (and CI) fail when an ESLint config imports an unlisted file outside its package. Nothing checks other reads: a test's `readFileSync` of a root file, or a test's static `import` of one (`@bnto/nodes` imports `engine/catalog.snapshot.json`). Add the input in the same PR.
 
+**Inside a git hook in a worktree, Turbo drops root inputs.** Git sets `GIT_DIR` for hooks run in a worktree, and with it set Turbo leaves `$TURBO_ROOT$/…` files out of the hash, so the pre-commit lint replayed `main`'s cached pass over a staged rule that fails every file (ISS-39). Hook commands run Turbo through `sh scripts/hooks/turbo.sh`, which unsets `GIT_DIR`; `scripts/hooks/turbo.test.ts` fails on a `turbo` line in `lefthook.yml` that skips it.
+
 ## Turbopack + Node.js Subpath Imports on Vercel
 
 Turbopack on Vercel does NOT support Node.js subpath imports (`#components/*` via `package.json` `imports` field). Builds fail with `Module not found: Can't resolve '#components/...'`. Setting `turbopack.root` to the monorepo root makes it worse — breaks the `imports` field resolution entirely. `resolveAlias` workarounds also fail.

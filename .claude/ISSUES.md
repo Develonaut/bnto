@@ -26,7 +26,6 @@
 | ISS-35 | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
 | ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
 | ISS-38 | CI and release skip jobs for root files those jobs read                                               | ci          | Open                                             |
-| ISS-39 | The pre-commit hook in a worktree replays stale Turbo lint results                                    | tooling     | Open                                             |
 | ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
@@ -190,15 +189,6 @@ A PR that changes only one of these files skips the jobs that read it, and the C
 
 - **Fix:** derive the filters from what the jobs read, and keep `ci.yml` and `release.yml` from drifting: one list both use (a shared script, or the release job calling the same filter).
 - **Regression test:** a check (in `task check`) that every root file a task or test reads is in the matching filter, the same way ISS-9's fix checks Turbo's inputs.
-
-### ISS-39: The pre-commit hook in a worktree replays stale Turbo lint results
-
-**Found:** October 24, 2026 (fixing ISS-9, reproduced by the fixer with a probe).
-
-In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.config.base.mjs` that fails every file passed the pre-commit hook: the hook's lint printed `@bnto/auth:lint: cache hit` with `main`'s old hash and the commit went through. Run outside the hook, the same task hashes differently and fails. Likely cause: git sets `GIT_DIR` during hooks, and Turbo then hashes a different tree (a comment in `formatVersion.test.ts` describes the same effect in worktrees). Not yet confirmed.
-
-- **Fix:** run the hook's Turbo tasks with `GIT_DIR` unset (or `--force` for lint), and confirm the hash matches a plain run.
-- **Regression test:** in a worktree, a staged lint-breaking change to the base config fails `git commit`.
 
 ### ISS-43: The TUI labels overwrite results with the first file's folder only
 
