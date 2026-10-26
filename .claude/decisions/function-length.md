@@ -39,6 +39,7 @@ All counts skip blank lines and comments.
   - `max-lines-per-function` is 20 for `.ts`.
   - `.tsx` keeps 60, because code-standards.md sizes a component at 50-100 lines of JSX and logic. Dropping it to 20 would add 187 baseline entries; that's a separate call. (Since ISS-62, code-standards.md sizes the file at 50-100 lines and the component function at most 60, with logic past ~20 lines in a hook; the 60 stands on its own.)
   - Each package's `eslint-suppressions.json` (ESLint 9.24+ bulk suppressions) lists the 98 existing offenders by file and count.
+  - The root `scripts/` folder, which belongs to no package, got the same setup in ISS-65: a root `eslint.config.mjs` on `baseConfig` and a root `eslint-suppressions.json`, run by `task check:scripts` and CI's Scripts job. Its baseline also holds three kebab-case file names and two complexity findings.
   - ESLint fails when a file has more offenders than its count. It also fails when the file has fewer ("suppressions left that do not occur anymore"), so fixing a function means lowering its count, or deleting the entry when the count reaches zero.
 - **Rust:**
   - `#[expect(clippy::too_many_lines)]` on each existing offender, with `too-many-lines-threshold = 20` in `engine/clippy.toml`.

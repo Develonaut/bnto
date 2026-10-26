@@ -52,6 +52,12 @@ pre-commit:
         - "**/.next/**"
       run: pnpm turbo run lint
 
+    # The root scripts/ belong to no package, so Turbo's lint skips them.
+    # Also on a config or baseline change, which can flag a script.
+    lint-scripts:
+      glob: "{scripts/*.ts,eslint.config.mjs,eslint.config.base.mjs,eslint-suppressions.json}"
+      run: pnpm exec eslint scripts
+
     typecheck:
       glob: "*.{ts,tsx}"
       run: pnpm turbo run build

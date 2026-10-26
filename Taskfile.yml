@@ -52,8 +52,9 @@ tasks:
       - task: ui:lint
       - echo "=== turbo cache inputs ==="
       - task: check:turbo-inputs
-      - echo "=== lighthouse config ==="
-      - task: check:lighthouse-config
+      # Runs every scripts/ test, the Lighthouse config's among them.
+      - echo "=== scripts/ lint + tests ==="
+      - task: check:scripts
       - echo "=== theme codegen check ==="
       - task: theme:check
       - echo "=== docs validation ==="
@@ -145,6 +146,15 @@ tasks:
   check:lighthouse-config:
     desc: Test the Lighthouse config generator (a free port the server and the audited URLs share)
     cmds: [pnpm exec tsx --test scripts/generate-lighthouserc.test.ts]
+
+  # The repo's own scripts/ (ISS-65, ISS-54): no workspace package lints or tests them
+  check:scripts:
+    desc: Lint scripts/ (root eslint.config.mjs) and run every scripts/**/*.test.ts
+    cmds:
+      - pnpm exec eslint scripts
+      # Quoted, so Node expands the glob, not the shell (a shell without
+      # globstar reads `**` as `*` and misses the tests directly in scripts/).
+      - pnpm exec tsx --test 'scripts/**/*.test.ts'
 
   # Dogfood recipes (recipes/): repo chores done by bnto itself
   check:recipes:

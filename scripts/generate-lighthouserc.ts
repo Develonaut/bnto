@@ -20,8 +20,8 @@
  *   npx tsx scripts/generate-lighthouserc.ts --with-server
  */
 
-import { writeFileSync } from "fs";
-import { createServer } from "net";
+import { writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { RECIPES } from "../packages/@bnto/registry/src/recipesCatalog";
 
 function getArg(flag: string): string | undefined {
@@ -91,7 +91,7 @@ function assertions(isPreview: boolean) {
   };
 }
 
-function writeConfig(baseUrl: string, port: number | undefined) {
+function writeConfig(baseUrl: string, port?: number) {
   const outPath = getArg("--output") ?? "lighthouserc.json";
   const url = auditUrls(baseUrl);
   const collect = { url, numberOfRuns: 1, settings: auditSettings(), ...serverOptions(port) };
@@ -108,7 +108,7 @@ function writeConfig(baseUrl: string, port: number | undefined) {
 
 async function main() {
   if (!process.argv.includes("--with-server")) {
-    writeConfig(getArg("--base-url") ?? "http://localhost:3000", undefined);
+    writeConfig(getArg("--base-url") ?? "http://localhost:3000");
     return;
   }
   if (getArg("--base-url")) {

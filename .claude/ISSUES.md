@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-92**.
+- **IDs never get reused.** The next one is **ISS-93**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -34,13 +34,11 @@
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
-| ISS-54 | The `scripts/seo` tests never run                                                                     | tooling     | Scheduled ([plan](strategy/changelog.md))        |
 | ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
-| ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
 | ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 | ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
@@ -61,6 +59,7 @@
 | ISS-89 | In a fresh worktree, `task seo:audit` fails at the first URL with no hint: there's no `.env.local`    | tooling     | Open                                             |
 | ISS-90 | `@bnto/form` exports `FormStoreProvider` and four hooks nothing outside it uses                       | form        | Open                                             |
 | ISS-91 | 28 TS files use `React.*` namespace types the import rule bans                                        | web         | Open                                             |
+| ISS-92 | Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked                                 | tooling     | Open                                             |
 
 ---
 
@@ -267,15 +266,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 - **Fix:** run the same import scan over each package's test and build sources against `test` and `build` inputs. Runtime `readFileSync` reads stay a documented manual step.
 - **Regression test:** a package test that imports an unlisted root file fails the check.
 
-### ISS-54: The `scripts/seo` tests never run
-
-**Found:** October 24, 2026 (planning the changelog, [changelog.md](strategy/changelog.md)).
-
-`scripts/seo/collectUrls.test.ts` and `scripts/seo/indexNowOutcome.test.ts` run in no workflow, Taskfile task or Turbo task. Outside `.claude/`, a grep for `scripts/seo` finds no runner but the two submit scripts' (`Taskfile.yml:246,250`, `release.yml:601,607`), and the root `test` script is `turbo run test`, which covers workspace packages only. A change that breaks the URL list or the IndexNow outcome parsing passes CI.
-
-- **Fix:** a `task check:scripts` that runs them with `pnpm exec tsx --test` (as `check:turbo-inputs` runs `scripts/turbo`), added to `task check`, plus a CI step. Scheduled in the changelog plan: its PR 1 adds `check:scripts`, and its PR 2 runs both `scripts/seo` tests there and in CI, then deletes this issue.
-- **Regression test:** `task check:scripts` fails when one of those tests fails.
-
 ### ISS-55: A printed command line with a word that starts with `=` fails in zsh
 
 **Found:** October 25, 2026 (cold review of the ISS-50 fix).
@@ -320,15 +310,6 @@ A per-file node inside a loop gets `{{item.*}}` from the file's current metadata
 
 - **Fix:** build the footer from the same `-p` values and `--vars` files, as `DryRunHint` does for the declined-run hint (`engine/crates/bnto/src/dry_run_hint.rs`), each one shell word.
 - **Regression test:** `bnto dry-run <path> -p version=1.2.3 --vars vars.json` ends `Run with: bnto run <path> -p version=1.2.3 --vars vars.json <input>`.
-
-### ISS-65: Nothing lints the root `scripts/` folder
-
-**Found:** October 25, 2026 (cold review of the ISS-20 fix).
-
-ESLint runs per workspace package (`turbo run lint`), and the workspaces are `packages/*`, `packages/@bnto/*` and `apps/*` (`pnpm-workspace.yaml`). The repo root has only `eslint.config.base.mjs`, which packages import, so the 14 TypeScript files in `scripts/` (`validate-docs.ts`, `generate-theme.ts`, `scripts/turbo/`, `scripts/seo/`, `scripts/docs/`) get no function-length, file-length or complexity checks. `validate-docs.ts`'s `main()` reached 21 lines unflagged (fixed with ISS-20). Like ISS-16, which is `@bnto/nodes` ignoring its own `scripts/`.
-
-- **Fix:** a root `eslint.config.mjs` over `scripts/**` built on `baseConfig`, run by `task ui:lint` (or a `check:scripts` task) and CI, with any existing overruns on a suppressions baseline.
-- **Regression test:** a function over 20 lines in `scripts/` fails lint.
 
 ### ISS-66: Down past the last home recipe hides the selection until you press Up as many times
 
@@ -516,3 +497,12 @@ Two `apps/web` comments do the same: `app/editor/layout.tsx:12` ("`AppShell.Main
 
 - **Fix:** switch each to a named `import type` from `"react"`, and add a lint rule that bans `React.` type references (`no-restricted-syntax` on a `TSQualifiedName` whose left side is `React`) so new ones fail.
 - **Regression test:** a file that writes `React.ReactNode` fails `task ui:lint`.
+
+### ISS-92: Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked
+
+**Found:** October 25, 2026 (fixing ISS-65).
+
+The root `scripts/` folder and `packages/@bnto/nodes/scripts/` and `packages/@bnto/registry/scripts/` run through `pnpm exec tsx`, which strips types without checking them. The repo root has no `tsconfig.json`, and the two packages' `tsconfig.json` files `include` only `src` (`packages/@bnto/nodes/tsconfig.json`), so `turbo run build` (`tsc --noEmit`) never sees a script. ESLint's `baseConfig` uses typescript-eslint's non-type-checked rules, so lint doesn't catch type errors either. While fixing ISS-65, ESLint's autofix for `unicorn/no-useless-undefined` turned `writeConfig(url, undefined)` into `writeConfig(url)` against a required `port: number | undefined` parameter (`scripts/generate-lighthouserc.ts`): a type error that `task check:scripts` and its tests passed.
+
+- **Fix:** a `tsconfig.json` per scripts folder (or a root one over `scripts/**`) and a `tsc --noEmit` over each in `task check:scripts`, the packages' `build`, and CI.
+- **Regression test:** a type error in a `scripts/` file fails `task check`.

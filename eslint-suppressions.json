@@ -1,0 +1,34 @@
+{
+  "scripts/generate-lighthouserc.ts": {
+    "check-file/filename-naming-convention": {
+      "count": 1
+    }
+  },
+  "scripts/generate-theme.ts": {
+    "check-file/filename-naming-convention": {
+      "count": 1
+    },
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 4
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "scripts/seo/submitGoogleIndexing.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "scripts/validate-docs.ts": {
+    "check-file/filename-naming-convention": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}
