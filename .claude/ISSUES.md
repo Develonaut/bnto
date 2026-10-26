@@ -7,14 +7,13 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-95**.
+- **IDs never get reused.** The next one is **ISS-96**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
 | ------ | ----------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
 | ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404                                           | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`                                      | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-10 | `task check` skips the crate publish checks CI runs                                                   | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-12 | Released CLIs send no telemetry: the PostHog key is never set                                         | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
@@ -59,6 +58,7 @@
 | ISS-92 | Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked                                 | tooling     | Open                                             |
 | ISS-93 | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
 | ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
+| ISS-95 | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
 
 ---
 
@@ -73,12 +73,6 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 **Found:** October 23, 2026 (fixing ISS-3).
 
 `cli_commands.rs` and the run helpers in `tests/helpers/mod.rs` now use `helpers::Sandbox` (temp HOME, BNTO_HOME, config dir and working directory, telemetry off). About 17 other files in `engine/crates/bnto/tests/` still spawn `Command::new(bnto_bin())` with no HOME or BNTO_HOME: `assert_files`, `check_edges`, `check_folders`, `check_run_time`, `edges`, `edit_fields`, `file_delete`, `file_inspect`, `file_join`, `progressive_output`, `report_file_names`, `run_args`, `run_json`, `run_temp_files`, `shell_each`, `shell_options`, and some runs in `dry_run_temp_files` and `run_timeout`. Each run writes a session log into the developer's `~/.bnto/state/logs`: `cargo test -p bnto --test edges --test run_json` added 3. A run that resolves a slug would also read their library. Switch them to `Sandbox::new().command()`.
-
-### ISS-10: `task check` skips the crate publish checks CI runs
-
-**Found:** October 23, 2026 (ISS-5, PR #740).
-
-CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scripts/check-own-version-crates.sh` (`.github/workflows/ci.yml:316-323`), but no task does, so `task check` can't catch them. #740 added `#[expect]` lines to tonkotsu without bumping its own version: `task check` exited 0 and CI failed (`tonkotsu-0.1.2/src/field.rs ... differ`). Add both scripts to `task check` (the own-version one needs network, to download the published crate), or say in pre-commit.md that a change to a crate with its own version needs that bump.
 
 ### ISS-12: Released CLIs send no telemetry: the PostHog key is never set
 
@@ -499,3 +493,12 @@ Codegen writes `catalog/iterationModes.ts` only when the definition schema has a
 
 - **Fix:** remove `iterationModes.ts` when there are no modes (or clean the `catalog/` root against the files written).
 - **Regression test:** codegen on a snapshot without the enum, after one with it, leaves no `catalog/iterationModes.ts`.
+
+### ISS-95: The own-version check reports a failed crate download as a changed crate
+
+**Found:** October 26, 2026 (cold review of the ISS-10 fix; the bug predates it).
+
+In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside an `if`, so `set -e` doesn't apply in it. When the crates.io index answers but the `.crate` download (`curl … | tar xz`) fails, the function goes on: `diff` compares against a missing folder and exits 2, and the leading `!` turns that into "differs". The script then says `tonkotsu changed since X was published` and asks for a bump that isn't needed. It fails, so it can't pass a bad change, but the message misleads. Read from the code; not reproduced.
+
+- **Fix:** return a distinct status when the download or `cargo package` fails, and report it like an unreachable crates.io.
+- **Regression test:** with the download URL failing (a proxy that lets the index through, or a stubbed `curl`), the script doesn't print "changed since".

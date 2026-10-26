@@ -9,7 +9,8 @@
 # the crate and compares its files with the published ones. A version that
 # isn't published yet passes: it's the bump.
 #
-# Usage: scripts/check-own-version-crates.sh   (needs network)
+# Usage: scripts/check-own-version-crates.sh   (needs network; offline it
+# warns and skips, or fails when CI is set)
 set -euo pipefail
 
 cd "$(dirname "$0")/../engine"
@@ -51,14 +52,34 @@ differs_from_published() {
     "$published/$name-$version" "$local_pkg/$name-$version"
 }
 
+# Fetch a crate's index entry into $work/index and print the HTTP status
+# ("000" when crates.io can't be reached).
+fetch_index() {
+  curl -sS -o "$work/index" -w '%{http_code}' \
+    "https://index.crates.io/$(index_path "$1")" 2>/dev/null || true
+}
+
+# Without an answer from crates.io (offline, or an error status), nothing can
+# be compared. Locally that's a warning, so `task check` still runs on a
+# plane; in CI the check must run, so it fails.
+unreachable() {
+  echo "WARNING: couldn't check $1 on crates.io (HTTP $2): skipped. CI runs this check." >&2
+  if [[ -n ${CI:-} ]]; then failed=1; fi
+}
+
 failed=0
 for manifest in crates/*/Cargo.toml; do
   grep -q '^version.workspace *= *true' "$manifest" && continue
   grep -q '^publish *= *false' "$manifest" && continue
   name=$(package_field "$manifest" name)
   version=$(package_field "$manifest" version)
-  if ! curl -sSf "https://index.crates.io/$(index_path "$name")" |
-    grep -q "\"vers\":\"$version\""; then
+  status=$(fetch_index "$name")
+  case $status in
+    200) ;;
+    404) echo "$name isn't on crates.io yet: it will publish."; continue ;;
+    *) unreachable "$name" "$status"; continue ;;
+  esac
+  if ! grep -q "\"vers\":\"$version\"" "$work/index"; then
     echo "$name $version isn't on crates.io yet: it will publish."
     continue
   fi
