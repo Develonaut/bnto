@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-94**.
+- **IDs never get reused.** The next one is **ISS-95**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -58,6 +58,7 @@
 | ISS-91 | 28 TS files use `React.*` namespace types the import rule bans                                        | web         | Open                                             |
 | ISS-92 | Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked                                 | tooling     | Open                                             |
 | ISS-93 | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
+| ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
 
 ---
 
@@ -489,3 +490,12 @@ The root `scripts/` folder and `packages/@bnto/nodes/scripts/` and `packages/@bn
 
 - **Fix:** rewrite the tree and the table from the package as it is.
 - **Regression test:** none (docs); every path the README names exists.
+
+### ISS-94: Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`
+
+**Found:** October 26, 2026 (cold review of the ISS-16 split; the bug predates it).
+
+Codegen writes `catalog/iterationModes.ts` only when the definition schema has an iteration enum (`packages/@bnto/nodes/scripts/codegen/catalog/writeCatalogFiles.ts`), and nothing cleans the `catalog/` root, unlike `nodeTypes/` and `processors/` (`writePerItemFolder`). With the enum gone, the old file stays on disk with an outdated version header while `catalog/index.ts` stops exporting it. Reproduced with old and new scripts by deleting `definitionSchema` from a scratch snapshot. The old script built an `expectedCatalogFiles` set for this and never used it; the split dropped that dead set.
+
+- **Fix:** remove `iterationModes.ts` when there are no modes (or clean the `catalog/` root against the files written).
+- **Regression test:** codegen on a snapshot without the enum, after one with it, leaves no `catalog/iterationModes.ts`.
