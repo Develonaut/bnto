@@ -8,21 +8,19 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { posix } from "node:path";
 import { missingTaskInputs, type Task } from "./missingTaskInputs";
+import { taskEntries } from "./taskEntries";
 
 interface DryRunTask extends Omit<Task, "inputs"> {
   taskId: string;
   task: string;
+  command: string;
   inputs: Record<string, string>;
 }
 
 const CHECKED = ["lint", "test", "build"];
-const SOURCE = /\.(?:[cm]?[jt]sx?)$/;
-const TEST = /\.test\.[cm]?[jt]sx?$|\/__tests__\//;
-// Read by lint only.
-const LINT_CONFIG = /(?:^|\/)eslint\.config\.[cm]?js$/;
 
 function dryRunTasks(): DryRunTask[] {
   // On Windows `pnpm` is a `pnpm.cmd` shim, which only a shell can start.
@@ -31,26 +29,19 @@ function dryRunTasks(): DryRunTask[] {
     shell: process.platform === "win32",
   });
   const { tasks } = JSON.parse(out.slice(out.indexOf("{"))) as { tasks: DryRunTask[] };
-  return tasks.filter((t) => CHECKED.includes(t.task) && t.directory);
+  // A package without that script gets a placeholder task that never runs.
+  return tasks.filter(
+    (t) => CHECKED.includes(t.task) && t.directory && t.command !== "<NONEXISTENT>",
+  );
 }
 
 const tracked = execFileSync("git", ["ls-files"], { encoding: "utf8" }).trim().split("\n");
 
-// Package sources, relative to its folder.
-function sources(directory: string): string[] {
+// A package's tracked files, relative to its folder.
+function packageFiles(directory: string): string[] {
   return tracked
-    .filter(
-      (file) => file.startsWith(`${directory}/`) && SOURCE.test(file) && !LINT_CONFIG.test(file),
-    )
+    .filter((file) => file.startsWith(`${directory}/`))
     .map((file) => posix.relative(directory, file));
-}
-
-function entries(task: DryRunTask): string[] {
-  if (task.task === "lint") {
-    return existsSync(posix.join(task.directory, "eslint.config.mjs")) ? ["eslint.config.mjs"] : [];
-  }
-  const all = sources(task.directory);
-  return task.task === "build" ? all.filter((file) => !TEST.test(file)) : all;
 }
 
 // A folder isn't a file an import resolves to (`./lib` is `./lib/index.ts`).
@@ -60,7 +51,7 @@ const repo = { read: (file: string) => readFileSync(file, "utf8"), exists: isFil
 const failures = dryRunTasks().flatMap((t) =>
   missingTaskInputs(
     { directory: t.directory, inputs: Object.keys(t.inputs) },
-    entries(t),
+    taskEntries(t.task, packageFiles(t.directory)),
     repo,
   ).map((file) => `  ${t.taskId}: imports ${file}; add "$TURBO_ROOT$/${file}" to its inputs`),
 );

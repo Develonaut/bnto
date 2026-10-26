@@ -22,19 +22,20 @@ export interface Repo {
   exists: (file: string) => boolean;
 }
 
-// What an extensionless or folder import can name, in the order TypeScript tries.
-const SUFFIXES = [
-  "",
-  ".ts",
-  ".tsx",
-  ".mts",
-  ".js",
-  ".mjs",
-  ".json",
-  "/index.ts",
-  "/index.tsx",
-  "/index.js",
-];
+// What an extensionless or folder import can name, and `./x.js` names
+// `./x.ts` in TypeScript's ESM style. Unresolved imports are skipped.
+const SUFFIXES = [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".json"];
+const INDEXES = ["/index.ts", "/index.tsx", "/index.mts", "/index.js"];
+
+function candidates(path: string): string[] {
+  const asTs = path.replace(/\.([cm]?)js(x?)$/, ".$1ts$2");
+  return [
+    path,
+    asTs,
+    ...SUFFIXES.map((suffix) => path + suffix),
+    ...INDEXES.map((index) => path + index),
+  ];
+}
 
 // Sources whose own imports are followed; JSON and assets are only collected.
 const SCRIPT = /\.(?:[cm]?[jt]sx?)$/;
@@ -44,7 +45,7 @@ const isOutside = (dir: string, file: string) => posix.relative(dir, file).start
 const isRelative = (specifier: string) => specifier.startsWith("./") || specifier.startsWith("../");
 
 function resolve(path: string, repo: Repo): string | undefined {
-  return SUFFIXES.map((suffix) => path + suffix).find(repo.exists);
+  return candidates(path).find(repo.exists);
 }
 
 /** Files `file` imports through relative specifiers (static, re-exported or dynamic) that exist. */
@@ -68,7 +69,8 @@ export function missingTaskInputs(task: Task, entries: readonly string[], repo: 
   const queue = entries.map((entry) => posix.join(task.directory, entry));
   const seen = new Set(queue);
   for (const file of queue) {
-    const unseen = relativeImports(file, repo).filter((next) => !seen.has(next));
+    // A Set: a file can import one target twice (`import type` and `import`).
+    const unseen = new Set(relativeImports(file, repo).filter((next) => !seen.has(next)));
     for (const next of unseen) seen.add(next);
     queue.push(...unseen);
   }

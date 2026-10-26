@@ -140,4 +140,22 @@ describe("missingTaskInputs: test and build", () => {
     const task = { directory: "apps/web", inputs: [] };
     assert.deepEqual(missingTaskInputs(task, ["app/layout.tsx"], repo(files)), []);
   });
+
+  it("names a file imported twice once", () => {
+    const files = {
+      "packages/core/src/a.ts": `import type { T } from "../../../shared/x";\nimport { v } from "../../../shared/x";`,
+      "shared/x.ts": ``,
+    };
+    const task = { directory: "packages/core", inputs: [] };
+    assert.deepEqual(missingTaskInputs(task, ["src/a.ts"], repo(files)), ["shared/x.ts"]);
+  });
+
+  it("resolves a `.js` specifier to its `.ts` source", () => {
+    const files = {
+      "packages/core/src/a.ts": `import { h } from "../../../shared/helper.js";`,
+      "shared/helper.ts": ``,
+    };
+    const task = { directory: "packages/core", inputs: [] };
+    assert.deepEqual(missingTaskInputs(task, ["src/a.ts"], repo(files)), ["shared/helper.ts"]);
+  });
 });
