@@ -23,10 +23,8 @@
 | ISS-34 | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                | engine      | Open                                             |
 | ISS-35 | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
 | ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
-| ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
-| ISS-46 | The TUI's Open action uses the first folder for overwrite results                                     | tui         | Open                                             |
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
@@ -162,15 +160,6 @@ On a trace of `https://www.bnto.io/` (mobile viewport, 4x CPU, Slow 4G) the HTML
 - **Lighthouse misleads here:** its simulated mobile run blames a 4.3 s "render delay" on the hero's text, which is server-rendered and unanimated; the real delay is the stylesheet.
 - **Regression test:** a JS budget for the homepage, enforced the way `task check:budgets` (`recipes/size-budget.bnto.json`) enforces other sizes, so the bundle can't grow back unnoticed.
 
-### ISS-43: The TUI labels overwrite results with the first file's folder only
-
-**Found:** October 24, 2026 (fixing ISS-21).
-
-In overwrite mode the results screen names `source_dir`, the first selected file's folder, as "the output folder" (`engine/crates/bnto/src/tui/bridge.rs:232`). With files from several folders the label is wrong (the list itself is correct since the ISS-21 fix).
-
-- **Fix:** in overwrite mode, say the files were renamed in place, or name each folder.
-- **Regression test:** a screen snapshot of overwrite results with files from two folders.
-
 ### ISS-44: In the browser, a renamed or removed param's error says to run `bnto migrate`
 
 **Found:** October 24, 2026 (cold review of the ISS-15 fix, which removes `vector-optimize`'s `precision`; confirmed by running the committed WASM in Node).
@@ -190,15 +179,6 @@ A loop with `outputPersistence: "progressive"` copies each iteration's files int
 
 - **Fix:** decide what progressive persistence means per mode: either only in write mode, or always, with those files listed. Then make the CLI and the TUI agree.
 - **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched (or lists what it wrote), in `bnto run` and the TUI bridge.
-
-### ISS-46: The TUI's Open action uses the first folder for overwrite results
-
-**Found:** October 24, 2026 (second cold review of the ISS-21 fix).
-
-Since the ISS-21 fix, overwrite results from a picked folder or from several folders are listed, but `OutputFile` drops the path `FileResultMeta` carries. Open still joins `results.output_dir` with the name (`engine/crates/bnto/src/tui/app_helpers/results.rs:11`), and in overwrite mode that's the first selected file's folder (`source_dir`, `tui/bridge.rs:232`). For a picked `photos/` folder it opens `parent/renamed-a.txt`, which doesn't exist. With two folders, both rows read `renamed-a.txt` and both open the first folder's file. Related: ISS-43 (the folder label).
-
-- **Fix:** carry each result's path into `OutputFile`, open that, and show which folder a row is in when names repeat.
-- **Regression test:** an overwrite run over two folders, then Open on each row opens that row's file.
 
 ### ISS-47: Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image
 

@@ -446,6 +446,7 @@ mod tests {
         let m = ExecutionModel::new("s");
         let outputs = vec![OutputFile {
             name: "photo.jpg".into(),
+            path: "photo.jpg".into(),
             size_bytes: 290_000,
             original_size: Some(780_000),
         }];

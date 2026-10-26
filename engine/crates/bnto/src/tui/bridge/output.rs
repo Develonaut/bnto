@@ -92,6 +92,7 @@ pub fn build_output_files(file_metadata: &[FileResultMeta]) -> Vec<OutputFile> {
             let on_disk = std::fs::metadata(&meta.path).ok()?;
             on_disk.is_file().then(|| OutputFile {
                 name: meta.name.clone(),
+                path: meta.path.clone(),
                 size_bytes: on_disk.len(),
                 original_size: meta.original_size,
             })
@@ -102,6 +103,20 @@ pub fn build_output_files(file_metadata: &[FileResultMeta]) -> Vec<OutputFile> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn each_output_keeps_the_path_it_landed_at() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("sub").join("a.txt");
+        std::fs::create_dir(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, b"a").unwrap();
+        let meta = FileResultMeta {
+            name: "a.txt".into(),
+            path: path.clone(),
+            original_size: None,
+        };
+        assert_eq!(build_output_files(&[meta])[0].path, path);
+    }
 
     #[test]
     fn outputs_are_listed_in_the_order_the_run_produced_them() {

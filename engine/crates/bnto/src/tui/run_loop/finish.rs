@@ -49,9 +49,11 @@ fn finish_results(model: AppModel, done: RunDone, slug: String) -> AppModel {
         .message
         .map(|message| ExecutionMessage::Reported { message });
     let steps = reported.into_iter().chain([
+        // Files written in place have no one output folder; results find
+        // each file's from its path.
         ExecutionMessage::OutputsReady {
             files,
-            output_dir: Some(done.output_dir),
+            output_dir: (!done.in_place).then_some(done.output_dir),
             warnings: done.warnings,
         },
         ExecutionMessage::PipelineCompleted {

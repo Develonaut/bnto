@@ -28,6 +28,7 @@ fn model_on_execution(dir: &tempfile::TempDir, preview_mode: bool) -> AppModel {
 fn done(output_dir: &str) -> RunDone {
     RunDone {
         output_dir: output_dir.into(),
+        in_place: false,
         file_count: 2,
         duration_ms: 1500,
         file_metadata: vec![],
@@ -83,6 +84,19 @@ fn done_in_normal_mode_reaches_results_with_the_output_dir() {
     let results = model.results.expect("results built");
     assert_eq!(results.output_dir.as_deref(), Some("/out"));
     assert_eq!(results.total_time_ms, 1500);
+}
+
+#[test]
+fn done_in_place_reaches_results_with_no_one_output_folder() {
+    // Overwrite mode's output_dir is only the first file's folder.
+    let dir = tempfile::tempdir().unwrap();
+    let in_place = RunDone {
+        in_place: true,
+        ..done("/first-folder")
+    };
+    let model = apply_bridge_event(model_on_execution(&dir, false), BridgeEvent::Done(in_place));
+    let results = model.results.expect("results built");
+    assert_eq!(results.output_dir, None);
 }
 
 // --- When the bridge is let go ---

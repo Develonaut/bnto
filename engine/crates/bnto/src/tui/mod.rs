@@ -1149,11 +1149,13 @@ mod tests {
         let outputs = vec![
             OutputFile {
                 name: "photo-1.jpg".into(),
+                path: "photo-1.jpg".into(),
                 size_bytes: 290_000,
                 original_size: Some(780_000),
             },
             OutputFile {
                 name: "photo-2.jpg".into(),
+                path: "photo-2.jpg".into(),
                 size_bytes: 340_000,
                 original_size: Some(920_000),
             },
