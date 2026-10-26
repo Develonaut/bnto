@@ -5,8 +5,9 @@
 ///
 /// Quoting is POSIX sh's, and on Windows PowerShell's (its default shell);
 /// cmd.exe has no single quotes, so a quoted word there needs retyping.
+/// A leading `=` is quoted too: zsh expands `=word` to that command's path.
 pub fn shell_word(arg: &str) -> String {
-    if !arg.is_empty() && arg.chars().all(is_plain) {
+    if !arg.is_empty() && !arg.starts_with('=') && arg.chars().all(is_plain) {
         return arg.to_string();
     }
     format!("'{}'", arg.replace('\'', QUOTE_ESCAPE))
@@ -30,6 +31,13 @@ mod tests {
     #[test]
     fn a_plain_word_stays_bare() {
         assert_eq!(shell_word("version=1.2.3"), "version=1.2.3");
+    }
+
+    #[test]
+    fn a_leading_equals_is_quoted_for_zsh() {
+        // zsh expands a word that starts with `=` to that command's path.
+        assert_eq!(shell_word("=1.2"), "'=1.2'");
+        assert_eq!(shell_word("version=1.2"), "version=1.2");
     }
 
     #[test]

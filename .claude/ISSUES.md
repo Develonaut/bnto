@@ -28,8 +28,6 @@
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
 | ISS-46 | The TUI's Open action uses the first folder for overwrite results                                     | tui         | Open                                             |
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
-| ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
-| ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
@@ -210,24 +208,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 - **Fix:** as on the homepage (#753): lazy below-the-fold images, `fetchPriority="high"` on the hero.
 - **Regression test:** extend `e2e/pages/homepage-loading.spec.ts`'s checks to a recipe page; the Lighthouse `lcp-discovery-insight` assertion already covers every recipe URL once its LCP is the image.
-
-### ISS-55: A printed command line with a word that starts with `=` fails in zsh
-
-**Found:** October 25, 2026 (cold review of the ISS-50 fix).
-
-`shell_word` (`engine/crates/bnto/src/shell_word.rs`) treats `=` as plain anywhere in a word, so a word that starts with `=` stays bare. zsh, macOS's default shell, expands a leading `=word` to that command's path: `zsh -c 'echo =1.2'` prints `zsh:1: 1.2 not found`. A declined run's `bnto dry-run … -p …` hint and a dry run's `$` lines both go through `shell_word`, so a pasted line with such a value fails in zsh. `sh` and PowerShell are fine.
-
-- **Fix:** treat `=` as plain only after a word's first char.
-- **Regression test:** `shell_word("=1.2")` is quoted, and `version=1.2` stays bare.
-
-### ISS-56: A dry run's command whose program path needs quotes won't paste into PowerShell
-
-**Found:** October 25, 2026 (cold review of the ISS-50 fix).
-
-On Windows, `format_command_line` (`engine/crates/bnto/src/dry_run/shell.rs`) quotes the program like any other word, for PowerShell. PowerShell reads a quoted first word as a string, so `'C:\Program Files\tool.exe' arg` fails with an unexpected token; it runs only as `& 'C:\Program Files\tool.exe' arg`. Unquoted it failed too, before ISS-50's fix.
-
-- **Fix:** on Windows, put `& ` before a program word that needed quotes.
-- **Regression test:** a Windows unit test: a step whose `command` holds a space shows `& '<command>' …`.
 
 ### ISS-57: `errorCategory` reports `out_of_memory` for any message containing `oom`
 

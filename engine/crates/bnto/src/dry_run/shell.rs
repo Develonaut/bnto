@@ -111,8 +111,22 @@ fn override_target(
 
 /// A command and its args as a line that pastes into a shell, each one word.
 pub fn format_command_line(cmd: &ShellCommandInfo) -> String {
-    let words = std::iter::once(&cmd.command).chain(&cmd.args);
-    words.map(|w| shell_word(w)).collect::<Vec<_>>().join(" ")
+    let args = cmd.args.iter().map(|w| shell_word(w));
+    std::iter::once(program_word(&cmd.command))
+        .chain(args)
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// The program as the line's first word. PowerShell reads a quoted first word
+/// as a string, so on Windows a quoted program is called with `&`.
+fn program_word(command: &str) -> String {
+    let word = shell_word(command);
+    if cfg!(windows) && word.starts_with('\'') {
+        format!("& {word}")
+    } else {
+        word
+    }
 }
 
 // --- Internal helpers ---
@@ -347,6 +361,30 @@ mod tests {
     fn an_awkward_arg_is_quoted_for_powershell() {
         let line = format_command_line(&printf_with("a b $HOME;*'x"));
         assert_eq!(line, "printf 'a b $HOME;*''x'");
+    }
+
+    /// A step running `command` with the one arg `a`.
+    fn program(command: &str) -> ShellCommandInfo {
+        ShellCommandInfo {
+            command: command.into(),
+            ..printf_with("a")
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn a_quoted_program_is_called_with_an_ampersand_for_powershell() {
+        // PowerShell reads a quoted first word as a string, not a command.
+        let line = format_command_line(&program(r"C:\Program Files\tool.exe"));
+        assert_eq!(line, r"& 'C:\Program Files\tool.exe' a");
+        assert_eq!(format_command_line(&program("tool")), "tool a");
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn a_quoted_program_is_just_quoted_for_sh() {
+        let line = format_command_line(&program("/opt/my tools/tool"));
+        assert_eq!(line, "'/opt/my tools/tool' a");
     }
 
     #[test]
