@@ -206,7 +206,7 @@ src/
 +-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
 +-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
 +-- dry_run_hint.rs        # The quoted `bnto dry-run … -p … --vars …` line a declined run suggests
-+-- shell_word.rs          # Quotes an argument as one sh / PowerShell word, for printed command lines
++-- shell_word.rs          # Quotes an argument as one sh, zsh or PowerShell word, for printed command lines
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)
 +-- check_targets.rs       # `bnto check` arguments to recipe files (a folder walked recursively, sorted)
