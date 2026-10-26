@@ -21,26 +21,23 @@ jobs:
       web: ${{ steps.filter.outputs.web }}
     steps:
       - uses: actions/checkout@v5
-
-      - uses: dorny/paths-filter@v4
-        id: filter
         with:
-          filters: |
-            # A change to this workflow runs the jobs it could break.
-            engine:
-              - 'engine/**'
-              - 'recipes/**'
-              - '.github/workflows/ci.yml'
-            web:
-              - '.github/workflows/ci.yml'
-              - 'apps/**'
-              - 'packages/**'
-              - 'pnpm-lock.yaml'
-              - 'package.json'
-              - 'tsconfig*.json'
-              # The TypeScript job's task graph and package list.
-              - 'turbo.json'
-              - 'pnpm-workspace.yaml'
+          fetch-depth: 0 # The base commit, to diff against
+
+      # The same list release.yml uses (scripts/ci/changed-surfaces.sh). A PR
+      # diffs against its base; a push against the commit before it. A push
+      # with no usable base (a new branch) runs everything.
+      - name: Determine changed surfaces
+        id: filter
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "No base commit: running every job"
+            printf 'engine=true\nweb=true\nconvex=true\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --name-only "$BASE" HEAD | scripts/ci/changed-surfaces.sh | tee -a "$GITHUB_OUTPUT"
 
   # ── Rust CI (only when engine files changed) ──
   rust:

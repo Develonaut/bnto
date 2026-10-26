@@ -126,6 +126,12 @@ Don't use `globalDependencies`, which would invalidate every task's cache. `task
 
 **Inside a git hook in a worktree, Turbo drops root inputs.** Git sets `GIT_DIR` for hooks run in a worktree, and with it set Turbo leaves `$TURBO_ROOT$/…` files out of the hash, so the pre-commit lint replayed `main`'s cached pass over a staged rule that fails every file (ISS-39). Hook commands run Turbo through `sh scripts/hooks/turbo.sh`, which unsets `GIT_DIR`; `scripts/hooks/turbo.test.ts` fails on a `turbo` line in `lefthook.yml` that skips it.
 
+## CI Picks Jobs by the Paths a Change Touches
+
+CI and release run the Rust and TypeScript jobs only when a change touches a path those jobs read, and the CI Gate accepts the skip. Both workflows decide it with one list, `scripts/ci/changed-surfaces.sh` (ISS-38). A job that starts reading a new file outside its folders (a root config, a shared fixture) needs that path on the list, or a change to only that file skips the job and passes.
+
+`scripts/ci/changed-surfaces.test.ts` (in `task check:scripts` and CI) fails when a `$TURBO_ROOT$` input in any `turbo.json` isn't on the web list, or a root path the engine's Rust code reads through a `../` literal isn't on the engine list. Other reads (a TypeScript test's `readFileSync` of a root file) are a manual step: add the path to the list in the same PR.
+
 ## Turbopack + Node.js Subpath Imports on Vercel
 
 Turbopack on Vercel does NOT support Node.js subpath imports (`#components/*` via `package.json` `imports` field). Builds fail with `Module not found: Can't resolve '#components/...'`. Setting `turbopack.root` to the monorepo root makes it worse — breaks the `imports` field resolution entirely. `resolveAlias` workarounds also fail.

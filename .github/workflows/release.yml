@@ -61,12 +61,11 @@ jobs:
           CHANGED=$(git diff --name-only "$PREV_TAG"..HEAD)
           echo "$CHANGED"
 
-          engine=$(echo "$CHANGED" | grep -q '^engine/' && echo true || echo false)
-          # Engine changes reach the web app through the WASM bundle.
-          # turbo.json and pnpm-workspace.yaml decide what the TypeScript job runs
-          # and how the site builds, so a change to either also redeploys the web app.
-          web=$(echo "$CHANGED" | grep -qE '^(apps/|packages/|engine/|turbo\.json$|pnpm-workspace\.yaml$)' && echo true || echo false)
-          convex=$(echo "$CHANGED" | grep -q '^packages/@bnto/backend/convex/' && echo true || echo false)
+          # The same list ci.yml uses (scripts/ci/changed-surfaces.sh).
+          eval "$(echo "$CHANGED" | scripts/ci/changed-surfaces.sh)"
+          # Engine changes reach the web app through the WASM bundle, so they
+          # run the TypeScript job and redeploy the site too.
+          if [ "$engine" = true ]; then web=true; fi
 
           echo "engine=$engine" >> "$GITHUB_OUTPUT"
           echo "web=$web" >> "$GITHUB_OUTPUT"
