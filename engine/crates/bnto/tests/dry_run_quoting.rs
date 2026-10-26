@@ -50,11 +50,15 @@ fn a_shown_command_pasted_into_sh_passes_the_same_argument() {
 }
 
 #[test]
-fn the_run_with_footer_quotes_the_recipe_path() {
+fn the_run_with_footer_quotes_the_recipe_path_and_params() {
     let sandbox = Sandbox::new();
     let out = dry_run_print_msg(&sandbox, "my print.bnto.json");
-    assert!(
-        out.contains("Run with: bnto run 'my print.bnto.json' <input>"),
-        "{out}"
-    );
+    // sh closes, escapes and reopens a quote; PowerShell doubles it.
+    let msg = if cfg!(windows) {
+        "'msg=a b $HOME;*''x'"
+    } else {
+        r"'msg=a b $HOME;*'\''x'"
+    };
+    let footer = format!("Run with: bnto run 'my print.bnto.json' -p {msg} <input>");
+    assert!(out.contains(&footer), "{out}");
 }

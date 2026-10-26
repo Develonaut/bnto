@@ -30,7 +30,6 @@
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
-| ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
 | ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 | ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
@@ -226,15 +225,6 @@ A per-file node inside a loop gets `{{item.*}}` from the file's current metadata
 
 - **Fix:** for a node that fills items itself (`resolves_items`), inside a loop, fill only the loop's keys and leave the rest as written, so the node fills them from each file's metadata. Not for `shell-run`, which also declares `resolves_items` but fills only inside `each` groups: a leftover `{{item.*}}` elsewhere in its command must still be refused.
 - **Regression test:** inside a loop, `file-inspect` then `file-copy` with `destination: "<dir>/{{item.extension}}"` copies each file into its extension's folder.
-
-### ISS-64: A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`
-
-**Found:** October 25, 2026 (second cold review of the ISS-40 fix).
-
-`print_footer` (`engine/crates/bnto/src/dry_run/format.rs`) prints `Run with: bnto run <recipe> <input>` from the recipe argument alone. `bnto dry-run drive.bnto.json --vars vars.json` previews `$ echo D:/Art`, then suggests `bnto run drive.bnto.json <input>`, which stops on `unresolved {{vars.Drive}}` unless `BNTO_VAR_DRIVE` is set. A recipe with a required field fails the same way, since the `-p` values are dropped too.
-
-- **Fix:** build the footer from the same `-p` values and `--vars` files, as `DryRunHint` does for the declined-run hint (`engine/crates/bnto/src/dry_run_hint.rs`), each one shell word.
-- **Regression test:** `bnto dry-run <path> -p version=1.2.3 --vars vars.json` ends `Run with: bnto run <path> -p version=1.2.3 --vars vars.json <input>`.
 
 ### ISS-66: Down past the last home recipe hides the selection until you press Up as many times
 
