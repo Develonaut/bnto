@@ -140,10 +140,10 @@ tasks:
 
   # Turbo cache inputs (ISS-9)
   check:turbo-inputs:
-    desc: Fail naming every Turbo lint task that doesn't hash a file outside its package that its ESLint config reads
+    desc: Fail naming every Turbo lint, test or build task that doesn't hash a file outside its package that its sources import
     cmds:
-      - pnpm exec tsx --test scripts/turbo/missingLintInputs.test.ts
-      - pnpm exec tsx scripts/turbo/checkLintInputs.ts
+      - pnpm exec tsx --test scripts/turbo/missingTaskInputs.test.ts
+      - pnpm exec tsx scripts/turbo/checkTaskInputs.ts
 
   check:lighthouse-config:
     desc: Test the Lighthouse config generator (a free port the server and the audited URLs share)
