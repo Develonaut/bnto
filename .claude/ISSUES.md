@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-95**.
+- **IDs never get reused.** The next one is **ISS-96**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -58,6 +58,7 @@
 | ISS-92 | Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked                                 | tooling     | Open                                             |
 | ISS-93 | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
 | ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
+| ISS-95 | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
 
 ---
 
@@ -492,3 +493,12 @@ Codegen writes `catalog/iterationModes.ts` only when the definition schema has a
 
 - **Fix:** remove `iterationModes.ts` when there are no modes (or clean the `catalog/` root against the files written).
 - **Regression test:** codegen on a snapshot without the enum, after one with it, leaves no `catalog/iterationModes.ts`.
+
+### ISS-95: The own-version check reports a failed crate download as a changed crate
+
+**Found:** October 26, 2026 (cold review of the ISS-10 fix; the bug predates it).
+
+In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside an `if`, so `set -e` doesn't apply in it. When the crates.io index answers but the `.crate` download (`curl … | tar xz`) fails, the function goes on: `diff` compares against a missing folder and exits 2, and the leading `!` turns that into "differs". The script then says `tonkotsu changed since X was published` and asks for a bump that isn't needed. It fails, so it can't pass a bad change, but the message misleads. Read from the code; not reproduced.
+
+- **Fix:** return a distinct status when the download or `cargo package` fails, and report it like an unreachable crates.io.
+- **Regression test:** with the download URL failing (a proxy that lets the index through, or a stubbed `curl`), the script doesn't print "changed since".

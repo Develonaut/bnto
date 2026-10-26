@@ -19,7 +19,7 @@ task ui:test            # Frontend tests -- must pass
 task ui:lint            # ESLint -- must pass
 ```
 
-Or run `task check`, which runs all of the above plus the repo-wide checks: Turbo cache inputs, `scripts/` lint and tests, the crate publish checks (`check:crates`, CI's Crate Publish List job), theme codegen, docs validation and the dogfood recipes. `check:crates` compares each crate with its own version (tonkotsu) with crates.io, so it needs network; offline it warns and skips, and CI still runs it.
+Or run `task check`, which runs all of the above plus the repo-wide checks: Turbo cache inputs, `scripts/` lint and tests, the crate publish checks (`check:crates`, CI's Crate Publish List job), theme codegen, docs validation and the dogfood recipes. `check:crates` compares each crate with its own version (tonkotsu) with crates.io, so it needs network; without an answer from crates.io it warns and skips, and CI still runs it.
 
 If any check fails: fix the errors, re-run from the top.
 
