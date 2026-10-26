@@ -29,6 +29,11 @@ impl RunBridge {
             ..Self::default()
         }
     }
+
+    /// When the run's timer started.
+    pub(super) fn started(&self) -> Option<Instant> {
+        self.started
+    }
 }
 
 /// One frame of run upkeep: start the bridge, apply its events, tick the
@@ -81,9 +86,9 @@ fn drain(mut model: AppModel, run: &mut RunBridge) -> AppModel {
     model
 }
 
-/// Tell the waiting bridge to go on once the user has allowed the run. A
-/// declined run moves off the screen, and letting the bridge go drops the
-/// reply, which stops it.
+/// Tell the waiting bridge to go on once the user has allowed the run, and
+/// start the run's timer then, not counting the wait. A declined run moves
+/// off the screen, and letting the bridge go drops the reply, which stops it.
 fn answer_consent(model: &AppModel, run: &mut RunBridge) {
     let allowed = model
         .execution
@@ -91,6 +96,7 @@ fn answer_consent(model: &AppModel, run: &mut RunBridge) {
         .is_some_and(|e| e.status == ExecutionStatus::Idle);
     if allowed && let Some(reply) = run.consent_reply.take() {
         let _ = reply.send(());
+        run.started = Some(Instant::now());
     }
 }
 
@@ -99,8 +105,16 @@ fn answer_consent(model: &AppModel, run: &mut RunBridge) {
 pub(super) fn apply_bridge_event(model: AppModel, event: BridgeEvent) -> AppModel {
     match event {
         BridgeEvent::Progress(pe) => update(model, bridge::map_pipeline_event(pe)),
-        // `drain` keeps the reply; one dropped here stops the run.
-        BridgeEvent::ConsentNeeded { request, .. } => consent::hold(model, request),
+        // `drain` handles a request, keeping its reply. One that reaches here
+        // has lost its reply, so the bridge has stopped: fail the run rather
+        // than hold it on a prompt nothing can answer.
+        BridgeEvent::ConsentNeeded { .. } => update(
+            model,
+            AppMessage::Execution(ExecutionMessage::PipelineFailed {
+                node_id: String::new(),
+                error: "The run's request for consent was lost; start it again.".into(),
+            }),
+        ),
         BridgeEvent::Done(done) => finish_run(model, done),
         BridgeEvent::Error(error) => update(
             model,

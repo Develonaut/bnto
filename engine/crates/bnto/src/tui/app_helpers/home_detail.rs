@@ -209,15 +209,10 @@ pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
         .as_ref()
         .map(|d| d.definition_json.clone())
         .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_inputs(
-        &slug,
-        files,
-        overrides,
-        definition_json,
-    ));
+    let exec = ExecutionModel::with_inputs(&slug, files, overrides, definition_json);
     AppModel {
         screen: Screen::Execution { slug, from },
-        execution,
+        execution: Some(exec),
         param_overrides: HashMap::new(),
         ..model
     }
@@ -267,15 +262,10 @@ pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel 
             )
         })
         .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_inputs(
-        &slug,
-        files,
-        overrides,
-        definition_json,
-    ));
+    let exec = ExecutionModel::with_inputs(&slug, files, overrides, definition_json);
     AppModel {
         screen: Screen::Execution { slug, from },
-        execution,
+        execution: Some(exec),
         preview: None,
         param_overrides: HashMap::new(),
         ..model

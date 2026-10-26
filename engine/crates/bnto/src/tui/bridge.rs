@@ -122,24 +122,19 @@ fn run_bridge_in(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob, ctx: NativeCon
 
 /// Check the run and get consent, run the pipeline, then write (or preview)
 /// the results.
-#[expect(clippy::too_many_lines)]
 fn try_run_bridge(
     tx: &mpsc::Sender<BridgeEvent>,
     job: &BridgeJob,
     ctx: &NativeContext,
 ) -> Result<(), String> {
-    let Some(Ready {
-        prepared,
-        recipe_dir,
-    }) = checked(tx, job, ctx)?
-    else {
+    let Some(ready) = checked(tx, job, ctx)? else {
         return Ok(());
     };
     let mode = resolve_mode(&job.definition_json);
-    let output_dir = resolve_output_dir(job, &mode, recipe_dir);
+    let output_dir = resolve_output_dir(job, &mode, ready.recipe_dir);
     let reporter = channel_reporter(tx, progressive_dir(job.preview_mode, &mode, &output_dir));
     // Run the pipeline (blocking — this is why we're on a background thread).
-    let Some(result) = run_watched(tx, prepared, &reporter, ctx)? else {
+    let Some(result) = run_watched(tx, ready.prepared, &reporter, ctx)? else {
         return Ok(());
     };
     if job.preview_mode {
@@ -1135,10 +1130,35 @@ mod tests {
 
     #[test]
     fn a_var_is_filled_from_its_bnto_var_environment_variable() {
-        // SAFETY: no other test reads or writes this variable.
+        // SAFETY: set_var races any concurrent getenv in this test binary;
+        // like the repo's other env tests, it uses a name nothing else reads.
         unsafe { std::env::set_var("BNTO_VAR_ISS78PREFIX", "filled") };
         let done = run_on_photo("vars", vars_prefix_recipe_json("Iss78Prefix"));
         assert_eq!(listed(&done), ["filled-photo.txt"]);
+    }
+
+    #[test]
+    fn consent_shows_and_pins_the_filled_value_of_a_var() {
+        // SEC-29: the prompt shows what runs, and the approval is pinned to
+        // it, so a changed value asks again.
+        // SAFETY: as above, a name nothing else reads.
+        unsafe { std::env::set_var("BNTO_VAR_ISS78ARG", "--version") };
+        let trust = tempfile::tempdir().unwrap();
+        let json = serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "say", "type": "shell-run",
+              "parameters": { "command": "git", "args": ["{{vars.Iss78Arg}}"] } }
+        ] })
+        .to_string();
+        let (rx, handle) = start(untrusted_job(json.clone(), &trust));
+        let Ok(BridgeEvent::ConsentNeeded { request, reply }) = rx.recv() else {
+            panic!("expected a request for consent");
+        };
+        assert_eq!(request.commands, vec!["git --version"]);
+        let filled = crate::vars::apply(&json, &[]).unwrap();
+        assert_eq!(request.hash, crate::trust::definition_hash(&filled));
+        drop(reply);
+        handle.join().unwrap();
     }
 
     #[test]

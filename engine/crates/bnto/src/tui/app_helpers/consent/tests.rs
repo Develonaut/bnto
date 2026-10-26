@@ -234,6 +234,7 @@ fn y_allows_and_n_declines_only_while_consent_is_pending() {
     let app = run_from_detail(model, "probe", SHELL_RECIPE, false);
     // Not yet asked: the bridge is still checking the run.
     assert!(handle_key(&app, key(KeyCode::Char('y'))).is_none());
+    assert!(handle_key(&app, key(KeyCode::Char('n'))).is_none());
     let app = held(app);
     assert!(matches!(
         handle_key(&app, key(KeyCode::Char('y'))),

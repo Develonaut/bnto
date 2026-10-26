@@ -140,6 +140,7 @@ fn the_bridges_request_holds_the_run_until_the_user_allows_it() {
     );
     assert!(answer.try_recv().is_err(), "answered before the user did");
 
+    let allowed_at = std::time::Instant::now();
     let model = update(
         model,
         AppMessage::Execution(ExecutionMessage::AllowCommands),
@@ -149,6 +150,8 @@ fn the_bridges_request_holds_the_run_until_the_user_allows_it() {
         answer.try_recv().is_ok(),
         "the bridge was not told to go on"
     );
+    // The timer starts at Allow: the time on the prompt isn't the run's.
+    assert!(run.started().is_some_and(|t| t >= allowed_at));
 }
 
 #[test]
