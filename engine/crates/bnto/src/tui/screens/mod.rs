@@ -22,6 +22,7 @@ mod picker_loader;
 mod picker_update;
 pub mod preview;
 pub mod results;
+mod results_location;
 pub mod settings;
 pub mod size_change;
 pub mod viewport;

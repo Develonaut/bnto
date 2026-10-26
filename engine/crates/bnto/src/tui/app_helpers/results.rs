@@ -2,24 +2,20 @@
 
 use super::super::app::AppModel;
 
-/// Open the selected output file in the default app.
+/// Open the selected output file in the default app: the row's own file,
+/// wherever the run left it.
 pub(crate) fn handle_open_file(model: AppModel) -> AppModel {
-    if let Some(results) = &model.results
-        && let Some(dir) = &results.output_dir
-        && let Some(file) = results.outputs.get(results.cursor)
-    {
-        let path = std::path::Path::new(dir).join(&file.name);
+    if let Some(path) = model.results.as_ref().and_then(|r| r.selected_path()) {
         let _ = open_path(path.to_string_lossy().as_ref());
     }
     model
 }
 
-/// Open the output folder in the system file manager.
+/// Open the output folder (for files written in place, the selected file's
+/// folder) in the system file manager.
 pub(crate) fn handle_open_folder(model: AppModel) -> AppModel {
-    if let Some(results) = &model.results
-        && let Some(dir) = &results.output_dir
-    {
-        let _ = open_path(dir);
+    if let Some(dir) = model.results.as_ref().and_then(|r| r.folder_to_open()) {
+        let _ = open_path(dir.to_string_lossy().as_ref());
     }
     model
 }

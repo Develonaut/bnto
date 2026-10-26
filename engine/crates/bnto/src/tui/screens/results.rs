@@ -2,12 +2,16 @@
 //
 // TEA pattern: ResultsModel (state) + ResultsMessage (events) + update() (pure transitions).
 
+use std::path::PathBuf;
+
 use super::size_change::SizeChange;
 
 /// An output file with size and optional original size for savings calculation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OutputFile {
     pub name: String,
+    /// Where the file is on disk; in place, that's its own folder.
+    pub path: PathBuf,
     pub size_bytes: u64,
     pub original_size: Option<u64>,
 }
@@ -136,16 +140,19 @@ mod tests {
         vec![
             OutputFile {
                 name: "photo-1.jpg".into(),
+                path: "photo-1.jpg".into(),
                 size_bytes: 290_000,
                 original_size: Some(780_000),
             },
             OutputFile {
                 name: "photo-2.jpg".into(),
+                path: "photo-2.jpg".into(),
                 size_bytes: 340_000,
                 original_size: Some(920_000),
             },
             OutputFile {
                 name: "photo-3.jpg".into(),
+                path: "photo-3.jpg".into(),
                 size_bytes: 260_000,
                 original_size: Some(640_000),
             },
@@ -225,11 +232,13 @@ mod tests {
         let outputs = vec![
             OutputFile {
                 name: "shrunk.jpg".into(),
+                path: "shrunk.jpg".into(),
                 size_bytes: 50,
                 original_size: Some(100),
             },
             OutputFile {
                 name: "grew.jpg".into(),
+                path: "grew.jpg".into(),
                 size_bytes: 200,
                 original_size: Some(100),
             },
@@ -244,11 +253,13 @@ mod tests {
         let outputs = vec![
             OutputFile {
                 name: "a.txt".into(),
+                path: "a.txt".into(),
                 size_bytes: 100,
                 original_size: None,
             },
             OutputFile {
                 name: "b.txt".into(),
+                path: "b.txt".into(),
                 size_bytes: 200,
                 original_size: None,
             },

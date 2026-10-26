@@ -756,6 +756,7 @@ mod tests {
             ExecutionMessage::OutputsReady {
                 files: vec![OutputFile {
                     name: "out.jpg".into(),
+                    path: "out.jpg".into(),
                     size_bytes: 500,
                     original_size: Some(1000),
                 }],
@@ -788,11 +789,13 @@ mod tests {
         let outputs = vec![
             OutputFile {
                 name: "a".into(),
+                path: "a".into(),
                 size_bytes: 100,
                 original_size: None,
             },
             OutputFile {
                 name: "b".into(),
+                path: "b".into(),
                 size_bytes: 200,
                 original_size: None,
             },
@@ -1003,6 +1006,7 @@ mod tests {
             AppMessage::Execution(ExecutionMessage::OutputsReady {
                 files: vec![OutputFile {
                     name: "result.jpg".into(),
+                    path: "result.jpg".into(),
                     size_bytes: 200,
                     original_size: Some(500),
                 }],

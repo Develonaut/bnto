@@ -91,11 +91,11 @@ fn message_lines<'a>(message: &'a RunMessage, theme: &Theme) -> Vec<Line<'a>> {
 }
 
 fn output_dir_lines<'a>(results: &ResultsModel, theme: &Theme) -> Vec<Line<'a>> {
-    let Some(dir) = &results.output_dir else {
+    let Some(location) = results.location_line() else {
         return Vec::new();
     };
     vec![
-        Line::from(Span::styled(format!("  Output: {dir}"), theme.muted())),
+        Line::from(Span::styled(format!("  {location}"), theme.muted())),
         Line::from(""),
     ]
 }
@@ -108,14 +108,16 @@ fn file_lines<'a>(results: &'a ResultsModel, theme: &Theme) -> Vec<Line<'a>> {
         ))];
     }
     let mut lines = vec![Line::from(Span::styled("  FILES", theme.category()))];
-    for (i, file) in results.outputs.iter().enumerate() {
-        lines.push(file_line(file, i == results.cursor, theme));
+    let rows = results.outputs.iter().zip(results.row_names()).enumerate();
+    for (i, (file, name)) in rows {
+        lines.push(file_line(file, name, i == results.cursor, theme));
     }
     lines
 }
 
-/// One output file: name, then how its size changed when the original's known.
-fn file_line<'a>(file: &'a OutputFile, is_selected: bool, theme: &Theme) -> Line<'a> {
+/// One output file: its row name, then how its size changed when the
+/// original's known.
+fn file_line<'a>(file: &OutputFile, name: String, is_selected: bool, theme: &Theme) -> Line<'a> {
     let (marker, name_style) = if is_selected {
         ("▸ ", theme.selected())
     } else {
@@ -132,7 +134,7 @@ fn file_line<'a>(file: &'a OutputFile, is_selected: bool, theme: &Theme) -> Line
         None => format!("  {}", format_size(file.size_bytes)),
     };
     Line::from(vec![
-        Span::styled(format!("  {marker}{}", file.name), name_style),
+        Span::styled(format!("  {marker}{name}"), name_style),
         Span::styled(size_info, theme.muted()),
     ])
 }
@@ -219,6 +221,7 @@ mod tests {
     fn grown_output_reads_as_larger_not_zero_percent_smaller() {
         let lines = rendered(vec![OutputFile {
             name: "gradient.webp".into(),
+            path: "gradient.webp".into(),
             size_bytes: 10_240,
             original_size: Some(5_120),
         }]);
@@ -235,6 +238,7 @@ mod tests {
     fn shrunk_output_keeps_savings_wording() {
         let lines = rendered(vec![OutputFile {
             name: "photo.jpg".into(),
+            path: "photo.jpg".into(),
             size_bytes: 5_120,
             original_size: Some(10_240),
         }]);

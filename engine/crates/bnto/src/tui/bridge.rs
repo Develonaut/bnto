@@ -43,6 +43,9 @@ pub enum BridgeEvent {
 #[derive(Debug)]
 pub struct RunDone {
     pub output_dir: String,
+    /// The run wrote each file in place (overwrite mode), not into
+    /// `output_dir`, which is then just the first selected file's folder.
+    pub in_place: bool,
     pub file_count: usize,
     pub duration_ms: u64,
     pub file_metadata: Vec<FileResultMeta>,
@@ -136,7 +139,8 @@ fn try_run_bridge(
         .then(|| run_message(&result, recipe_output_label(&job.definition_json)))
         .flatten();
     io::write_results_with_mode(&result, &mode, &output_dir, false)?;
-    send_done(tx, output_dir, result, file_metadata, message);
+    let in_place = mode == "overwrite";
+    send_done(tx, output_dir, in_place, result, file_metadata, message);
     Ok(())
 }
 
@@ -267,6 +271,7 @@ fn send_preview_done(
     let previews = crate::dry_run::files::extract_previews(&result);
     let _ = tx.send(BridgeEvent::Done(RunDone {
         output_dir,
+        in_place: false,
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
         file_metadata: vec![],
@@ -280,12 +285,14 @@ fn send_preview_done(
 fn send_done(
     tx: &mpsc::Sender<BridgeEvent>,
     output_dir: String,
+    in_place: bool,
     result: bnto_core::pipeline::PipelineResult,
     file_metadata: Vec<FileResultMeta>,
     message: Option<RunMessage>,
 ) {
     let _ = tx.send(BridgeEvent::Done(RunDone {
         output_dir,
+        in_place,
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
         file_metadata,
@@ -319,6 +326,7 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use crate::process_registry::ProcessRegistry;
+    use crate::tui::screens::results::ResultsModel;
 
     /// Far longer than a stopped run may take, far shorter than the hang.
     const STOP_DEADLINE: Duration = Duration::from_secs(60);
@@ -790,6 +798,21 @@ mod tests {
             "the run renamed nothing"
         );
         assert_eq!(listed(&done), ["renamed-a.txt", "renamed-a.txt"]);
+        // Open on each row opens that row's file, not the first folder's.
+        assert!(done.in_place);
+        let outputs = build_output_files(&done.file_metadata);
+        let mut results = ResultsModel::new("ow-two", outputs, 0, None);
+        for (row, dir) in [one.path(), two.path()].into_iter().enumerate() {
+            results.cursor = row;
+            let opened = results.selected_path().unwrap();
+            let expected = dir.join("renamed-a.txt");
+            assert_eq!(
+                fs::canonicalize(opened).unwrap(),
+                fs::canonicalize(expected).unwrap()
+            );
+        }
+        let line = results.location_line().unwrap();
+        assert_eq!(line, "Written in place, in 2 folders");
     }
 
     #[test]

@@ -1,0 +1,27 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+      ▄▄
+      ██           ██
+      ████▄ ████▄ ▀██▀▀ ▄███▄
+      ██ ██ ██ ██  ██   ██ ██
+      ████▀ ██ ██  ██   ▀███▀
+
+
+      ╭ R E S U L T S ───────────────────────────────────────────────────╮
+      │  Completed in 412ms                                              │
+      │                                                                  │
+      │  Written in place, in 2 folders                                  │
+      │                                                                  │
+      │  FILES                                                           │
+      │  ▸ summer/renamed-a.txt  2 KB                                    │
+      │    winter/renamed-a.txt  2 KB                                    │
+      │                                                                  │
+      │                                                                  │
+      │                                                                  │
+      │                                                                  │
+      │                                                                  │
+      ╰──────────────────────────────────────────────────────────────────╯
+      o open file  O open folder    22 recipes  ·  v[version]  ·  Los Angeles
