@@ -32,7 +32,6 @@
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
 | ISS-46 | The TUI's Open action uses the first folder for overwrite results                                     | tui         | Open                                             |
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
-| ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
 | ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
@@ -247,15 +246,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 - **Fix:** as on the homepage (#753): lazy below-the-fold images, `fetchPriority="high"` on the hero.
 - **Regression test:** extend `e2e/pages/homepage-loading.spec.ts`'s checks to a recipe page; the Lighthouse `lcp-discovery-insight` assertion already covers every recipe URL once its LCP is the image.
-
-### ISS-49: A half-written `.next-e2e` from an interrupted E2E run breaks the web build
-
-**Found:** October 24, 2026 (`task check` on `fix/homepage-lcp`).
-
-`apps/web/tsconfig.json:38-39` includes `.next-e2e/types/**/*.ts` and `.next-e2e/dev/types/**/*.ts`, the generated route types of the isolated E2E server (`E2E_PORT`, which sets `NEXT_DIST_DIR=.next-e2e`). When that server is stopped mid-write, `routes.d.ts` is left truncated, and the next `task check` fails in `@bnto/web#build` with `Type error: Expression expected` at `.next-e2e/dev/types/routes.d.ts:87`. Deleting the gitignored folder fixes it.
-
-- **Fix:** keep the E2E server's generated types out of the app's `tsconfig.json` (Next writes them for its own type-check), or have the isolated run clear `.next-e2e` when it starts.
-- **Regression test:** a truncated `.next-e2e/dev/types/routes.d.ts` doesn't fail `pnpm --filter @bnto/web build`.
 
 ### ISS-51: The Turbo-inputs check guards lint only, not test or build reads
 
