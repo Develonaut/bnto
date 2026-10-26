@@ -35,8 +35,6 @@
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
 | ISS-76 | A TUI whose terminal restore fails skips the kept-files report                                        | tui         | Open                                             |
-| ISS-77 | The TUI asks to allow a shell recipe's commands for a run it then refuses                             | tui         | Open                                             |
-| ISS-78 | The TUI never fills `{{vars.*}}`: a step gets the text as written                                     | tui         | Open                                             |
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
 | ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
 | ISS-83 | A `file-copy` whose source is gone says it failed to write the destination                            | engine      | Open                                             |
@@ -271,24 +269,6 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 
 - **Fix:** run the report whatever the restore returns (after it, so the warning lands on the normal screen), then return the restore error, or the run's error first if both failed.
 - **Regression test:** with a restore that fails, the kept-files report still runs.
-
-### ISS-77: The TUI asks to allow a shell recipe's commands for a run it then refuses
-
-**Found:** October 25, 2026 (fixing ISS-22).
-
-`bnto run` checks a run's `{{fields.*}}`, inputs and output folder before it asks to allow a shell recipe's commands (`engine/crates/bnto/src/run.rs:77-85`), so nobody approves a run that is then refused. The TUI asks first: `consent::gate` (`tui/app_helpers/consent.rs:13-20`) decides only whether the recipe is trusted, and the checks run after the user allows, on the bridge thread: inputs and the output folder in `try_run_bridge` (`tui/bridge.rs:121-123`), unfilled fields in the engine's pre-flight. For an untrusted shell recipe whose output folder names an unset secret, or with a field left empty, the TUI shows the consent prompt, and allowing it ends in an error. Nothing runs and no folder is made, so this is a wasted approval, not a safety gap.
-
-- **Fix:** run the same checks before `consent::gate` holds the run (the TUI knows the files and form values then), and show the refusal instead of the prompt. Preparing inputs walks picked folders, so keep it off the update thread (the bridge does it on its own thread today).
-- **Regression test:** an untrusted shell recipe whose output folder reads an undeclared `{{env.*}}` goes straight to the error, with no consent prompt.
-
-### ISS-78: The TUI never fills `{{vars.*}}`: a step gets the text as written
-
-**Found:** October 25, 2026 (cold review of the ISS-22 fix).
-
-Run vars (`--vars` files, `BNTO_VAR_<KEY>`) are the consumer's to fill ([recipe-fields.md](strategy/recipe-fields.md#active-namespaces)). `bnto run` and `bnto dry-run` do (`vars::apply`, `engine/crates/bnto/src/run.rs:274`, `inspect.rs:35`), and refuse an unset key. Nothing under `engine/crates/bnto/src/tui/` calls it, and the engine leaves a `{{vars.*}}` as written (`interpolated_value`, `bnto-core/src/executor/template.rs`, `_ => None`). So a recipe that `bnto run` fills from `BNTO_VAR_DRIVE` runs in the TUI with the literal text `{{vars.Drive}}` in its step's params, and in its output folder it's refused ("has no value") even with `BNTO_VAR_DRIVE` set.
-
-- **Fix:** fill vars in the TUI from `BNTO_VAR_<KEY>` (it has no `--vars` files), or refuse a run with any left, before consent.
-- **Regression test:** a TUI bridge run of a recipe whose step reads `{{vars.X}}`, with `BNTO_VAR_X` set, gets the value; with it unset, the run is refused naming `{{vars.X}}`.
 
 ### ISS-79: An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it
 

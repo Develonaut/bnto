@@ -6,6 +6,7 @@ use std::time::Instant;
 
 use super::finish::finish_run;
 use crate::tui::app::{AppMessage, AppModel, Screen, update};
+use crate::tui::app_helpers::consent;
 use crate::tui::bridge::{self, BridgeEvent};
 use crate::tui::screens::execution::{ExecutionMessage, ExecutionStatus};
 
@@ -15,6 +16,19 @@ pub(super) struct RunBridge {
     rx: Option<mpsc::Receiver<BridgeEvent>>,
     /// When the run started, for its elapsed timer.
     started: Option<Instant>,
+    /// The bridge's wait for consent: sent on once the user allows.
+    consent_reply: Option<mpsc::Sender<()>>,
+}
+
+#[cfg(test)]
+impl RunBridge {
+    /// A run whose bridge reports on `rx`, already started.
+    pub(super) fn listening(rx: mpsc::Receiver<BridgeEvent>) -> Self {
+        Self {
+            rx: Some(rx),
+            ..Self::default()
+        }
+    }
 }
 
 /// One frame of run upkeep: start the bridge, apply its events, tick the
@@ -24,6 +38,7 @@ pub(super) fn advance(model: AppModel, run: &mut RunBridge) -> AppModel {
         start_if_idle(&model, run);
     }
     let model = drain(model, run);
+    answer_consent(&model, run);
     let model = tick(model, run.started);
     if run.rx.is_some() && bridge_finished(&model) {
         release(run);
@@ -43,18 +58,40 @@ fn start_if_idle(model: &AppModel, run: &mut RunBridge) {
             exec.selected_files.clone(),
             exec.param_overrides.clone(),
             exec.preview_mode,
+            consent::consent_check(model, slug, &exec.definition_json),
         ));
         run.started = Some(Instant::now());
     }
 }
 
 /// Apply every event the bridge sent since the last frame (non-blocking).
+/// A request for consent leaves its reply with the run, to answer later.
 fn drain(mut model: AppModel, run: &mut RunBridge) -> AppModel {
     let Some(rx) = &run.rx else { return model };
-    while let Ok(event) = rx.try_recv() {
-        model = apply_bridge_event(model, event);
+    let events: Vec<BridgeEvent> = rx.try_iter().collect();
+    for event in events {
+        model = match event {
+            BridgeEvent::ConsentNeeded { request, reply } => {
+                run.consent_reply = Some(reply);
+                consent::hold(model, request)
+            }
+            event => apply_bridge_event(model, event),
+        };
     }
     model
+}
+
+/// Tell the waiting bridge to go on once the user has allowed the run. A
+/// declined run moves off the screen, and letting the bridge go drops the
+/// reply, which stops it.
+fn answer_consent(model: &AppModel, run: &mut RunBridge) {
+    let allowed = model
+        .execution
+        .as_ref()
+        .is_some_and(|e| e.status == ExecutionStatus::Idle);
+    if allowed && let Some(reply) = run.consent_reply.take() {
+        let _ = reply.send(());
+    }
 }
 
 /// The model after one bridge event. Progressive files are already on disk:
@@ -62,6 +99,8 @@ fn drain(mut model: AppModel, run: &mut RunBridge) -> AppModel {
 pub(super) fn apply_bridge_event(model: AppModel, event: BridgeEvent) -> AppModel {
     match event {
         BridgeEvent::Progress(pe) => update(model, bridge::map_pipeline_event(pe)),
+        // `drain` keeps the reply; one dropped here stops the run.
+        BridgeEvent::ConsentNeeded { request, .. } => consent::hold(model, request),
         BridgeEvent::Done(done) => finish_run(model, done),
         BridgeEvent::Error(error) => update(
             model,

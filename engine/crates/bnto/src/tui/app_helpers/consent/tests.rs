@@ -1,5 +1,8 @@
 // SEC-19: every TUI path that starts a run asks before an untrusted shell
-// recipe's commands run, and remembers the answer like `bnto run` does.
+// recipe's commands run, and remembers the answer like `bnto run` does. The
+// run's bridge asks once its checks pass (ISS-77); `would_ask` decides as it
+// does, from what each path hands it. The bridge's side is tested in
+// `tui/bridge.rs`, the event's in `tui/run_loop/tests.rs`.
 
 use std::collections::HashMap;
 
@@ -11,8 +14,10 @@ use super::super::super::screens::detail::DetailModel;
 use super::super::super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::super::super::screens::preview::PreviewModel;
 use super::super::super::theme::ThemeVariant;
+use super::{consent_check, hold};
 use crate::storage::paths::BntoPaths;
 use crate::trust::{TrustStore, definition_hash};
+use crate::trust_gate::{self, ConsentRequest};
 
 const SHELL_RECIPE: &str = r#"{
     "id": "probe", "type": "group", "version": "1.0.0", "name": "Probe",
@@ -64,10 +69,32 @@ fn key(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::NONE)
 }
 
+/// The consent the run's bridge would ask for, from what this run hands it.
+fn would_ask(model: &AppModel) -> Option<ConsentRequest> {
+    let exec = model.execution.as_ref().expect("a run");
+    let check = consent_check(model, &exec.slug, &exec.definition_json);
+    let store = TrustStore::load(&check.trusted_file);
+    trust_gate::consent_needed(&exec.definition_json, &exec.slug, check.bundled, &store)
+}
+
+/// The run held for consent, as the bridge's request does.
+fn held(model: AppModel) -> AppModel {
+    let request = would_ask(&model).expect("the run needs consent");
+    hold(model, request)
+}
+
+/// The run starts its bridge, which will ask before any command runs.
+fn asks_first(model: &AppModel) {
+    assert_eq!(status(model), ExecutionStatus::Idle);
+    assert!(would_ask(model).is_some(), "the run would start unasked");
+}
+
 #[test]
 fn running_an_untrusted_shell_recipe_waits_for_consent() {
     let (_dir, model) = model();
     let app = run_from_detail(model, "probe", SHELL_RECIPE, false);
+    asks_first(&app);
+    let app = held(app);
     assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
     let request = app.execution.as_ref().unwrap().consent.clone().unwrap();
     assert_eq!(request.commands, vec!["git --version"]);
@@ -78,7 +105,7 @@ fn previewing_an_untrusted_shell_recipe_waits_for_consent() {
     // Preview runs still execute shell steps.
     let (_dir, model) = model();
     let app = run_from_detail(model, "probe", SHELL_RECIPE, true);
-    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+    asks_first(&app);
 }
 
 #[test]
@@ -98,7 +125,7 @@ fn picking_files_for_an_untrusted_shell_recipe_waits_for_consent() {
             slug: "probe".into(),
         },
     );
-    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+    asks_first(&app);
 }
 
 #[test]
@@ -128,7 +155,7 @@ fn confirming_a_preview_of_an_untrusted_shell_recipe_waits_for_consent() {
             slug: "probe".into(),
         },
     );
-    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+    asks_first(&app);
 }
 
 #[test]
@@ -142,6 +169,7 @@ fn bundled_recipes_start_without_asking() {
         .clone();
     let app = run_from_detail(model, "download-video", &json, false);
     assert_eq!(status(&app), ExecutionStatus::Idle);
+    assert!(would_ask(&app).is_none());
 }
 
 #[test]
@@ -156,13 +184,13 @@ fn an_edited_copy_of_a_bundled_recipe_still_asks() {
         .clone();
     let edited = json.replace("yt-dlp", "evil-tool");
     let app = run_from_detail(model, "download-video", &edited, false);
-    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+    asks_first(&app);
 }
 
 #[test]
 fn allowing_starts_the_run_and_remembers_the_approval() {
     let (_dir, model) = model();
-    let app = run_from_detail(model, "probe", SHELL_RECIPE, false);
+    let app = held(run_from_detail(model, "probe", SHELL_RECIPE, false));
     let app = update(app, AppMessage::Execution(ExecutionMessage::AllowCommands));
     assert_eq!(status(&app), ExecutionStatus::Idle);
     let store = TrustStore::load(&app.paths.trusted_file());
@@ -170,13 +198,13 @@ fn allowing_starts_the_run_and_remembers_the_approval() {
 
     // The same definition runs straight away next time.
     let app = run_from_detail(app, "probe", SHELL_RECIPE, false);
-    assert_eq!(status(&app), ExecutionStatus::Idle);
+    assert!(would_ask(&app).is_none());
 }
 
 #[test]
 fn declining_returns_to_the_recipe_without_running() {
     let (_dir, model) = model();
-    let app = run_from_detail(model, "probe", SHELL_RECIPE, false);
+    let app = held(run_from_detail(model, "probe", SHELL_RECIPE, false));
     let app = update(app, AppMessage::Execution(ExecutionMessage::Cancel));
     assert!(matches!(app.screen, Screen::Detail { .. }));
     assert!(app.execution.is_none());
@@ -204,6 +232,9 @@ fn allow_does_nothing_unless_consent_is_pending() {
 fn y_allows_and_n_declines_only_while_consent_is_pending() {
     let (_dir, model) = model();
     let app = run_from_detail(model, "probe", SHELL_RECIPE, false);
+    // Not yet asked: the bridge is still checking the run.
+    assert!(handle_key(&app, key(KeyCode::Char('y'))).is_none());
+    let app = held(app);
     assert!(matches!(
         handle_key(&app, key(KeyCode::Char('y'))),
         Some(AppMessage::Execution(ExecutionMessage::AllowCommands))
@@ -243,7 +274,7 @@ fn the_shipped_recipe_starts_without_asking_when_a_library_copy_shares_its_slug(
     let shipped = shipped_download_video();
     let (_dir, model) = model_with_library_copy(&shipped.replace("yt-dlp", "my-dlp"));
     let app = run_from_detail(model, "download-video", &shipped, false);
-    assert_eq!(status(&app), ExecutionStatus::Idle);
+    assert!(would_ask(&app).is_none());
 }
 
 #[test]
@@ -251,5 +282,5 @@ fn a_library_copy_with_a_built_in_slug_still_asks() {
     let copy = shipped_download_video().replace("yt-dlp", "my-dlp");
     let (_dir, model) = model_with_library_copy(&copy);
     let app = run_from_detail(model, "download-video", &copy, false);
-    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+    asks_first(&app);
 }
