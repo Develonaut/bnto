@@ -6,11 +6,16 @@
 #
 # The one list both workflows use. Each surface lists what its jobs read,
 # root files included; scripts/ci/changed-surfaces.test.ts checks that every
-# `$TURBO_ROOT$` input and every root path the engine's Rust code reads is here.
+# `$TURBO_ROOT$` input, every root path the engine's Rust code reads, and
+# every scripts/ or recipes/ path a gated ci.yml job runs is here.
+# Callers diff with --no-renames, so a moved file's old path arrives too.
 
 # A change to CI or to this list runs every job it could break. --release
 # leaves this out: a release doesn't run ci.yml.
 SELF='^(\.github/workflows/ci\.yml|scripts/ci/changed-surfaces\.sh)$'
+
+# How every file checks out (line endings on Windows), for both surfaces.
+CHECKOUT='^\.gitattributes$'
 
 # The Rust jobs: the engine, the dogfood recipes its tests run, and the
 # shared fixtures its tests read.
@@ -33,7 +38,7 @@ ci_self() { [ "$mode" != --release ] && matches -e "$SELF"; }
 engine=false
 web=false
 convex=false
-if ci_self || matches -e "$ENGINE"; then engine=true; fi
-if ci_self || matches -e "$WEB" -e "$WEB_ROOT_INPUTS"; then web=true; fi
+if ci_self || matches -e "$ENGINE" -e "$CHECKOUT"; then engine=true; fi
+if ci_self || matches -e "$WEB" -e "$WEB_ROOT_INPUTS" -e "$CHECKOUT"; then web=true; fi
 if matches -e "$CONVEX"; then convex=true; fi
 printf 'engine=%s\nweb=%s\nconvex=%s\n' "$engine" "$web" "$convex"

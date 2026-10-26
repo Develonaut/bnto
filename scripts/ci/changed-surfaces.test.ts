@@ -74,6 +74,11 @@ describe("changed-surfaces.sh", () => {
       web: "true",
       convex: "false",
     });
+    assert.deepEqual(surfaces([".gitattributes"]), {
+      engine: "true",
+      web: "true",
+      convex: "false",
+    });
     assert.deepEqual(surfaces(["docs/notes.txt"]), {
       engine: "false",
       web: "false",
@@ -127,6 +132,9 @@ describe("changed-surfaces.sh", () => {
     for (const workflow of [".github/workflows/ci.yml", ".github/workflows/release.yml"]) {
       const source = readFileSync(workflow, "utf-8");
       assert.match(source, /scripts\/ci\/changed-surfaces\.sh/, workflow);
+      // Without it a moved file shows only its new path, and moving one out
+      // of a surface would skip that surface's jobs.
+      assert.match(source, /git diff --name-only --no-renames /, workflow);
       assert.doesNotMatch(source, /paths-filter|grep -qE? '\^/, workflow);
     }
   });

@@ -28,7 +28,8 @@ jobs:
       # run checks out the merge commit, whose first parent is main: diffing
       # against it is exactly the PR's change. A push diffs against the commit
       # before it, and with no usable base (a new branch) runs everything.
-      # `shell: bash` adds pipefail, so a failed diff or script fails this job
+      # --no-renames lists a moved file's old path too, so moving a file out of
+      # a surface still runs its jobs. `shell: bash` adds pipefail, so a failed diff or script fails this job
       # and the CI Gate, instead of writing no flags and skipping every job.
       - name: Determine changed surfaces
         id: filter
@@ -41,7 +42,7 @@ jobs:
             printf 'engine=true\nweb=true\nconvex=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git diff --name-only "$BASE" HEAD | sh scripts/ci/changed-surfaces.sh | tee -a "$GITHUB_OUTPUT"
+          git diff --name-only --no-renames "$BASE" HEAD | sh scripts/ci/changed-surfaces.sh | tee -a "$GITHUB_OUTPUT"
 
   # ── Rust CI (only when engine files changed) ──
   rust:

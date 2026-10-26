@@ -58,7 +58,8 @@ jobs:
             exit 0
           fi
           echo "Comparing $PREV_TAG..$GITHUB_REF_NAME"
-          CHANGED=$(git diff --name-only "$PREV_TAG"..HEAD)
+          # --no-renames: a file moved out of a surface counts for it too.
+          CHANGED=$(git diff --name-only --no-renames "$PREV_TAG"..HEAD)
           echo "$CHANGED"
 
           # The same list ci.yml uses (scripts/ci/changed-surfaces.sh). The
