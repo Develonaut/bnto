@@ -1161,18 +1161,56 @@ mod tests {
         handle.join().unwrap();
     }
 
+    /// An untrusted shell step whose arg is `arg`, with a field `title` that
+    /// has no default (so the run needs it filled).
+    fn shell_reading_json(arg: &str) -> String {
+        serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "say", "type": "shell-run",
+              "fields": { "title": { "type": "string", "label": "Title" } },
+              "parameters": { "command": "git", "args": [arg] } }
+        ] })
+        .to_string()
+    }
+
+    /// The events a run of `job` sends until its bridge ends. Fails if it
+    /// asks for consent; failing drops the request's reply, which stops it.
+    fn events_of(job: BridgeJob) -> Vec<BridgeEvent> {
+        let (rx, handle) = start(job);
+        let events = rx
+            .into_iter()
+            .inspect(|e| {
+                assert!(
+                    !matches!(e, BridgeEvent::ConsentNeeded { .. }),
+                    "asked first"
+                )
+            })
+            .collect();
+        handle.join().unwrap();
+        events
+    }
+
     #[test]
     fn an_unset_var_is_refused_before_consent() {
+        // A shell step reads it, so a check after consent would ask first.
         let trust = tempfile::tempdir().unwrap();
-        let mut job = untrusted_job(vars_prefix_recipe_json("Iss78Unset"), &trust);
-        let photo = trust.path().join("photo.txt");
-        fs::write(&photo, b"new").unwrap();
-        job.selected_files = vec![photo];
-        let (rx, handle) = start(job);
-        handle.join().unwrap();
-        let events: Vec<BridgeEvent> = rx.try_iter().collect();
+        let json = shell_reading_json("{{vars.Iss78Unset}}");
+        let events = events_of(untrusted_job(json, &trust));
         assert!(
             matches!(&events[..], [BridgeEvent::Error(e)] if e.contains("{{vars.Iss78Unset}}")),
+            "{events:?}"
+        );
+    }
+
+    #[test]
+    fn an_empty_field_is_refused_before_consent() {
+        let trust = tempfile::tempdir().unwrap();
+        let events = events_of(untrusted_job(
+            shell_reading_json("{{fields.title}}"),
+            &trust,
+        ));
+        assert!(
+            matches!(&events[..], [BridgeEvent::Error(e)] if e.contains("\"title\"")),
             "{events:?}"
         );
     }

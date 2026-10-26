@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-97**.
+- **IDs never get reused.** The next one is **ISS-98**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -51,6 +51,7 @@
 | ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
 | ISS-95 | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
 | ISS-96 | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
+| ISS-97 | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
 
 ---
 
@@ -418,3 +419,12 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** end the footer by the recipe's input mode, as `run_hint` does, from one shared function.
 - **Regression test:** a dry run of a `mode: "none"` recipe ends `Run with: bnto run <path>` with no placeholder; a file recipe ends `<files...>`.
+
+### ISS-97: The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have
+
+**Found:** October 26, 2026 (cold review of the ISS-77 fix).
+
+Since the ISS-77 fix the TUI refuses an empty field before consent with `refuse_unfilled` (`engine/crates/bnto/src/unfilled_fields.rs`), whose line reads `field "title" (node "say") is unset: pass -p title=...`. In the TUI a field is filled on the recipe's detail form, not with `-p`.
+
+- **Fix:** let the caller word the remedy (`-p title=...` for the CLI, "fill Title on the recipe's form" for the TUI), from one list of missing fields.
+- **Regression test:** a TUI bridge run with an empty field reports it without `-p`; `bnto run` still names `-p`.

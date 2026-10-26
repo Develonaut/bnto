@@ -234,7 +234,7 @@ src/
     +-- app.rs             # App state machine (Screen enum, AppModel, update())
     +-- app/               # AppMessage enum and AppModel construction
     +-- bridge.rs          # Pipeline execution bridge (engine -> TUI progress)
-    +-- bridge/            # Engine event mapping, output-file helpers, and the reporter that writes progressive copies
+    +-- bridge/            # Engine event mapping, output-file helpers, the reporter that writes progressive copies, and the checks a run passes before it asks for consent
     +-- config.rs          # Persistent settings (theme, output dir)
     +-- event.rs           # Terminal event polling
     +-- format.rs          # File size and path formatting
