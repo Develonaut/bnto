@@ -83,8 +83,12 @@ pub mod join;
 /// WASM bridge — JS-callable functions for file operations.
 pub mod wasm_bridge;
 
+mod held_sources;
+
 #[cfg(test)]
 mod changes_mid_run;
+#[cfg(test)]
+mod held_by;
 #[cfg(test)]
 mod time_runs_out;
 

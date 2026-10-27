@@ -1,8 +1,8 @@
 # Decision: file-copy refuses to replace a file the run still reads outside its batch
 
 **Created:** October 25, 2026
-**Status:** Decided by Ryan on October 25, 2026: option 1 (the executor tracks the files it still holds, and `file-copy` asks through a new `ProcessContext` method before replacing a file). Built on branch `design/iss-59`, which fixes ISS-59. Up-front refusals for `file-move` and `file-delete` are a later issue (ISS-82).
-**Applies to:** `engine/crates/bnto-core/src/executor/` (`held.rs`, `run_scope.rs`, `node_events.rs`, `container.rs`, `flow.rs`, `routed.rs`, `primitive.rs`, `mod.rs`), `bnto-core/src/context.rs` and `file_stamp.rs`, `bnto-file/src/copy.rs`, `copy_newer.rs`, `copy_batch/refusal.rs` and `readers.rs`. Related: ISS-60 (time limit), ISS-58 (loop `{{item.*}}`), [file-copy-batch.md](file-copy-batch.md).
+**Status:** Decided by Ryan on October 25, 2026: option 1 (the executor tracks the files it still holds, and `file-copy` asks through a new `ProcessContext` method before replacing a file). Built on branch `design/iss-59`, which fixes ISS-59. Up-front refusals for `file-move` and `file-delete` followed as ISS-82, now fixed: both ask `held_elsewhere` about each source (`bnto-file/src/held_sources.rs`).
+**Applies to:** `engine/crates/bnto-core/src/executor/` (`held.rs`, `run_scope.rs`, `node_events.rs`, `container.rs`, `flow.rs`, `routed.rs`, `primitive.rs`, `mod.rs`), `bnto-core/src/context.rs` and `file_stamp.rs`, `bnto-file/src/copy.rs`, `copy_newer.rs`, `copy_batch/refusal.rs` and `readers.rs`; for ISS-82, `bnto-file/src/held_sources.rs`, `move/mod.rs` and `delete/mod.rs`. Related: ISS-60 (time limit), ISS-58 (loop `{{item.*}}`), [file-copy-batch.md](file-copy-batch.md).
 
 ## The defect, reproduced
 
@@ -186,7 +186,7 @@ Order:
 2. **PR 2, ISS-60 (built):** the run's limit on `RunScope`, checked by `file-copy`, `file-move` and `file-delete` before each file. The method is named `check_time_limit`, after the executor's own check, rather than `time_is_up`. See engine-execution.md's [Run Time Limit](../strategy/engine-execution.md#run-time-limit-settingstimeout).
 3. **ISS-58:** independent; any time.
 
-Whether `file-move` and `file-delete` should also refuse a source `held_elsewhere` up front (rows 8 and 10) is logged as ISS-82. Nothing is lost there today, so it waits.
+Whether `file-move` and `file-delete` should also refuse a source `held_elsewhere` up front (rows 8 and 10) was logged as ISS-82 and is now done: rows 8 and 10 are refused before anything moves or is deleted, naming the file. An iteration's own file is out of its loop frame, so moving or deleting it stays allowed. One change from before: `loop { file-delete }` with one file given twice is now refused in the first iteration (the second iteration's slot holds it), where it used to delete it once and skip the second as missing. The flat recipe still does that (row 11), as the batch sees both items.
 
 ## What was built
 

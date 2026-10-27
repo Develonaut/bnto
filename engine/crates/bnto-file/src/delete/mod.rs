@@ -22,6 +22,8 @@ use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 use serde_json::{Map, Value};
 
+use crate::held_sources::{HINT, held_sources};
+use crate::relocate;
 use params::{DeleteParams, build_delete_parameters};
 use target::Target;
 
@@ -102,6 +104,7 @@ impl NodeProcessor for FileDelete {
         let params = DeleteParams::read(&input.params).map_err(BntoError::InvalidInput)?;
         let root = target::base_root(&params.base).map_err(BntoError::InvalidInput)?;
         let targets = plan(&input.files, &root, &params.base).map_err(BntoError::InvalidInput)?;
+        refuse_held(&targets, ctx)?;
         if !ctx.dry_run()
             && let Err((done, error)) = delete_all(&input.files, &targets, ctx)
         {
@@ -164,6 +167,23 @@ fn handed_over(
     BntoError::with_output(error, outputs(finished, &targets[..done]))
 }
 
+/// Refuse the batch when a later step still reads a file it would delete.
+fn refuse_held(targets: &[Target], ctx: &dyn ProcessContext) -> Result<(), BntoError> {
+    let paths = targets.iter().filter_map(|t| match t {
+        Target::File(path) => Some(path.as_path()),
+        Target::Missing => None,
+    });
+    let held = held_sources(paths, "deleted", ctx);
+    if held.is_empty() {
+        return Ok(());
+    }
+    let text = relocate::listing(&held, ("file", "files"));
+    // "This step": earlier loop iterations may have deleted files already.
+    Err(BntoError::InvalidInput(format!(
+        "File delete refused, this step deleted nothing: {text}\n  {HINT}"
+    )))
+}
+
 fn summary(deleted: usize, skipped: usize, base: &str, ctx: &dyn ProcessContext) -> String {
     let verb = if ctx.dry_run() {
         "Would delete"
@@ -213,6 +233,8 @@ fn outputs(files: Vec<BatchFile>, targets: &[Target]) -> NodeOutput {
 
 #[cfg(test)]
 mod failed_tests;
+#[cfg(test)]
+mod held_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

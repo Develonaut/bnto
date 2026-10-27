@@ -20,6 +20,7 @@ use bnto_core::processor::{
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
+use crate::held_sources::{HINT, held_sources};
 use crate::relocate::{self, Move};
 use params::{MoveParams, build_move_parameters};
 use plan::{Planned, refused};
@@ -97,6 +98,7 @@ impl NodeProcessor for FileMove {
         let planned = plan::plan(&input.files, &mut root).map_err(BntoError::InvalidInput)?;
         let moves = real_moves(&planned.moves);
         refuse_conflicts(&moves)?;
+        refuse_held(&moves, ctx)?;
         let moved = moves.len();
         if !ctx.dry_run()
             && let Err(stopped) = relocate::run_checked(moves, &|| ctx.check_time_limit())
@@ -116,6 +118,19 @@ fn refuse_conflicts(moves: &[Move]) -> Result<(), BntoError> {
     }
     let text = relocate::listing(&conflicts, ("conflict", "conflicts"));
     Err(BntoError::InvalidInput(refused(&text)))
+}
+
+/// Refuse the batch when a later step still reads a file it would move.
+fn refuse_held(moves: &[Move], ctx: &dyn ProcessContext) -> Result<(), BntoError> {
+    let held = held_sources(moves.iter().map(|m| m.src.as_path()), "moved", ctx);
+    if held.is_empty() {
+        return Ok(());
+    }
+    let text = relocate::listing(&held, ("file", "files"));
+    // "This step": earlier loop iterations may have moved files already.
+    Err(BntoError::InvalidInput(format!(
+        "File move refused, this step moved nothing: {text}\n  {HINT}"
+    )))
 }
 
 /// The moves that change a path (a file already in place stays put).
@@ -162,6 +177,8 @@ fn outputs(files: Vec<BatchFile>, planned: Planned, dry_run: bool) -> NodeOutput
 
 #[cfg(test)]
 mod failed_tests;
+#[cfg(test)]
+mod held_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

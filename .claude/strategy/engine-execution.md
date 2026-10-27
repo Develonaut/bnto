@@ -101,7 +101,7 @@ A batch node gets the files its level hands it, but the run can still hold other
 - `record_write(path)` and `recorded_writes()`: the files the run has written so far.
 - `check_time_limit()`: `BntoError::TimedOut` once the run has passed its time limit (see [Run Time Limit](#run-time-limit-settingstimeout)).
 
-`file-copy` refuses an `overwrite`/`newer` copy onto a held file, and once earlier copies have run, the refusal names them. In the browser nothing is ever held: it has no files on disk. Decision: [file-copy-held-files.md](../decisions/file-copy-held-files.md).
+`file-copy` refuses an `overwrite`/`newer` copy onto a held file, and once earlier copies have run, the refusal names them. `file-move` and `file-delete` refuse to move or delete a held file, before the step acts (ISS-82). A loop iteration's own file isn't held while it runs, so moving or deleting it stays allowed. In the browser nothing is ever held: it has no files on disk. Decision: [file-copy-held-files.md](../decisions/file-copy-held-files.md).
 
 ### Node Output Metadata
 
@@ -164,7 +164,7 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 - **Auto-iteration:** a branching level runs as linear segments, each through the existing chain or auto-iteration code. Fan-in and fan-out points are barriers like batch nodes, so adding a branch to an auto recipe changes where its per-file passes split.
 - **Events:** `PipelineStarted.nodes` lists nodes in execution order, and `node_index` is the execution position.
 
-**Watch for:** a step that moves or deletes a shared file (`file-move`, `file-delete`, an overwriting output) takes it from branches that run after it. They then fail naming the missing file (ISS-82). A `file-copy` that would replace a file a later branch still reads is refused before it copies anything (see "Files Held Outside a Step" above). A recipe saved by the frozen editor, which never writes edges, keeps its old edges when a node is added, so the run is refused, naming the unconnected node, until the editor wires edges.
+**Watch for:** a `file-move` or `file-delete` of a file a later branch still reads, and a `file-copy` that would replace one, are refused before the step acts (see "Files Held Outside a Step" above; ISS-59, ISS-82). An overwriting output still takes a shared file from branches that run after it, and they fail naming the missing file. A recipe saved by the frozen editor, which never writes edges, keeps its old edges when a node is added, so the run is refused, naming the unconnected node, until the editor wires edges.
 
 ### Run Time Limit (`settings.timeout`)
 
