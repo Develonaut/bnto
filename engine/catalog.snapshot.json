@@ -1018,7 +1018,7 @@
         {
           "name": "overlay",
           "label": "Overlay Image",
-          "description": "The image to overlay (base64-encoded).",
+          "description": "The image to overlay.",
           "paramType": {
             "type": "file",
             "accept": [
@@ -3601,7 +3601,7 @@
         {
           "name": "overlay",
           "label": "Overlay Image",
-          "description": "The image to overlay (base64-encoded).",
+          "description": "The image to overlay.",
           "paramType": {
             "type": "file",
             "accept": [

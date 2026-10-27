@@ -42,7 +42,7 @@ export const imageOverlayNodeSchema: NodeSchema = {
   params: {
     overlay: {
       label: "Overlay Image",
-      description: "The image to overlay (base64-encoded).",
+      description: "The image to overlay.",
     },
     position: {
       label: "Position",

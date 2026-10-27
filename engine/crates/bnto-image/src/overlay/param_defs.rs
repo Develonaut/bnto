@@ -46,7 +46,7 @@ fn overlay_param() -> ParameterDef {
     ParameterDef {
         name: "overlay".to_string(),
         label: "Overlay Image".to_string(),
-        description: "The image to overlay (base64-encoded).".to_string(),
+        description: "The image to overlay.".to_string(),
         param_type: ParameterType::File {
             accept: vec![
                 "image/png".to_string(),

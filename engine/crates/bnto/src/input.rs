@@ -195,7 +195,8 @@ pub(crate) fn apply_param_overrides(
     overrides: &[String],
     default_node_id: Option<&str>,
 ) -> Result<(), String> {
-    let registry = bnto_engine::create_registry();
+    // Built only when a raw param needs its type looked up.
+    let registry = std::cell::OnceCell::new();
     for entry in overrides {
         let target = unnamed_target(def, entry, default_node_id)?;
         let (node_id, key, value) = parse_override(entry, target.as_deref())?;
@@ -221,10 +222,11 @@ pub(crate) fn apply_param_overrides(
 /// `None` to keep the text as given.
 fn raw_param_value(
     def: &PipelineDefinition,
-    registry: &bnto_core::NodeRegistry,
+    registry: &std::cell::OnceCell<bnto_core::NodeRegistry>,
     (node_id, key): (&str, &str),
     value: &str,
 ) -> Result<Option<serde_json::Value>, String> {
+    let registry = registry.get_or_init(bnto_engine::create_registry);
     let read = crate::file_param::read_file_param(&def.nodes, registry, node_id, key, value)?;
     Ok(read.map(serde_json::Value::String))
 }

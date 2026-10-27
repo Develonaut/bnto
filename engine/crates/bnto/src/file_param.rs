@@ -4,7 +4,7 @@
 
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
-use bnto_core::metadata::ParameterType;
+use bnto_core::metadata::{ParameterDef, ParameterType};
 use bnto_core::{NodeRegistry, PipelineNode};
 
 /// The value `-p node_id:key=value` gives a param `node_id`'s type declares
@@ -20,24 +20,28 @@ pub fn read_file_param(
     let Some(node) = find_node(nodes, node_id) else {
         return Ok(None);
     };
-    if !is_file_param(registry, node, key) {
+    let Some(def) = file_param_def(registry, node, key) else {
         return Ok(None);
-    }
-    let bytes = std::fs::read(value)
-        .map_err(|e| format!("--param {node_id}:{key}: can't read {value}: {e}"))?;
+    };
+    // Worded like the engine's own param refusals, with no CLI flag in it:
+    // the TUI's form fills params through the same overrides.
+    let bytes = std::fs::read(value).map_err(|e| {
+        format!(
+            "Node '{node_id}': param \"{key}\" ({}): can't read {value}: {e}",
+            def.label
+        )
+    })?;
     Ok(Some(BASE64.encode(bytes)))
 }
 
-/// True when `node`'s type declares `key` as a file param.
-fn is_file_param(registry: &NodeRegistry, node: &PipelineNode, key: &str) -> bool {
-    let Some(processor) = registry.resolve(&node.node_type, &node.params) else {
-        return false;
-    };
+/// `key`'s definition when `node`'s type declares it as a file param.
+fn file_param_def(registry: &NodeRegistry, node: &PipelineNode, key: &str) -> Option<ParameterDef> {
+    let processor = registry.resolve(&node.node_type, &node.params)?;
     processor
         .metadata()
         .parameters
-        .iter()
-        .any(|def| def.name == key && matches!(def.param_type, ParameterType::File { .. }))
+        .into_iter()
+        .find(|def| def.name == key && matches!(def.param_type, ParameterType::File { .. }))
 }
 
 /// The node `-p` sets for `id`: the first in order, each node's children
@@ -115,7 +119,10 @@ mod tests {
         )
         .unwrap_err();
 
-        assert!(err.starts_with("--param wm:overlay: can't read "), "{err}");
+        assert!(
+            err.starts_with("Node 'wm': param \"overlay\" (Overlay Image): can't read "),
+            "{err}"
+        );
         assert!(err.contains("missing.png"), "{err}");
     }
 }

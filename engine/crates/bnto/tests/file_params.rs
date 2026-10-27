@@ -20,19 +20,28 @@ fn watermark(out: &tempfile::TempDir, params: &[&str]) -> std::process::Output {
     cmd.output().unwrap()
 }
 
-#[test]
-fn test_overlay_param_takes_a_path() {
+/// The one image `watermark` writes into a fresh folder.
+fn watermarked(params: &[&str]) -> Vec<u8> {
     let out = tempfile::tempdir().unwrap();
-    let overlay = format!("overlay:overlay={}", fixture_image("small.png"));
-
-    let output = watermark(&out, &[&overlay]);
-
+    let output = watermark(&out, params);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "stderr: {stderr}");
     let files = output_files(&out);
     assert_eq!(files.len(), 1, "one watermarked image");
-    let written = std::fs::read(files[0].path()).unwrap();
+    std::fs::read(files[0].path()).unwrap()
+}
+
+#[test]
+fn test_overlay_param_takes_a_path() {
+    let overlay = format!("overlay:overlay={}", fixture_image("small.png"));
+
+    let written = watermarked(&[&overlay]);
+    // At opacity 0 the overlay is invisible, so a file that differs from
+    // that run's shows the overlay read from the path was drawn.
+    let invisible = watermarked(&[&overlay, "overlay:opacity=0"]);
+
     assert_eq!(&written[..3], &[0xFF, 0xD8, 0xFF], "JPEG magic bytes");
+    assert_ne!(written, invisible, "the overlay is drawn on the image");
 }
 
 #[test]
@@ -55,7 +64,8 @@ fn test_overlay_path_that_is_missing_is_refused_naming_it() {
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "a missing overlay fails the run");
     assert!(
-        stderr.contains("--param overlay:overlay") && stderr.contains("missing.png"),
+        stderr.contains("param \"overlay\" (Overlay Image): can't read")
+            && stderr.contains("missing.png"),
         "names the param and the path: {stderr}"
     );
     assert!(!out.exists(), "refused before the output folder is made");
