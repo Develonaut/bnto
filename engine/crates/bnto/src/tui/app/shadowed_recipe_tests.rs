@@ -46,6 +46,7 @@ fn opening_it_from_the_recipes_pane_opens_the_shipped_recipe() {
         .iter()
         .position(|r| r.slug == SLUG)
         .unwrap();
+    // A position in the shown list (`filtered`), which starts as every recipe in order.
     app.home.recipes_cursor = index;
     let app = update(app, AppMessage::HomeConfirm);
     let detail = app.detail.expect("detail opened");

@@ -134,7 +134,7 @@ pub fn update(model: HomeModel, msg: HomeMessage, recipes: usize) -> HomeModel {
                 recipes_cursor: (model.recipes_cursor.min(recipes - 1) + 1) % recipes,
                 ..model
             },
-            _ => model, // No-op on action panes or empty library
+            _ => model, // No-op on action panes, or an empty Library or Recipes pane
         },
         HomeMessage::CursorUp => match model.focused {
             HomePane::Library if !model.library_names.is_empty() => {
