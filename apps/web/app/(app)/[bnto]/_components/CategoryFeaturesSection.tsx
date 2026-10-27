@@ -41,6 +41,7 @@ export function CategoryFeaturesSection({ category, runsInBrowser }: CategoryFea
             <img
               src={getCategoryMascot(category)}
               alt=""
+              loading="lazy"
               className="w-auto self-start"
               style={{ height: 140 }}
               aria-hidden
