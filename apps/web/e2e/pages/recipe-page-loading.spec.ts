@@ -30,7 +30,7 @@ for (const { path, hero } of PAGES) {
         .locator('link[rel="preload"][as="image"]')
         .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
 
-      expect([...new Set(preloads)].sort()).toEqual([LOGO, hero].sort());
+      expect([...preloads].sort()).toEqual([LOGO, hero].sort());
     });
 
     test("fetches the hero mascot at high priority", async ({ page }) => {
