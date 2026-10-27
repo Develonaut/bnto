@@ -148,16 +148,16 @@ fn delete_all(
     Ok(())
 }
 
-/// `error`, carrying the first `done` items when the run's time ran out, as
-/// a per-file node hands over the files it finished. A failed delete hands
-/// over nothing, as before (ISS-87).
+/// `error`, carrying the first `done` items, as a per-file node hands over
+/// the files it finished: out of time (ISS-60) or after a failed delete
+/// (ISS-87).
 fn handed_over(
     error: BntoError,
     files: Vec<BatchFile>,
     targets: &[Target],
     done: usize,
 ) -> BntoError {
-    if done == 0 || !error.is_timeout() {
+    if done == 0 {
         return error;
     }
     let finished = files.into_iter().take(done).collect();
@@ -211,6 +211,8 @@ fn outputs(files: Vec<BatchFile>, targets: &[Target]) -> NodeOutput {
     NodeOutput { files, metadata }
 }
 
+#[cfg(test)]
+mod failed_tests;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

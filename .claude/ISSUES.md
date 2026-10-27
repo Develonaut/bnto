@@ -16,7 +16,7 @@ Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue
 
 | #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Engine file operations     | ISS-87, ISS-82                                         | Follow-ups to the file-safety work (ISS-59, ISS-60)                                                                                                                                                                                                                                                             |
+| 1   | Engine file operations     | ISS-82                                                 | Follow-ups to the file-safety work (ISS-59, ISS-60)                                                                                                                                                                                                                                                             |
 | 2   | TUI correctness            | ISS-98, ISS-66, ISS-97                                 | ISS-98 loses unsaved edits; ISS-66 hides the cursor; ISS-97 points TUI users at a CLI flag                                                                                                                                                                                                                      |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
 | 4   | Engine file naming         | ISS-17, ISS-33, ISS-34                                 | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33)                                                                                                  |
@@ -63,7 +63,6 @@ Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue
 | ISS-84 | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
 | ISS-85 | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
 | ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
-| ISS-87 | `file-move`/`file-delete` hand over nothing when a move or delete fails partway                       | engine      | Open                                             |
 | ISS-88 | `FileUpload` context errors and two web comments name dot-notation components                         | ui          | Open                                             |
 | ISS-89 | In a fresh worktree, `task seo:audit` fails at the first URL with no hint: there's no `.env.local`    | tooling     | Open                                             |
 | ISS-90 | `@bnto/form` exports `FormStoreProvider` and four hooks nothing outside it uses                       | form        | Open                                             |
@@ -321,15 +320,6 @@ Formatting is applied only by the pre-commit hook (`prettier --write {staged_fil
 
 - **Fix:** format the files in one PR, then add `pnpm format:check` (or a narrower glob) to `task check` and CI's TypeScript job.
 - **Regression test:** an unformatted file fails `task check` and CI.
-
-### ISS-87: `file-move`/`file-delete` hand over nothing when a move or delete fails partway
-
-**Found:** October 25, 2026 (fixing ISS-60, which makes both hand over what they finished when the run's time runs out).
-
-A batch node that fails partway can hand its finished files to the run's closing steps with `BntoError::with_output`, as a per-file node's are (engine-execution.md, "Closing Steps"). `file-copy` does for any failure (`copy_batch::copy_each`). `file-move` and `file-delete` do only for the time limit: a rename that fails after others ran ("Stopped: <dest> now exists", `relocate::run_checked` returning `Stopped::Failed`, mapped in `engine/crates/bnto-file/src/move/stopped.rs`) or a `remove_file` that fails after earlier deletes (`delete/mod.rs`, `handed_over` keeps only a timeout's items) fails with no output. A closing step that logs what was moved or deleted then gets no files, though some were.
-
-- **Fix:** hand over the files under the destination (move) and the items finished (delete) for any failure after work began, as for the timeout.
-- **Regression test:** a `file-move` whose second rename finds its target taken, and a `file-delete` whose second delete fails, each fail handing over the first file.
 
 ### ISS-88: `FileUpload` context errors and two web comments name dot-notation components
 

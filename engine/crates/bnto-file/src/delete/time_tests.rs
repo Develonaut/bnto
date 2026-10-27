@@ -13,7 +13,7 @@ use super::FileDelete;
 use crate::time_runs_out::TimeRunsOut;
 
 /// A temp dir whose `base/` holds `a.txt`, `b.txt` and `c.txt`.
-fn three_files() -> tempfile::TempDir {
+pub(super) fn three_files() -> tempfile::TempDir {
     let tmp = tempfile::tempdir().unwrap();
     let base = tmp.path().join("base");
     std::fs::create_dir_all(&base).unwrap();
@@ -24,7 +24,11 @@ fn three_files() -> tempfile::TempDir {
 }
 
 /// Delete `names` under `base`, each an item named by its relative path.
-fn run(base: &Path, names: &[&str], ctx: &dyn ProcessContext) -> Result<NodeOutput, BntoError> {
+pub(super) fn run(
+    base: &Path,
+    names: &[&str],
+    ctx: &dyn ProcessContext,
+) -> Result<NodeOutput, BntoError> {
     let files = names
         .iter()
         .map(|name| BatchFile {
@@ -40,7 +44,7 @@ fn run(base: &Path, names: &[&str], ctx: &dyn ProcessContext) -> Result<NodeOutp
     FileDelete::new().process_batch(input, &ProgressReporter::new_noop(), ctx)
 }
 
-fn names(output: &NodeOutput) -> Vec<&str> {
+pub(super) fn names(output: &NodeOutput) -> Vec<&str> {
     output.files.iter().map(|f| f.filename.as_str()).collect()
 }
 

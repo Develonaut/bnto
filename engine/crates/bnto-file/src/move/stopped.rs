@@ -1,6 +1,7 @@
-// The error of a file-move batch that stopped partway. Out of time (ISS-60),
-// it hands over the files that ended up under the destination, as a per-file
-// node hands over the files it made before a failure.
+// The error of a file-move batch that stopped partway, out of time (ISS-60)
+// or on a failed rename (ISS-87): it hands over the files that ended up under
+// the destination, as a per-file node hands over the files it made before a
+// failure.
 
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -12,10 +13,10 @@ use super::outputs;
 use super::plan::Planned;
 use crate::relocate::Stopped;
 
-/// The batch's error. A failed move hands over nothing, as before.
+/// The batch's error, carrying the files already at their destination.
 pub(super) fn handed_over(stopped: Stopped, files: Vec<BatchFile>, planned: Planned) -> BntoError {
     let (error, moved) = match stopped {
-        Stopped::Failed(why) => return BntoError::ProcessingFailed(why),
+        Stopped::Failed { why, moved } => (BntoError::ProcessingFailed(why), moved),
         Stopped::Halted { error, moved } => (error, moved),
     };
     let (files, planned) = landed(files, planned, &moved.into_iter().collect());

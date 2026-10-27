@@ -85,7 +85,7 @@ src/
 │   ├── params.rs           # Parameter schema + typed reads
 │   ├── plan.rs             # Names → moves; refuses absolute, `..`, bad names
 │   ├── root.rs             # Destination resolution, folder/link/drive checks
-│   └── stopped.rs          # A stopped batch's error; out of time, the files under the destination
+│   └── stopped.rs          # A stopped batch's error: the files under the destination (out of time or a failed rename)
 ├── readers.rs        # Which files a batch reads from a destination (file-copy, output write)
 ├── relocate/         # Conflict check, ordered rename runner (optionally checked between moves), parked-file list (file-move, output overwrite)
 └── wasm_bridge.rs    # #[wasm_bindgen] bridge functions

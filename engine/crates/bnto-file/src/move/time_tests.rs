@@ -14,7 +14,7 @@ use super::FileMove;
 use crate::time_runs_out::TimeRunsOut;
 
 /// A temp dir holding `files` (relative path, content).
-fn dir_with(files: &[(&str, &str)]) -> tempfile::TempDir {
+pub(super) fn dir_with(files: &[(&str, &str)]) -> tempfile::TempDir {
     let tmp = tempfile::tempdir().unwrap();
     for (name, content) in files {
         let path = tmp.path().join(name);
@@ -25,7 +25,7 @@ fn dir_with(files: &[(&str, &str)]) -> tempfile::TempDir {
 }
 
 /// Move `(source, name)` pairs inside `dir` to names under `dir/dest`.
-fn run(
+pub(super) fn run(
     dir: &Path,
     moves: &[(&str, &str)],
     ctx: &dyn ProcessContext,
@@ -46,11 +46,11 @@ fn run(
     FileMove::new().process_batch(input, &ProgressReporter::new_noop(), ctx)
 }
 
-fn names(output: &NodeOutput) -> Vec<&str> {
+pub(super) fn names(output: &NodeOutput) -> Vec<&str> {
     output.files.iter().map(|f| f.filename.as_str()).collect()
 }
 
-fn read(path: &Path) -> String {
+pub(super) fn read(path: &Path) -> String {
     std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
 }
 
