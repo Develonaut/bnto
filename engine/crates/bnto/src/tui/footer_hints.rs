@@ -44,7 +44,7 @@ const SEARCH: &[Hint] = &[("Enter", "open"), ("Esc", "done"), ("Ctrl+U", "clear"
 const PICKER_SEARCH: &[Hint] = &[("Esc", "done"), ("Ctrl+U", "clear")];
 
 /// The editor's add-a-node picker: typing filters it.
-const NODE_PICKER: &[Hint] = &[("↑↓", "choose"), ("Enter", "add"), ("Esc", "cancel")];
+const NODE_PICKER: &[Hint] = &[("Enter", "add"), ("Esc", "cancel"), ("↑↓", "choose")];
 
 /// The keys of a mode that replaces the screen's, if one is active.
 fn mode_hints(model: &AppModel) -> Option<Vec<Hint>> {
@@ -227,7 +227,59 @@ mod tests {
         let mut exec = crate::tui::screens::execution::ExecutionModel::new("s");
         exec.status = ExecutionStatus::Failed;
         app.execution = Some(exec);
-        assert_eq!(keys(&footer_hints(&app)), ["Enter", "Esc", "q"]);
+        let hints = footer_hints(&app);
+        assert_eq!(
+            hints,
+            [("Enter", "continue"), ("Esc", "back"), ("q", "quit")]
+        );
+    }
+
+    #[test]
+    fn a_cancelled_run_offers_back() {
+        let (_tmp, mut app) = model(Screen::Execution {
+            slug: "s".into(),
+            from: DetailOrigin::Home,
+        });
+        let mut exec = crate::tui::screens::execution::ExecutionModel::new("s");
+        exec.status = ExecutionStatus::Cancelled;
+        app.execution = Some(exec);
+        assert_eq!(footer_hints(&app), [("Esc", "back"), ("q", "quit")]);
+    }
+
+    /// A one-field form, its field being edited.
+    fn editing_form() -> tonkotsu::FormModel {
+        let form = tonkotsu::FormModel::new(vec![tonkotsu::text("Name").build()]);
+        tonkotsu::update(form, tonkotsu::FormMessage::StartEdit)
+    }
+
+    #[test]
+    fn an_editor_field_being_edited_shows_tonkotsus_keys() {
+        let (_tmp, mut app) = editing();
+        app.editor.as_mut().unwrap().active_form =
+            Some(crate::tui::screens::editor_bridge::ActiveNodeForm {
+                node_index: 0,
+                params: vec![],
+                form: editing_form(),
+            });
+        assert_eq!(footer_hints(&app), [("Enter", "save"), ("Esc", "cancel")]);
+    }
+
+    #[test]
+    fn a_wizard_field_being_edited_shows_tonkotsus_keys() {
+        let (_tmp, mut app) = model(Screen::Wizard {
+            from: DetailOrigin::Home,
+        });
+        let mut wizard = crate::tui::screens::wizard::WizardModel::new(&app.registry);
+        wizard.form = Some(editing_form());
+        app.wizard = Some(wizard);
+        assert_eq!(footer_hints(&app), [("Enter", "save"), ("Esc", "cancel")]);
+    }
+
+    #[test]
+    fn a_library_search_shows_the_search_keys() {
+        let (_tmp, mut app) = library();
+        app.library.as_mut().unwrap().searching = true;
+        assert_eq!(footer_hints(&app), SEARCH);
     }
 
     #[test]

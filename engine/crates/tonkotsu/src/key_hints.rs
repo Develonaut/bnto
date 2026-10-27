@@ -9,16 +9,18 @@ use crate::form::FormModel;
 /// A key and what it does, as a footer shows them.
 pub type KeyHint = (&'static str, &'static str);
 
+// Each set lists its commit and cancel keys first: a narrow footer drops
+// hints from the end, so those two outlast the rest.
 const TEXT: &[KeyHint] = &[("Enter", "save"), ("Esc", "cancel")];
-const TEXT_AREA: &[KeyHint] = &[("Ctrl+D", "save"), ("Enter", "new line"), ("Esc", "cancel")];
-const SELECT: &[KeyHint] = &[("↑↓", "choose"), ("Enter", "pick"), ("Esc", "cancel")];
-const MULTI_SELECT: &[KeyHint] = &[("Space", "toggle"), ("Enter", "done"), ("Esc", "cancel")];
+const TEXT_AREA: &[KeyHint] = &[("Ctrl+D", "save"), ("Esc", "cancel"), ("Enter", "new line")];
+const SELECT: &[KeyHint] = &[("Enter", "pick"), ("Esc", "cancel"), ("↑↓", "choose")];
+const MULTI_SELECT: &[KeyHint] = &[("Enter", "done"), ("Esc", "cancel"), ("Space", "toggle")];
 const FILE_PATH: &[KeyHint] = &[
-    ("↑↓", "navigate"),
-    ("l", "open"),
-    ("h", "parent"),
     ("Space", "pick"),
     ("Esc", "cancel"),
+    ("l", "open"),
+    ("h", "parent"),
+    ("↑↓", "navigate"),
 ];
 
 /// The keys the focused field takes in its editing state, or `None` when no
@@ -38,7 +40,7 @@ pub fn key_hints(model: &FormModel) -> Option<&'static [KeyHint]> {
 mod tests {
     use super::*;
     use crate::FieldBuilder;
-    use crate::field::{file_path, multiselect, select, text, textarea};
+    use crate::field::{file_path, multiselect, number, select, text, textarea};
     use crate::form::FormMessage;
     use crate::keys::map_key_event;
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -79,6 +81,7 @@ mod tests {
     fn every_hinted_key_does_something_in_its_state() {
         let fields = [
             text("Name"),
+            number("Count"),
             textarea("Notes"),
             select("Kind", OPTIONS),
             multiselect("Tags", OPTIONS),

@@ -16,7 +16,7 @@ Each screen hard-coded its whole hint list in `Screen::help_hints`. Keys that wo
 2. **Then the base keys** (`BASE`: `q quit`), which work on every screen.
 3. **Except where a mode takes every key.** The key router's own test (`keys::captures_keys`, the `capturing_handler` that sends every key to a search box, a question or a field being edited) decides it, so the footer can't disagree with the keys: in a search box `q` is typed, and in a question it's no answer.
 
-The footer drops hints from the end when it's narrow, so the screen's or mode's keys outlast the base ones. At 80 columns the status leaves about 25 columns, so a mode's hints are kept short (`y save  n discard  Esc stay`, `y allow  n/Esc cancel`) to fit whole.
+The footer drops hints from the end when it's narrow, so the screen's or mode's keys outlast the base ones. At 80 columns the status leaves about 28 columns. So a mode lists its commit and cancel keys first (`Enter pick  Esc cancel  ↑↓ choose`, `Space pick  Esc cancel  l open…`), and what drops is navigation or a convenience key; the short sets (`y save  n discard  Esc stay`) fit whole.
 
 ## Extending it
 

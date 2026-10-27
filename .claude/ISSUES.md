@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-103**.
+- **IDs never get reused.** The next one is **ISS-104**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
@@ -16,15 +16,15 @@ Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue
 
 Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102). Batches keep their numbers.
 
-| #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
-| --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
-| 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                        | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                              |
-| 5   | Engine templating          | ISS-35, ISS-58                                         | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                |
-| 6   | Small code cleanups        | ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | Dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag                                                                                                                                                                                            |
-| 7   | Tooling and tests          | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18  | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                           |
-| 8   | Analytics                  | ISS-29, ISS-57, ISS-70                                 | Exception capture off and runs without one outcome event (ISS-29); a wrong `out_of_memory` category (ISS-57); recipe-page downloads never recorded (ISS-70)                                                                                                                                                     |
-| 9   | Web performance            | ISS-99, ISS-37                                         | Public pages render per request (ISS-99); the homepage's ~500 KB of JS (ISS-37). Larger and riskier, so last                                                                                                                                                                                                    |
+| #   | Batch                      | Issues                                                          | Why                                                                                                                                                                                                                                                                                                             |
+| --- | -------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                          | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
+| 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                                 | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                              |
+| 5   | Engine templating          | ISS-35, ISS-58                                                  | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                |
+| 6   | Small code cleanups        | ISS-103, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag                                                                                                                                              |
+| 7   | Tooling and tests          | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18           | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                           |
+| 8   | Analytics                  | ISS-29, ISS-57, ISS-70                                          | Exception capture off and runs without one outcome event (ISS-29); a wrong `out_of_memory` category (ISS-57); recipe-page downloads never recorded (ISS-70)                                                                                                                                                     |
+| 9   | Web performance            | ISS-99, ISS-37                                                  | Public pages render per request (ISS-99); the homepage's ~500 KB of JS (ISS-37). Larger and riskier, so last                                                                                                                                                                                                    |
 
 **Waiting on Ryan:**
 
@@ -72,6 +72,7 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-96  | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
 | ISS-99  | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
 | ISS-100 | `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files   | engine      | Open                                             |
+| ISS-103 | The TUI editor's node picker can't filter by `j` or `k`: they move the cursor                         | tui         | Open                                             |
 
 ---
 
@@ -403,3 +404,12 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** say "this step moved nothing" in `refused`, or name the moves earlier iterations made, as `file-copy` names earlier copies (`copy_batch/refusal.rs`, `recorded_writes`); the second needs the run to record moves.
 - **Regression test:** the loop above fails without claiming nothing moved, and `O/b.txt` holds `b.txt`'s content.
+
+### ISS-103: The TUI editor's node picker can't filter by `j` or `k`: they move the cursor
+
+**Found:** October 27, 2026 (cold review of the ISS-102 fix).
+
+In the editor's add-a-node picker, typing filters the node list (`PickerInput`). But `keys/editor.rs`'s picker branch matches `KeyCode::Down | KeyCode::Char('j')` and `KeyCode::Up | KeyCode::Char('k')` before `KeyCode::Char(ch)`, so `j` and `k` move the cursor and never reach the filter: a search for "json" or "mkdir" can't be typed.
+
+- **Fix:** in the picker, only the arrow keys move the cursor; every character goes to the filter.
+- **Regression test:** with the picker open, `j` adds "j" to the filter and Down moves the cursor.
