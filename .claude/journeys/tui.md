@@ -1,8 +1,8 @@
 # TUI — User Journey Test Matrix
 
 **Domain:** `bnto tui`, the terminal UI. Covers home, library, recipe detail, file picking, consent, live execution and results.
-**Status:** Snapshots (#681) and journeys TJ1–TJ3, TJ5, TJ6 and TJ10–TJ14 run on every PR in the CI Gate. The other journeys are planned.
-**Last Updated:** October 25, 2026
+**Status:** Snapshots (#681) and journeys TJ1–TJ3, TJ5, TJ6 and TJ10–TJ15 run on every PR in the CI Gate. The other journeys are planned.
+**Last Updated:** October 27, 2026
 
 ---
 
@@ -54,7 +54,8 @@ Every journey runs with temp `HOME`, `BNTO_HOME` and config dirs, and never touc
 | TJ6  | A message recipe shows its message  | A library recipe whose output is a message (`fixtures/tui/report.bnto.json`), Run, allow                                                       | The results screen shows "Nothing to report." under the output's label. (Used keep-awake's Check status until PR 6 made keep-awake macOS-only.)                    | `tj6_a_message_recipe_shows_its_message`                                                                      |
 | TJ14 | A run keeps the recipe's folder     | A library recipe writing to `BNTO_HOME/output/kept`, which already holds `notes.txt` and an old `renamed-report.txt`; select `report.txt`, Run | The results list `renamed-report.txt` and not `notes.txt`; `notes.txt` is untouched and only `renamed-report.txt` is replaced (ISS-21)                             | `tj14_a_run_keeps_what_is_already_in_the_recipes_folder`                                                      |
 | TJ9  | A failing step                      | Run a recipe whose command exits non-zero                                                                                                      | Failed state names the step, the error and the last output lines; Esc returns to the detail                                                                        | Planned                                                                                                       |
-| TJ10 | Upgrade notice                      | Launch with a seeded newer-version cache                                                                                                       | Status line shows `bnto X available, run bnto upgrade`                                                                                                             | `tj10_a_newer_release_shows_in_the_status_line`                                                               |
+| TJ10 | Upgrade notice                      | Launch with a seeded newer-version cache                                                                                                       | Status line shows `bnto X available, U to upgrade`                                                                                                                 | `tj10_a_newer_release_shows_in_the_status_line`                                                               |
+| TJ15 | U upgrades                          | Launch with a seeded newer-version cache and a local index, press U                                                                            | The TUI closes and `bnto upgrade` runs in the terminal (the test binary isn't a cargo install, so it explains how to upgrade; nothing installs)                    | `tj15_u_closes_the_tui_and_upgrades`                                                                          |
 
 ## Known gaps
 

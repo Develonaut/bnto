@@ -7,9 +7,10 @@ pub fn notice(current: Version, latest: Version) -> String {
     format!("bnto {latest} is available (you have {current}). Run `bnto upgrade`.")
 }
 
-/// The TUI status line's form: "bnto 0.17.0 available, run bnto upgrade".
+/// The TUI status line's form: "bnto 0.17.0 available, U to upgrade".
+/// U closes the TUI and runs `bnto upgrade` (`tui/keys/mod.rs`).
 pub fn tui_notice(latest: Version) -> String {
-    format!("bnto {latest} available, run bnto upgrade")
+    format!("bnto {latest} available, U to upgrade")
 }
 
 #[cfg(test)]
@@ -20,7 +21,7 @@ mod tests {
     fn the_tui_form_fits_a_status_line() {
         assert_eq!(
             tui_notice(Version(0, 17, 0)),
-            "bnto 0.17.0 available, run bnto upgrade"
+            "bnto 0.17.0 available, U to upgrade"
         );
     }
 

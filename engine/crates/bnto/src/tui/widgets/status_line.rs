@@ -128,14 +128,10 @@ mod tests {
 
     #[test]
     fn an_update_takes_the_place_of_the_counts() {
-        let line = render_update_line(
-            "bnto 0.17.0 available, run bnto upgrade",
-            "0.16.1",
-            &theme(),
-        );
+        let line = render_update_line("bnto 0.17.0 available, U to upgrade", "0.16.1", &theme());
         assert_eq!(
             collect_text(&line),
-            "bnto 0.17.0 available, run bnto upgrade  ·  v0.16.1"
+            "bnto 0.17.0 available, U to upgrade  ·  v0.16.1"
         );
     }
 }

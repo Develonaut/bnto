@@ -11,6 +11,7 @@ use std::sync::{Arc, mpsc};
 
 use bnto_core::logging::{LogEntry, LogLevel, Logger};
 
+use super::SessionEnd;
 use super::app::{AppMessage, AppModel, update};
 use super::terminal::TuiTerminal;
 use super::theme::ThemeVariant;
@@ -28,7 +29,7 @@ pub(super) fn run_loop(
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
     paths: Option<BntoPaths>,
-) -> io::Result<()> {
+) -> io::Result<SessionEnd> {
     let mut model = new_model(variant, recipe_json, new_recipe, paths);
     let (update_notice, mut update_rx) = crate::update_check::for_tui(&model.paths);
     model.update_notice = update_notice;
@@ -50,16 +51,25 @@ fn run_frames(
     mut model: AppModel,
     update_rx: &mut Option<mpsc::Receiver<String>>,
     logger: &Arc<dyn Logger>,
-) -> io::Result<()> {
+) -> io::Result<SessionEnd> {
     let mut run = RunBridge::default();
     loop {
         model = frame::render(terminal, model, logger)?;
         model = poll_update_notice(model, update_rx);
         model = bridge_events::advance(model, &mut run);
         if model.should_quit {
-            return Ok(());
+            return Ok(session_end(&model));
         }
         model = input::handle_input(model, logger)?;
+    }
+}
+
+/// How the quitting model ended the session.
+fn session_end(model: &AppModel) -> SessionEnd {
+    if model.upgrade_on_exit {
+        SessionEnd::Upgrade
+    } else {
+        SessionEnd::Quit
     }
 }
 

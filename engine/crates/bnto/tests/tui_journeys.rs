@@ -269,5 +269,21 @@ fn tj11_tab_walks_every_field_to_run_on_a_short_terminal() {
 #[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
 fn tj10_a_newer_release_shows_in_the_status_line() {
     let tui = Tui::launch_with_update(120, 36, "99.0.0");
-    tui.wait_for("bnto 99.0.0 available, run bnto upgrade");
+    tui.wait_for("bnto 99.0.0 available, U to upgrade");
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+fn tj15_u_closes_the_tui_and_upgrades() {
+    let mut tui = Tui::launch_with_update(120, 36, "99.0.0");
+    tui.wait_for("U to upgrade");
+    tui.press(&[Key::Char('U')]);
+    // The test binary isn't a cargo install, so `bnto upgrade` explains how
+    // to upgrade instead of running cargo: proof it ran, with no install.
+    let screen = tui.wait_for("wasn't installed with cargo");
+    assert!(screen.contains("bnto 99.0.0 is available"), "{screen}");
+    assert!(
+        !screen.contains("R E C I P E S"),
+        "the TUI is still open: {screen}"
+    );
 }

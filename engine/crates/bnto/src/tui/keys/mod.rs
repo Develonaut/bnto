@@ -43,10 +43,18 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     if matches!(&model.screen, Screen::Execution { .. }) && key.code == KeyCode::Esc {
         return Some(AppMessage::Execution(ExecutionMessage::Cancel));
     }
-    if let Some(msg) = event::map_global_key(key) {
+    if let Some(msg) = event::map_global_key(key).or_else(|| upgrade_key(model, key)) {
         return Some(msg);
     }
     screen_handler(&model.screen)(model, key)
+}
+
+/// U while a newer release is out: quit and upgrade. Not mid-run, where a
+/// stray U would cut the run short.
+fn upgrade_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let running = matches!(model.screen, Screen::Execution { .. });
+    (key.code == KeyCode::Char('U') && model.update_notice.is_some() && !running)
+        .then_some(AppMessage::Upgrade)
 }
 
 /// The screen's handler when a search, modal or field-editing mode is

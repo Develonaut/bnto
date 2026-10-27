@@ -44,6 +44,14 @@ use bnto_core::logging::{LogEntry, LogLevel, Logger};
 
 use theme::ThemeVariant;
 
+/// How a TUI session ended.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SessionEnd {
+    Quit,
+    /// U was pressed: run `bnto upgrade` now that the terminal is back.
+    Upgrade,
+}
+
 /// Launch the interactive TUI with the given theme variant.
 ///
 /// If `recipe_json` is Some, starts directly on the editor screen
@@ -55,7 +63,7 @@ pub fn launch_tui(
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
     paths: Option<crate::storage::BntoPaths>,
-) -> io::Result<()> {
+) -> io::Result<SessionEnd> {
     logger.log(LogEntry {
         level: LogLevel::Info,
         target: "tui",
@@ -85,14 +93,15 @@ pub fn launch_tui(
 /// kept staging folder or parked file may hold the only copy (ISS-76). After
 /// the restore, so the warning lands on the normal screen. The run's error
 /// comes first when both failed.
-fn end_session(
-    result: io::Result<()>,
+fn end_session<T>(
+    result: io::Result<T>,
     restore: impl FnOnce() -> io::Result<()>,
     report: impl FnOnce(),
-) -> io::Result<()> {
+) -> io::Result<T> {
     let restored = restore();
     report();
-    result.and(restored)
+    let ended = result?;
+    restored.map(|()| ended)
 }
 
 #[cfg(test)]
@@ -190,6 +199,58 @@ mod tests {
     }
 
     // --- Home screen key handling ---
+
+    // --- U upgrades ---
+
+    fn shift_u() -> KeyEvent {
+        KeyEvent::new(KeyCode::Char('U'), crossterm::event::KeyModifiers::SHIFT)
+    }
+
+    fn with_update(screen: Screen) -> AppModel {
+        AppModel {
+            screen,
+            update_notice: Some("bnto 99.0.0 available, U to upgrade".into()),
+            ..default_model()
+        }
+    }
+
+    #[test]
+    fn u_upgrades_while_a_newer_release_is_out() {
+        for screen in [
+            Screen::Home,
+            Screen::Library,
+            Screen::Browser,
+            Screen::Settings,
+            Screen::Results { slug: "t".into() },
+        ] {
+            let model = with_update(screen);
+            assert_eq!(handle_key(&model, shift_u()), Some(AppMessage::Upgrade));
+        }
+    }
+
+    #[test]
+    fn u_does_nothing_without_a_newer_release() {
+        assert_eq!(handle_key(&default_model(), shift_u()), None);
+    }
+
+    #[test]
+    fn u_does_nothing_mid_run() {
+        let model = with_update(Screen::Execution {
+            slug: "t".into(),
+            from: app::DetailOrigin::Browser,
+        });
+        assert_ne!(handle_key(&model, shift_u()), Some(AppMessage::Upgrade));
+    }
+
+    #[test]
+    fn a_search_types_u_instead_of_upgrading() {
+        let mut model = with_update(Screen::Browser);
+        model.browser.searching = true;
+        assert_eq!(
+            handle_key(&model, shift_u()),
+            Some(AppMessage::Browser(BrowserMessage::SearchInput('U')))
+        );
+    }
 
     #[test]
     fn home_j_moves_cursor_down() {

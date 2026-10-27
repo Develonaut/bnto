@@ -106,7 +106,7 @@ fn snapshot(name: &str, session: &Session) {
 /// Home while a newer bnto is out: the status line names it.
 fn update_available() -> Session {
     let mut session = Session::new();
-    session.model.update_notice = Some("bnto 99.0.0 available, run bnto upgrade".into());
+    session.model.update_notice = Some("bnto 99.0.0 available, U to upgrade".into());
     session
 }
 
@@ -169,7 +169,7 @@ fn the_bottom_bar_status_is_never_overwritten() {
                 bottom[..at].trim_end().trim_end_matches(char::is_numeric)
             } else {
                 let at = bottom
-                    .find(" available, run bnto upgrade")
+                    .find(" available, U to upgrade")
                     .and_then(|end| bottom[..end].rfind("bnto "))
                     .unwrap_or_else(|| panic!("{name} {width}x{height}: status cut: {bottom:?}"));
                 &bottom[..at]

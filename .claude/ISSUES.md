@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-98**.
+- **IDs never get reused.** The next one is **ISS-99**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -51,6 +51,7 @@
 | ISS-95 | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
 | ISS-96 | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
 | ISS-97 | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
+| ISS-98 | Quitting the TUI from the recipe editor drops unsaved edits without asking                            | tui         | Open                                             |
 
 ---
 
@@ -418,3 +419,12 @@ Since the ISS-77 fix the TUI refuses an empty field before consent with `refuse_
 
 - **Fix:** let the caller word the remedy (`-p title=...` for the CLI, "fill Title on the recipe's form" for the TUI), from one list of missing fields.
 - **Regression test:** a TUI bridge run with an empty field reports it without `-p`; `bnto run` still names `-p`.
+
+### ISS-98: Quitting the TUI from the recipe editor drops unsaved edits without asking
+
+**Found:** October 27, 2026 (cold review of the TUI's U-to-upgrade key).
+
+Leaving the editor with Esc asks about unsaved changes (`EditorMessage::Back` → `confirming_dirty_exit`). Quitting doesn't. When no field is being edited, `q` is a global key (`tui/event.rs`, `map_global_key`), and `AppMessage::Quit` only sets `should_quit` (`tui/app.rs`, the `Quit` arm), so the TUI exits and the edits are gone. U (quit and upgrade, while a newer release is out) does the same through `upgrade_on_exit`.
+
+- **Fix:** with a dirty editor, have `Quit` and `Upgrade` open the same unsaved-changes prompt, and quit (and upgrade) after Save or Discard.
+- **Regression test:** with `editor.dirty` set, `Quit` and `Upgrade` leave `should_quit` false and show the prompt; Discard then quits.
