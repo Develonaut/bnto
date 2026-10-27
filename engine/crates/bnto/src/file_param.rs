@@ -9,7 +9,9 @@ use bnto_core::{NodeRegistry, PipelineNode};
 
 /// The value `-p node_id:key=value` gives a param `node_id`'s type declares
 /// as a file: `value` read as a path and base64-encoded. `Ok(None)` when the
-/// param isn't a file param (or the node isn't found), so `value` stands.
+/// param isn't a file param (or the node isn't found), so `value` stands,
+/// and for an empty value, which leaves the param unfilled for the run's
+/// required-param check to refuse.
 pub fn read_file_param(
     nodes: &[PipelineNode],
     registry: &NodeRegistry,
@@ -17,6 +19,9 @@ pub fn read_file_param(
     key: &str,
     value: &str,
 ) -> Result<Option<String>, String> {
+    if value.is_empty() {
+        return Ok(None);
+    }
     let Some(node) = find_node(nodes, node_id) else {
         return Ok(None);
     };
@@ -99,6 +104,16 @@ mod tests {
         let registry = bnto_engine::create_registry();
 
         let value = read_file_param(&nodes, &registry, "wm", "position", "center");
+
+        assert_eq!(value, Ok(None));
+    }
+
+    #[test]
+    fn test_an_empty_file_param_stays_unfilled() {
+        let nodes = nodes(r#"[{ "id": "wm", "type": "image-overlay", "params": {} }]"#);
+        let registry = bnto_engine::create_registry();
+
+        let value = read_file_param(&nodes, &registry, "wm", "overlay", "");
 
         assert_eq!(value, Ok(None));
     }

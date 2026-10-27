@@ -70,3 +70,25 @@ fn test_overlay_path_that_is_missing_is_refused_naming_it() {
     );
     assert!(!out.exists(), "refused before the output folder is made");
 }
+
+#[test]
+fn test_an_empty_overlay_is_refused_as_required() {
+    let out_parent = tempfile::tempdir().unwrap();
+    let out = out_parent.path().join("out");
+
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("watermark-images"), "--yes"])
+        .arg(fixture_image("small.jpg"))
+        .arg("-o")
+        .arg(&out)
+        .args(["-p", "overlay:overlay="])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "an empty overlay fails the run");
+    assert!(
+        stderr.contains("param \"overlay\" (Overlay Image) is required"),
+        "refused as a required param left empty, not read as a path: {stderr}"
+    );
+}
