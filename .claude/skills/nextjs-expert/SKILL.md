@@ -110,7 +110,7 @@ Some pages need per-request data (auth state, user-specific content). Next.js au
 **Rules:**
 
 - Prefer static + client-side fetching over full dynamic rendering. A static shell with a client-fetched data island is faster than a fully dynamic page
-- If you must go dynamic, use streaming (`loading.tsx` or `<Suspense>`) so the shell renders instantly
+- If you must go dynamic, use streaming (`loading.tsx` or `<Suspense>`) so the shell renders instantly, but only around work the page actually awaits. A fallback in front of a page that awaits nothing is streamed first and can make the footer the LCP element ([gotchas.md](../../rules/gotchas.md#a-loadingtsx-can-steal-a-pages-lcp))
 - Never call `cookies()` or `headers()` in a component that doesn't need them — it makes the entire route dynamic
 
 ### Streaming and Suspense
@@ -339,7 +339,7 @@ Run this checklist against every `apps/web/` change:
 
 - [ ] Pages that can be static ARE static (no accidental `cookies()`, `headers()`, or `searchParams` opt-in)
 - [ ] `generateStaticParams` covers all known slugs for `[bnto]` pages
-- [ ] Dynamic pages use streaming (`loading.tsx` or `<Suspense>`) for fast shell delivery
+- [ ] Dynamic pages that await data use streaming (`loading.tsx` or `<Suspense>`) for fast shell delivery; pages that await nothing have no fallback
 - [ ] `generateMetadata` is used for route-specific metadata (not client-side `<Head>`)
 
 ### Images and Fonts
@@ -377,22 +377,22 @@ Run this checklist against every `apps/web/` change:
 
 ## Gotchas You Watch For
 
-| Gotcha                                     | Prevention                                                                                                              |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| **SSG + Convex hooks crash**               | No `ConvexProvider` at build time. Use `next/dynamic` with `ssr: false`                                                 |
-| **`ssr: false` requires `"use client"`**   | The importing file must be a client component in Next.js 16                                                             |
-| **`cookies()` makes route dynamic**        | Only call in route handlers or pages that need per-request data                                                         |
-| **Turbopack + subpath imports**            | Don't use `#imports`. Use `@/` path aliases via `tsconfig.json`                                                         |
-| **`turbopack.root` breaks resolution**     | Use `transpilePackages` for monorepo packages instead                                                                   |
-| **Hydration mismatches**                   | Timestamps, `Math.random()`, `Date.now()` differ server/client. Use `suppressHydrationWarning` or client-only rendering |
-| **Middleware runs on all requests**        | Use specific `matcher` patterns. Exclude `_next`, static files, WASM                                                    |
-| **`generateStaticParams` missing slugs**   | Every slug in the registry must be returned. Missing = dynamic fallback = slower                                        |
-| **Layout re-renders on navigation**        | Layouts DON'T re-render — state persists. Don't put per-page state in layouts                                           |
-| **`"use server"` in wrong scope**          | Must be at top of file or inside function body. Top-level makes ALL exports server actions                              |
-| **Git case-sensitivity (macOS -> Vercel)** | Two-step `git mv` for case-only renames. macOS won't detect them                                                        |
-| **Font FOUT**                              | Always use `display: "swap"` in `next/font` options. Test in production build, not dev                                  |
-| **Standalone output + monorepo**           | `outputFileTracingRoot` must point to monorepo root for correct file tracing                                            |
-| **Missing `loading.tsx`**                  | Dynamic routes without loading boundaries show blank screens until data resolves                                        |
+| Gotcha                                     | Prevention                                                                                                                                                 |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SSG + Convex hooks crash**               | No `ConvexProvider` at build time. Use `next/dynamic` with `ssr: false`                                                                                    |
+| **`ssr: false` requires `"use client"`**   | The importing file must be a client component in Next.js 16                                                                                                |
+| **`cookies()` makes route dynamic**        | Only call in route handlers or pages that need per-request data                                                                                            |
+| **Turbopack + subpath imports**            | Don't use `#imports`. Use `@/` path aliases via `tsconfig.json`                                                                                            |
+| **`turbopack.root` breaks resolution**     | Use `transpilePackages` for monorepo packages instead                                                                                                      |
+| **Hydration mismatches**                   | Timestamps, `Math.random()`, `Date.now()` differ server/client. Use `suppressHydrationWarning` or client-only rendering                                    |
+| **Middleware runs on all requests**        | Use specific `matcher` patterns. Exclude `_next`, static files, WASM                                                                                       |
+| **`generateStaticParams` missing slugs**   | Every slug in the registry must be returned. Missing = dynamic fallback = slower                                                                           |
+| **Layout re-renders on navigation**        | Layouts DON'T re-render — state persists. Don't put per-page state in layouts                                                                              |
+| **`"use server"` in wrong scope**          | Must be at top of file or inside function body. Top-level makes ALL exports server actions                                                                 |
+| **Git case-sensitivity (macOS -> Vercel)** | Two-step `git mv` for case-only renames. macOS won't detect them                                                                                           |
+| **Font FOUT**                              | Always use `display: "swap"` in `next/font` options. Test in production build, not dev                                                                     |
+| **Standalone output + monorepo**           | `outputFileTracingRoot` must point to monorepo root for correct file tracing                                                                               |
+| **Missing `loading.tsx`**                  | Dynamic routes that await data, without loading boundaries, show blank screens until data resolves (a page that awaits nothing needs none; see gotchas.md) |
 
 ---
 

@@ -8,11 +8,16 @@ import { test, expect } from "../fixtures";
  * competes with the render-blocking CSS. The hero mascot, the LCP element on
  * pages such as /svg-to-png, is fetched at high priority; Lighthouse's
  * `lcp-discovery-insight` assertion fails the release otherwise.
+ *
+ * Pages render per request, so a `loading.tsx` streams its fallback first:
+ * the first paint then shows the footer, and its mascot becomes the LCP
+ * image. The hero must come in the first HTML, before the footer.
  */
 
 const LOGO = "/favicon/Logo.svg";
 const FAQ_MASCOT = "/mascots/sushi-onigiri.svg";
 const TRUST_MASCOT = "/mascots/sumo-sushi.svg";
+const FOOTER_MASCOT = "/mascots/sushi-shop.svg";
 
 const PAGES = [
   { path: "/svg-to-png", hero: "/mascots/penguin-chef.svg" },
@@ -20,6 +25,18 @@ const PAGES = [
 ];
 
 for (const { path, hero } of PAGES) {
+  test(`${path} sends the hero before the footer, with no streamed fallback @browser`, async ({
+    request,
+  }) => {
+    const html = await (await request.get(path)).text();
+
+    expect(html).not.toContain('<template id="B:');
+    // The <img> tags, not the hero's preload link in <head>.
+    const heroImg = html.indexOf(`src="${hero}"`);
+    expect(heroImg).toBeGreaterThan(-1);
+    expect(heroImg).toBeLessThan(html.indexOf(`src="${FOOTER_MASCOT}"`));
+  });
+
   test.describe(`${path} loading @browser`, () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(path);
