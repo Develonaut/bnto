@@ -49,7 +49,7 @@ pub fn check_then_consent(
     let definition_json = vars::apply(run.definition_json, &[])?;
     // A TUI field is filled on the recipe's form, not with -p (ISS-97).
     let form = unfilled_fields::FillWith::Form;
-    unfilled_fields::refuse_unfilled(&definition_json, run.overrides, form)?;
+    unfilled_fields::refuse_unfilled_with(&definition_json, run.overrides, form)?;
     let prepared = input::prepare_inputs(&definition_json, run.args, run.overrides)?;
     let recipe_dir = recipe_output_dir(&prepared.definition_json, ctx, &prepared.files)?;
     let allowed = allowed(tx, &definition_json, run.slug, consent);
