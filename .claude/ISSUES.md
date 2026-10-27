@@ -10,6 +10,26 @@
 - **IDs never get reused.** The next one is **ISS-100**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
+## Work order
+
+Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
+
+| #   | Batch                      | Issues                                 | Why                                                                                                                                                                          |
+| --- | -------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Engine file operations     | ISS-83, ISS-87, ISS-82                 | Follow-ups to the file-safety work (ISS-59, ISS-60)                                                                                                                          |
+| 2   | TUI correctness            | ISS-98, ISS-66, ISS-97                 | 98 loses unsaved edits; 66 hides the cursor; 97 points TUI users at a CLI flag                                                                                               |
+| 3   | Checks before a run starts | ISS-74, ISS-79, ISS-96                 | A required param refused after consent and `-o`; an unclosed `{{` in a folder name; a dry-run footer that always ends in `<input>`                                           |
+| 4   | Engine file naming         | ISS-33, ISS-34                         | One shared extension split for a dotted folder (33); `file-rename`'s `prefix`, `case`, `sanitize` touching folders (34, a shipped node's behavior: `/workflow-expert` first) |
+| 5   | Small code cleanups        | ISS-90, 88, 91, 93, 94, 84, 85         | Dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag                                                         |
+| 6   | Tooling gaps               | ISS-86, 92, 95, 89, 67, plus 8, 17, 18 | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock; 8, 17, 18 are in the open-issues plan                             |
+| 7   | Telemetry                  | ISS-12, then ISS-7; ISS-57, ISS-70     | Released CLIs send no telemetry (12); the notice's 404 (7) and two analytics fixes ride along                                                                                |
+| 8   | Web performance            | ISS-99, ISS-37                         | Public pages render per request; the homepage's ~500 KB of JS. Larger and riskier, so last                                                                                   |
+
+- **Folded into the template-filters plan** (PLAN.md, Engine backlog), not fixed alone: ISS-35 and ISS-58 live in the interpolators that plan unifies.
+- **Waiting on Ryan's decision:** ISS-29, ISS-31, ISS-44, ISS-45, ISS-73 (how the web runner refuses an empty required param) and ISS-75 (how the CLI takes an image file for a param).
+
+## Open issues
+
 | ID     | Issue                                                                                                 | Area        | Status                                           |
 | ------ | ----------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
 | ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404                                           | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
