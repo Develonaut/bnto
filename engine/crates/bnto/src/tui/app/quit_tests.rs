@@ -7,7 +7,7 @@ use crate::storage::config::TomlConfig;
 use crate::storage::paths::BntoPaths;
 use crate::tui::screens::editor::{EditorMessage, EditorScreenModel};
 
-/// A model on the editor with an unsaved recipe named `name`.
+/// A model on the editor with a recipe named `name`, modified when `dirty`.
 fn editing(name: &str, dirty: bool) -> (tempfile::TempDir, AppModel) {
     let tmp = tempfile::tempdir().unwrap();
     let paths = BntoPaths {
