@@ -1,8 +1,8 @@
 // `bnto run`, `bnto dry-run` and a TUI run stop before consent when a
 // `{{fields.*}}` has nothing to fill it, and say how to fill it: which `-p`
-// would on the command line, which form field in the TUI (ISS-97). The engine's pre-flight
-// refuses the same run (`bnto_core::missing_fields`); checking here first
-// means nobody approves a run that would be refused.
+// would on the command line, which form field in the TUI (ISS-97). The
+// engine's pre-flight refuses the same run (`bnto_core::missing_fields`);
+// checking here first means nobody approves a run that would be refused.
 
 use bnto_core::first_processing_node_id;
 use bnto_core::missing_fields::{MissingField, missing_fields};
