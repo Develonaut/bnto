@@ -26,6 +26,7 @@ pub mod form_file_path;
 mod form_nav;
 pub mod format_size;
 pub mod group;
+pub mod key_hints;
 pub mod keys;
 pub mod messages;
 pub mod render;
@@ -43,6 +44,7 @@ pub use field::{
 pub use file_entry::FileEntry;
 pub use form::{FormEffect, FormMessage, FormMode, FormModel, update};
 pub use group::FieldGroup;
+pub use key_hints::{KeyHint, key_hints};
 pub use keys::map_key_event;
 pub use render::{focused_field_lines, render_form};
 pub use theme::{DefaultTheme, FormTheme};
