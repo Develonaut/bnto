@@ -14,7 +14,7 @@ use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
 use crate::run_watchdog::{self, Watched};
 use crate::telemetry::recipe_label::{RecipeLabel, recipe_label};
-use crate::unfilled_fields::refuse_unfilled;
+use crate::unfilled_fields::{FillWith, refuse_unfilled};
 use crate::{
     context, dry_run, host_support, input, progress, recipe_source, run_limit, run_message,
     telemetry, vars,
@@ -74,7 +74,10 @@ pub fn run_recipe(
     let raw_json = resolve_vars(&raw_json, flags.vars, &verdict);
     // Fields, inputs and the output folder are all checked before consent,
     // so nobody approves a run the engine would refuse (ISS-22).
-    verdict.or_fail(refuse_unfilled(&raw_json, param_overrides), "Error:");
+    verdict.or_fail(
+        refuse_unfilled(&raw_json, param_overrides, FillWith::Flag),
+        "Error:",
+    );
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
     let limited = run_limit::apply(&prepared.definition_json, flags.timeout);

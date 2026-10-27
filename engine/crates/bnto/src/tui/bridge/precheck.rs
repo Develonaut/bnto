@@ -47,7 +47,9 @@ pub fn check_then_consent(
 ) -> Result<Option<Ready>, String> {
     // The TUI has no --vars files: BNTO_VAR_<KEY> fills a var, as for `bnto run`.
     let definition_json = vars::apply(run.definition_json, &[])?;
-    unfilled_fields::refuse_unfilled(&definition_json, run.overrides)?;
+    // A TUI field is filled on the recipe's form, not with -p (ISS-97).
+    let form = unfilled_fields::FillWith::Form;
+    unfilled_fields::refuse_unfilled(&definition_json, run.overrides, form)?;
     let prepared = input::prepare_inputs(&definition_json, run.args, run.overrides)?;
     let recipe_dir = recipe_output_dir(&prepared.definition_json, ctx, &prepared.files)?;
     let allowed = allowed(tx, &definition_json, run.slug, consent);

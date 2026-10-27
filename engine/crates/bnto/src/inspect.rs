@@ -8,7 +8,7 @@ use crate::catalog::RecipeCatalog;
 use crate::cli::DryRunArgs;
 use crate::consent::check_trust;
 use crate::dry_run_hint::DryRunHint;
-use crate::unfilled_fields::refuse_unfilled;
+use crate::unfilled_fields::{FillWith, refuse_unfilled};
 use crate::{dry_run, host_support, info, list, recipe_source, vars};
 
 /// `bnto list` — print the catalog grouped by category.
@@ -33,7 +33,7 @@ pub fn show_dry_run(args: &DryRunArgs, catalog: &RecipeCatalog) {
     // Vars fill in where `bnto run` fills them, so the preview, its unset
     // checks and its consent see the values the run would use.
     let json = or_exit(vars::apply(&json, &args.vars.files));
-    or_exit(refuse_unfilled(&json, params));
+    or_exit(refuse_unfilled(&json, params, FillWith::Flag));
     let given = DryRunHint::new(recipe_arg, params, &args.vars.files);
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
