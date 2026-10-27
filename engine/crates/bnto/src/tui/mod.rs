@@ -77,11 +77,8 @@ pub fn launch_tui(
         paths,
     );
     logger.flush();
-    end_session(
-        result,
-        || terminal::restore(&mut terminal),
-        crate::exit_report::report_kept_on_exit,
-    )
+    let restore = || terminal::restore(&mut terminal);
+    end_session(result, restore, crate::exit_report::report_kept_on_exit)
 }
 
 /// Restore the terminal, then report kept files whatever the restore did: a
@@ -103,6 +100,16 @@ mod tests {
     use crossterm::event::{KeyCode, KeyEvent};
 
     use super::*;
+
+    use app::{AppMessage, AppModel, Screen, update};
+    use keys::handle_key;
+    use screens::browser::BrowserMessage;
+    use screens::execution::ExecutionMessage;
+    use screens::home::HomeMessage;
+    use screens::picker::PickerMessage;
+    use screens::results::ResultsMessage;
+    use screens::settings::SettingsModel;
+    use tonkotsu::FormMessage;
 
     // --- Ending a session (ISS-76) ---
 
@@ -136,15 +143,6 @@ mod tests {
         end_session(Ok(()), restore, || order.borrow_mut().push("report")).unwrap();
         assert_eq!(*order.borrow(), ["restore", "report"]);
     }
-    use app::{AppMessage, AppModel, Screen, update};
-    use keys::handle_key;
-    use screens::browser::BrowserMessage;
-    use screens::execution::ExecutionMessage;
-    use screens::home::HomeMessage;
-    use screens::picker::PickerMessage;
-    use screens::results::ResultsMessage;
-    use screens::settings::SettingsModel;
-    use tonkotsu::FormMessage;
 
     fn test_paths() -> crate::storage::BntoPaths {
         // Kept on disk, as before: the model holds only the path.
