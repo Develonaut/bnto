@@ -11,7 +11,9 @@ use bnto_core::metadata::{
     Constraints, InputCardinality, NodeCategory, NodeMetadata, OptionEntry, ParamCondition,
     ParamConditionEntry, ParameterDef, ParameterType,
 };
-use bnto_core::processor::{BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{
+    BatchInput, FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile,
+};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 use std::path::{Path, PathBuf};
@@ -171,13 +173,24 @@ fn write_copy(input: &NodeInput, path: &Path, ctx: &dyn ProcessContext) -> Resul
         })?;
     }
     let in_place = input.data.is_at(path);
-    input.data.copy_to(path).map_err(|e| {
-        BntoError::ProcessingFailed(format!("Failed to write {}: {e}", path.display()))
-    })?;
+    input
+        .data
+        .copy_to(path)
+        .map_err(|e| copy_error(&input.data, path, e))?;
     if !in_place {
         ctx.record_write(path);
     }
     Ok(())
+}
+
+/// Why copying `data` to `path` failed: the source, when it's the file
+/// that's gone (ISS-83), else the destination.
+fn copy_error(data: &FileData, path: &Path, e: std::io::Error) -> BntoError {
+    let message = match data {
+        FileData::Path(src) if !src.exists() => format!("{} doesn't exist", src.display()),
+        _ => format!("Failed to write {}: {e}", path.display()),
+    };
+    BntoError::ProcessingFailed(message)
 }
 
 /// The `destination` folder, `.` when unset.
@@ -400,6 +413,31 @@ mod tests {
         let written = dest.path().join("output.txt");
         assert!(written.exists(), "File should be written to destination");
         assert_eq!(fs::read(&written).unwrap(), b"file content");
+    }
+
+    // --- A source that is gone (ISS-83) ---
+
+    #[test]
+    fn a_source_that_is_gone_is_named_not_the_destination() {
+        let tmp = TempDir::new().unwrap();
+        let dest = tmp.path().join("out");
+        fs::create_dir(&dest).unwrap();
+        let gone = tmp.path().join("a.txt");
+        let dest_param = serde_json::json!(dest.to_str().unwrap());
+        let mut input = make_input(b"", "a.txt", params(&[("destination", dest_param)]));
+        input.data = FileData::Path(gone.clone());
+
+        let progress = ProgressReporter::new_noop();
+        let Err(err) = FileCopy::new().process(input, &progress, &NoopContext) else {
+            panic!("copying a missing source succeeded");
+        };
+        let err = err.to_string();
+
+        assert!(
+            err.contains(&format!("{} doesn't exist", gone.display())),
+            "{err}"
+        );
+        assert!(!err.contains("Failed to write"), "{err}");
     }
 
     // --- Create dirs ---

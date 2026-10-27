@@ -36,7 +36,7 @@ Every engine node that writes to disk was checked (`grep` for `fs::write|copy|re
 
 **`file-move` and `file-delete` can't lose another iteration's bytes.** `file-move` refuses any move onto an existing file, and `file-delete` only deletes the file it was handed. Their loop gap is the same file arriving twice (duplicate arguments, fan-out into a loop, a link). The batch handles that up front, while the loop fails partway with a missing file. That is a worse message, but nothing is lost. So `file-copy` (`overwrite` and `newer`) is the only data-loss case. CLI progressive loop output already leaves occupied destinations to the final write (ISS-48, `bnto/src/progressive_output.rs`).
 
-Side finding (row 10): a `file-copy` whose source is gone fails with "Failed to write `O/a_1.txt`: No such file or directory". The message blames the destination (`copy.rs`, now `write_copy`). Logged as ISS-83.
+Side finding (row 10): a `file-copy` whose source is gone fails with "Failed to write `O/a_1.txt`: No such file or directory". The message blamed the destination (`copy.rs`, `write_copy`). Logged as ISS-83 and fixed: it now says "`F/a.txt` doesn't exist" (`copy_error`).
 
 ### What must still be allowed
 

@@ -16,7 +16,7 @@ Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue
 
 | #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Engine file operations     | ISS-83, ISS-87, ISS-82                                 | Follow-ups to the file-safety work (ISS-59, ISS-60)                                                                                                                                                                                                                                                             |
+| 1   | Engine file operations     | ISS-87, ISS-82                                         | Follow-ups to the file-safety work (ISS-59, ISS-60)                                                                                                                                                                                                                                                             |
 | 2   | TUI correctness            | ISS-98, ISS-66, ISS-97                                 | ISS-98 loses unsaved edits; ISS-66 hides the cursor; ISS-97 points TUI users at a CLI flag                                                                                                                                                                                                                      |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
 | 4   | Engine file naming         | ISS-17, ISS-33, ISS-34                                 | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33)                                                                                                  |
@@ -60,7 +60,6 @@ Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
 | ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
-| ISS-83 | A `file-copy` whose source is gone says it failed to write the destination                            | engine      | Open                                             |
 | ISS-84 | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
 | ISS-85 | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
 | ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
@@ -295,15 +294,6 @@ Flat, `file-move` refuses a batch that holds one file twice before anything move
 
 - **Fix:** have `file-move` and `file-delete` ask `ProcessContext::held_elsewhere` about each source before acting, and refuse, before anything moves or is deleted, a source a later iteration or branch still reads, as `file-copy` does for destinations.
 - **Regression test:** the two loop recipes above are refused before anything moves or is deleted, naming the file.
-
-### ISS-83: A `file-copy` whose source is gone says it failed to write the destination
-
-**Found:** October 25, 2026 (designing the ISS-59 fix).
-
-`file-copy` maps any error from `FileData::copy_to` to "Failed to write `<destination>`: …" (`engine/crates/bnto-file/src/copy.rs`, `write_copy`). When the source is missing, `std::fs::copy` fails to open it, and the message blames the destination: `loop { file-copy to O (rename), file-delete }` run on `F/a.txt` twice fails with "Failed to write `O/a_1.txt`: No such file or directory (os error 2)", though `O` exists and `F/a.txt` is the file that's gone.
-
-- **Fix:** check the source first (or tell the two apart in the error) and say "`<source>` doesn't exist" when it's the source.
-- **Regression test:** copying a `Path` whose file is gone fails naming the source, not the destination.
 
 ### ISS-84: E2E specs pass `navigateToRecipe` a page heading it ignores
 
