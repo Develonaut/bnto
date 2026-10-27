@@ -348,7 +348,6 @@ fn resolve_conflict(
 mod tests {
     use super::*;
     use bnto_core::context::NoopContext;
-    use bnto_core::processor::FileData;
     use bnto_core::progress::ProgressReporter;
     use std::fs;
     use tempfile::TempDir;
