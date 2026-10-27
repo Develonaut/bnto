@@ -52,6 +52,9 @@ bnto run recipe.bnto.json *.jpg --output ./compressed
 # Override parameters
 bnto run compress-images photo.jpg --param quality=50
 
+# A file param takes a path, which bnto reads (Watermark Images' overlay)
+bnto run watermark-images photo.jpg -p overlay:overlay=logo.png
+
 # Fill {{vars.KEY}} placeholders from JSON files (repeatable; later files win,
 # and a BNTO_VAR_<KEY> environment variable beats every file)
 bnto run backup.bnto.json --vars machine.json
@@ -84,7 +87,8 @@ bnto dry-run backup.bnto.json --vars machine.json
 # {{item.*}}, an undeclared {{env.*}}), and every edge problem at every level
 # (cycles, edges to unknown or other-level nodes, unwired nodes). A required
 # param left out (or given as "") for `bnto run -p node:param=value` to give
-# is a note, not a finding, and `bnto run` refuses it before any step runs;
+# is a note, not a finding (`=<path>` for a file param), and `bnto run`
+# refuses it before any step runs;
 # one no `-p` can give (an object, or a node `-p` can't name) is a finding.
 # Prints one line per finding, then a line per note, then
 # `Check: PASS (<n> recipes)` (exit 0) or `Check: FAIL (<n> findings)`
@@ -216,6 +220,7 @@ src/
 +-- doctor.rs              # `bnto doctor` command (processor + recipe-level dependency checks)
 +-- info.rs                # `bnto info` command (recipe details)
 +-- input.rs               # Input preparation (files, URLs, param overrides)
++-- file_param.rs          # A file param's `-p` value: a path, read and base64-encoded
 +-- install.rs             # `bnto install` command (plan, confirm, run, verify)
 +-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
 +-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands

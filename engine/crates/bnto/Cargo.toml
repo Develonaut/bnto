@@ -20,6 +20,7 @@ name = "bnto"
 path = "src/main.rs"
 
 [dependencies]
+base64 = { workspace = true }
 bnto-core = { workspace = true }
 bnto-engine = { workspace = true, features = ["native"] }
 bnto-file = { workspace = true }

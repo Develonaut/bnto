@@ -126,6 +126,7 @@ fn note(node_id: &str, param: &str) -> RunTimeParam {
         node_id: node_id.to_string(),
         node_type: "needy".to_string(),
         param: param.to_string(),
+        takes_file: false,
     }
 }
 

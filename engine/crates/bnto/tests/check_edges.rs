@@ -97,7 +97,7 @@ fn test_check_passes_every_bundled_recipe() {
         [
             format!(
                 "{watermark}: note: node \"overlay\" (image-overlay), param \"overlay\": \
-                 left for run time; give it with bnto run -p overlay:overlay=<value>"
+                 left for run time; give it with bnto run -p overlay:overlay=<path>"
             ),
             format!("Check: PASS ({BUNDLED_RECIPES} recipes, 1 note)"),
         ]

@@ -188,7 +188,7 @@ fn test_check_passes_the_bundled_recipes_folder() {
         [
             format!(
                 "{dir}/watermark-images.bnto.json: note: node \"overlay\" (image-overlay), \
-                 param \"overlay\": left for run time; give it with bnto run -p overlay:overlay=<value>"
+                 param \"overlay\": left for run time; give it with bnto run -p overlay:overlay=<path>"
             ),
             format!("Check: PASS ({BUNDLED_RECIPES} recipes, 1 note)"),
         ]
