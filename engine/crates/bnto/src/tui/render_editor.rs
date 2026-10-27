@@ -1,5 +1,5 @@
 // Render the Editor screen — node list with expand/collapse, picker overlay,
-// and delete confirmation dialog.
+// and its delete and unsaved-changes questions.
 
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
@@ -8,8 +8,25 @@ use ratatui::widgets::Paragraph;
 use super::app::AppModel;
 use super::render_layout::content_panel;
 use super::screens::detail_bridge::BntoFormTheme;
+use super::screens::editor::EditorScreenModel;
 use super::theme::Theme;
 use super::widgets::search_input;
+
+/// The question the editor is waiting on, if any: deleting the selected
+/// node, or saving before leaving (Back, or a quit: ISS-98).
+fn prompt(editor_screen: &EditorScreenModel) -> Option<String> {
+    let editor = &editor_screen.editor;
+    if editor_screen.confirming_delete {
+        let node_label = editor
+            .selected_index
+            .and_then(|i| editor.nodes.get(i))
+            .map_or("node", |n| n.label.as_str());
+        return Some(format!("  Delete '{node_label}'? (y/n)"));
+    }
+    editor_screen
+        .confirming_dirty_exit
+        .then(|| "  Save changes? (y: save, n: discard, Esc: keep editing)".to_string())
+}
 
 /// Draw the Editor screen content area.
 #[expect(clippy::too_many_lines)]
@@ -46,26 +63,8 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
     }
     lines.push(Line::from(""));
 
-    // Delete confirmation overlay.
-    if editor_screen.confirming_delete {
-        let node_label = editor
-            .selected_index
-            .and_then(|i| editor.nodes.get(i))
-            .map(|n| n.label.as_str())
-            .unwrap_or("node");
-        lines.push(Line::from(Span::styled(
-            format!("  Delete '{node_label}'? (y/n)"),
-            theme.heading(),
-        )));
-        lines.push(Line::from(""));
-    }
-
-    // Unsaved-changes question: Back, or a quit (ISS-98), on a modified recipe.
-    if editor_screen.confirming_dirty_exit {
-        lines.push(Line::from(Span::styled(
-            "  Save changes? (y: save, n: discard, Esc: keep editing)",
-            theme.heading(),
-        )));
+    if let Some(question) = prompt(editor_screen) {
+        lines.push(Line::from(Span::styled(question, theme.heading())));
         lines.push(Line::from(""));
     }
 

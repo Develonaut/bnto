@@ -12,7 +12,8 @@ use super::handle_editor;
 /// changes first.
 pub(crate) fn request_quit(model: AppModel, upgrade: bool) -> AppModel {
     let exit = PendingExit { upgrade };
-    if !matches!(model.screen, Screen::Editor { .. }) {
+    // No editor to ask (the screen and its model should agree): just quit.
+    if !matches!(model.screen, Screen::Editor { .. }) || model.editor.is_none() {
         return quit(model, exit);
     }
     // The editor's own Back: it syncs a half-edited field and asks when dirty.

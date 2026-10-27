@@ -106,3 +106,29 @@ fn upgrading_with_unsaved_edits_asks_then_upgrades() {
     assert!(app.should_quit);
     assert!(app.upgrade_on_exit);
 }
+
+#[test]
+fn a_save_that_fails_stays_in_the_editor_and_drops_the_quit() {
+    let (_tmp, app) = editing("Draft", true);
+    // A file where the recipes folder should be: the save can't write.
+    let recipes = app.paths.recipes_dir();
+    std::fs::remove_dir_all(&recipes).unwrap();
+    std::fs::write(&recipes, "").unwrap();
+    let app = update(app, AppMessage::Quit);
+
+    let app = update(app, AppMessage::Editor(EditorMessage::DirtySave));
+
+    assert!(!app.should_quit, "the edits weren't saved");
+    assert!(matches!(app.screen, Screen::Editor { .. }));
+    assert!(app.pending_exit.is_none());
+}
+
+#[test]
+fn an_editor_screen_without_an_editor_still_quits() {
+    let (_tmp, mut app) = editing("Draft", true);
+    app.editor = None;
+
+    let app = update(app, AppMessage::Quit);
+
+    assert!(app.should_quit);
+}
