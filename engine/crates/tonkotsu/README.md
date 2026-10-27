@@ -35,7 +35,7 @@ let form = FormModel::new(vec![
 
 ## Key Hints
 
-`key_hints(&form)` returns the keys the focused field takes while it's being edited (text: `Enter save  Esc cancel`; a dropdown: `↑↓ choose  Enter pick  Esc cancel`; and so on), or `None` when no field is being edited. A host shows them in its footer. They sit beside `keys.rs`, which maps the same keys, and a test checks that every hinted key does something in its state.
+`key_hints(&form)` returns the keys the focused field takes while it's being edited (text: `Enter save  Esc cancel`; a dropdown: `Enter pick  Esc cancel  ↑↓ choose`; and so on, commit and cancel first), or `None` when no field is being edited. A host shows them in its footer. They sit beside `keys.rs`, which maps the same keys, and a test checks that every hinted key does something in its state.
 
 ## Grouping
 
