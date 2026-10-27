@@ -425,7 +425,7 @@ Four places announce a new version. Each gains a pointer to the notes:
   - `update_available()` (l.277-282) hard-codes the notice string on l.280. It builds it with `update_check::tui_notice(Version(99, 0, 0))` instead, so the snapshot follows the real text.
   - `the_bottom_bar_status_is_never_overwritten` (l.327-353) finds the notice by `" available, U to upgrade"`, which the new text doesn't contain. It finds the start of `tui_notice(Version(99, 0, 0))` instead.
 - `engine/crates/bnto/src/tui/app.rs`: the `update_notice` doc comment (l.114) quotes the new text
-- `engine/crates/bnto/tests/tui_journeys.rs`: TJ10 (`tj10_a_newer_release_shows_in_the_status_line`) and TJ15 wait for `bnto 99.0.0: U upgrade · bnto changelog` instead of the old text (l.264)
+- `engine/crates/bnto/tests/tui_journeys.rs`: TJ10 (`tj10_a_newer_release_shows_in_the_status_line`) and TJ15 wait for `bnto 99.0.0: U upgrade · bnto changelog` instead of the old text
 - `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_80x24.snap`
 - `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_120x36.snap`
 - `engine/crates/bnto/tests/update_notice.rs`: `a_newer_cached_release_is_mentioned` (l.73-83). Its first-line assert still passes (`contains`); add one for the link line
