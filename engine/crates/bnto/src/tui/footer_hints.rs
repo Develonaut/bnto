@@ -1,6 +1,7 @@
 // The footer's key hints, composed from three layers so each is extended in
 // one place (ISS-101, decisions/tui-footer-hints.md):
-// - a mode's keys (a question, consent, the settings picker), or else the
+// - a mode's keys (a question, a rename, consent, a run in progress, the
+//   settings picker), or else the
 //   screen's own keys (`Screen::help_hints`), come first;
 // - then the base keys every screen shares (`BASE`), unless a mode takes
 //   every key (a question, a search box), where `q` is an answer or a letter.
@@ -26,36 +27,58 @@ pub fn footer_hints(model: &AppModel) -> Vec<Hint> {
     hints
 }
 
+/// The settings picker chooses a folder, not files.
+const SETTINGS_PICKER: &[Hint] = &[
+    ("↑↓", "navigate"),
+    ("h/l", "parent/enter"),
+    (".", "hidden"),
+    ("Tab", "select dir"),
+    ("Esc", "back"),
+];
+
 /// The keys of a mode that replaces the screen's, if one is active.
 fn mode_hints(model: &AppModel) -> Option<Vec<Hint>> {
-    let consent = model.execution.as_ref().map(|e| &e.status);
-    if consent == Some(&ExecutionStatus::AwaitingConsent) {
-        return Some(vec![("y", "allow"), ("n/Esc", "cancel")]);
+    match &model.screen {
+        Screen::Picker { .. } if model.settings_picker_field.is_some() => {
+            Some(SETTINGS_PICKER.to_vec())
+        }
+        Screen::Execution { .. } => execution_hints(model),
+        Screen::Editor { .. } => editor_question_hints(model),
+        Screen::Library => library_question_hints(model),
+        _ => None,
     }
-    if model.settings_picker_field.is_some() && matches!(model.screen, Screen::Picker { .. }) {
-        return Some(vec![
-            ("↑↓", "navigate"),
-            ("h/l", "parent/enter"),
-            (".", "hidden"),
-            ("Tab", "select dir"),
-            ("Esc", "back"),
-        ]);
+}
+
+/// Consent takes y or n/Esc; a run in progress only Esc to cancel it.
+fn execution_hints(model: &AppModel) -> Option<Vec<Hint>> {
+    match model.execution.as_ref()?.status {
+        ExecutionStatus::AwaitingConsent => Some(vec![("y", "allow"), ("n/Esc", "cancel")]),
+        ExecutionStatus::Idle | ExecutionStatus::Running => Some(vec![("Esc", "cancel")]),
+        _ => None,
     }
-    editor_question_hints(model)
 }
 
 /// While the editor asks to delete a node or to save, only its answers work.
 fn editor_question_hints(model: &AppModel) -> Option<Vec<Hint>> {
-    if !matches!(model.screen, Screen::Editor { .. }) {
-        return None;
-    }
     let editor = model.editor.as_ref()?;
     if editor.confirming_delete {
-        return Some(vec![("y", "delete"), ("n", "keep")]);
+        return Some(vec![("y", "delete"), ("n/Esc", "keep")]);
     }
     editor
         .confirming_dirty_exit
-        .then(|| vec![("y", "save"), ("n", "discard"), ("Esc", "cancel")])
+        .then(|| vec![("y", "save"), ("n", "discard"), ("Esc", "stay")])
+}
+
+/// While the library asks to delete a recipe or renames one.
+fn library_question_hints(model: &AppModel) -> Option<Vec<Hint>> {
+    let library = model.library.as_ref()?;
+    if library.confirming_delete.is_some() {
+        return Some(vec![("y", "delete"), ("n/Esc", "keep")]);
+    }
+    library
+        .renaming
+        .is_some()
+        .then(|| vec![("Enter", "save name"), ("Esc", "cancel")])
 }
 
 #[cfg(test)]
@@ -92,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn the_base_keys_follow_every_screens_own() {
+    fn the_base_keys_follow_a_screens_own() {
         for screen in [Screen::Home, Screen::Library, Screen::Settings] {
             let (_tmp, app) = model(screen.clone());
             let hints = footer_hints(&app);
@@ -119,7 +142,7 @@ mod tests {
         app.editor.as_mut().unwrap().confirming_dirty_exit = true;
         assert_eq!(
             footer_hints(&app),
-            [("y", "save"), ("n", "discard"), ("Esc", "cancel")]
+            [("y", "save"), ("n", "discard"), ("Esc", "stay")]
         );
     }
 
@@ -127,7 +150,7 @@ mod tests {
     fn the_editors_delete_question_shows_only_its_answers() {
         let (_tmp, mut app) = editing();
         app.editor.as_mut().unwrap().confirming_delete = true;
-        assert_eq!(footer_hints(&app), [("y", "delete"), ("n", "keep")]);
+        assert_eq!(footer_hints(&app), [("y", "delete"), ("n/Esc", "keep")]);
     }
 
     #[test]
@@ -154,5 +177,41 @@ mod tests {
         exec.status = ExecutionStatus::AwaitingConsent;
         app.execution = Some(exec);
         assert_eq!(keys(&footer_hints(&app)), ["y", "n/Esc", "q"]);
+    }
+
+    fn library() -> (tempfile::TempDir, AppModel) {
+        let (tmp, app) = model(Screen::Home);
+        let app = crate::tui::app::update(app, crate::tui::app::AppMessage::OpenLibrary);
+        (tmp, app)
+    }
+
+    #[test]
+    fn the_librarys_delete_question_shows_only_its_answers() {
+        let (_tmp, mut app) = library();
+        app.library.as_mut().unwrap().confirming_delete = Some(0);
+        assert_eq!(footer_hints(&app), [("y", "delete"), ("n/Esc", "keep")]);
+    }
+
+    #[test]
+    fn a_library_rename_shows_its_keys() {
+        let (_tmp, mut app) = library();
+        app.library.as_mut().unwrap().renaming = Some((0, "draft".into()));
+        assert_eq!(
+            footer_hints(&app),
+            [("Enter", "save name"), ("Esc", "cancel")]
+        );
+    }
+
+    #[test]
+    fn a_run_in_progress_offers_cancel_and_quit() {
+        // Enter does nothing until the run ends.
+        let (_tmp, mut app) = model(Screen::Execution {
+            slug: "s".into(),
+            from: DetailOrigin::Home,
+        });
+        let mut exec = crate::tui::screens::execution::ExecutionModel::new("s");
+        exec.status = ExecutionStatus::Running;
+        app.execution = Some(exec);
+        assert_eq!(keys(&footer_hints(&app)), ["Esc", "q"]);
     }
 }

@@ -35,4 +35,4 @@ expression: "session.screen(width, height)"
             │                                                                                              │
             │                                                                                              │
             ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
-            Esc cancel  Enter continue  q quit                        22 recipes  ·  v[version]  ·  Los Angeles
+            Esc cancel  q quit                                        22 recipes  ·  v[version]  ·  Los Angeles
