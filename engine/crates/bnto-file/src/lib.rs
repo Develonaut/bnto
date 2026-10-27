@@ -84,6 +84,8 @@ pub mod join;
 pub mod wasm_bridge;
 
 #[cfg(test)]
+mod changes_mid_run;
+#[cfg(test)]
 mod time_runs_out;
 
 /// Name prefix of the folder the CLI and TUI output step sets files aside in

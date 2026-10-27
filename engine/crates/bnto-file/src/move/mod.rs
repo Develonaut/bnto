@@ -161,6 +161,8 @@ fn outputs(files: Vec<BatchFile>, planned: Planned, dry_run: bool) -> NodeOutput
 }
 
 #[cfg(test)]
+mod failed_tests;
+#[cfg(test)]
 mod tests;
 #[cfg(test)]
 mod time_tests;

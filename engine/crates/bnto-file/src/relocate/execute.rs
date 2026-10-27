@@ -24,7 +24,8 @@ type Check<'a> = &'a dyn Fn() -> Result<(), BntoError>;
 /// Why a checked run ended before its last move.
 pub(crate) enum Stopped {
     /// A move failed: what happened, how far the run got and what it left.
-    Failed(String),
+    /// `moved` is the destination of every move that ran before it.
+    Failed { why: String, moved: Vec<PathBuf> },
     /// The check stopped the run between moves, with no file parked.
     /// `moved` is the destination of every move that ran.
     Halted {
@@ -37,7 +38,7 @@ pub(crate) enum Stopped {
 /// run got and what it left. Check the plan with `conflicts` first.
 pub fn run_in_order(moves: Vec<Move>) -> Result<(), String> {
     run_checked(moves, &|| Ok(())).map_err(|stopped| match stopped {
-        Stopped::Failed(why) => why,
+        Stopped::Failed { why, .. } => why,
         Stopped::Halted { error, .. } => error.to_string(),
     })
 }
@@ -49,7 +50,10 @@ pub(crate) fn run_checked(moves: Vec<Move>, check: Check) -> Result<(), Stopped>
     let mut runner = Runner::new(moves);
     match runner.run(check) {
         Ok(()) => Ok(()),
-        Err(Stop::Failed(e)) => Err(Stopped::Failed(runner.failure(&e, total))),
+        Err(Stop::Failed(e)) => Err(Stopped::Failed {
+            why: runner.failure(&e, total),
+            moved: runner.moved,
+        }),
         Err(Stop::Halted(error)) => Err(Stopped::Halted {
             error,
             moved: runner.moved,
