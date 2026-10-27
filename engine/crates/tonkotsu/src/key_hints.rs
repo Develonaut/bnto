@@ -9,32 +9,29 @@ use crate::form::FormModel;
 /// A key and what it does, as a footer shows them.
 pub type KeyHint = (&'static str, &'static str);
 
+const TEXT: &[KeyHint] = &[("Enter", "save"), ("Esc", "cancel")];
+const TEXT_AREA: &[KeyHint] = &[("Ctrl+D", "save"), ("Enter", "new line"), ("Esc", "cancel")];
+const SELECT: &[KeyHint] = &[("↑↓", "choose"), ("Enter", "pick"), ("Esc", "cancel")];
+const MULTI_SELECT: &[KeyHint] = &[("Space", "toggle"), ("Enter", "done"), ("Esc", "cancel")];
+const FILE_PATH: &[KeyHint] = &[
+    ("↑↓", "navigate"),
+    ("l", "open"),
+    ("h", "parent"),
+    ("Space", "pick"),
+    ("Esc", "cancel"),
+];
+
 /// The keys the focused field takes in its editing state, or `None` when no
 /// field is being edited (the screen's own keys apply then).
 pub fn key_hints(model: &FormModel) -> Option<&'static [KeyHint]> {
-    let hints: &[KeyHint] = match &model.focused_field()?.state {
-        FieldState::Idle => return None,
-        FieldState::TextEditing { .. } | FieldState::NumberEditing { .. } => {
-            &[("Enter", "save"), ("Esc", "cancel")]
-        }
-        FieldState::TextAreaEditing { .. } => {
-            &[("Ctrl+D", "save"), ("Enter", "new line"), ("Esc", "cancel")]
-        }
-        FieldState::SelectExpanded { .. } => {
-            &[("↑↓", "choose"), ("Enter", "pick"), ("Esc", "cancel")]
-        }
-        FieldState::MultiSelectEditing { .. } => {
-            &[("Space", "toggle"), ("Enter", "done"), ("Esc", "cancel")]
-        }
-        FieldState::FilePathBrowsing { .. } => &[
-            ("↑↓", "navigate"),
-            ("l", "open"),
-            ("h", "parent"),
-            ("Space", "pick"),
-            ("Esc", "cancel"),
-        ],
-    };
-    Some(hints)
+    match &model.focused_field()?.state {
+        FieldState::Idle => None,
+        FieldState::TextEditing { .. } | FieldState::NumberEditing { .. } => Some(TEXT),
+        FieldState::TextAreaEditing { .. } => Some(TEXT_AREA),
+        FieldState::SelectExpanded { .. } => Some(SELECT),
+        FieldState::MultiSelectEditing { .. } => Some(MULTI_SELECT),
+        FieldState::FilePathBrowsing { .. } => Some(FILE_PATH),
+    }
 }
 
 #[cfg(test)]
