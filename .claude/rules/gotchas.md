@@ -211,7 +211,7 @@ The engine honors a recipe's `edges` (see [engine-execution.md](../strategy/engi
 
 - **Edge order sets merge order.** A step fed by several edges gets their files in the order the edges are listed in `edges`, not `nodes` order. List `notes → join` before `listing → join` to put the notes first.
 - **A step with no incoming edge starts empty.** No more drop-everything `file-filter` before a fresh `file-list`; leave it unwired from the step before. A step wired to nothing after it contributes no files to the output.
-- **Fan-out shares files on disk.** One output feeding two steps hands both the same `FileData::Path`. A step that moves or deletes it (`file-move`, `file-delete`, an overwriting output) takes it from the branches that run after it, and they fail naming the missing file. A `file-copy` over it is refused (`ProcessContext::held_elsewhere`). A new node that replaces files on disk should ask the same, and must be a batch node: only a batch node's context gets the run's answer (`executor/run_scope.rs`); any other node's always says `None`.
+- **Fan-out shares files on disk.** One output feeding two steps hands both the same `FileData::Path`. A `file-move` or `file-delete` of it, or a `file-copy` over it, is refused before the step acts (`ProcessContext::held_elsewhere`, ISS-59 and ISS-82). An overwriting output still takes it from the branches that run after it, and they fail naming the missing file. A new node that replaces files on disk should ask the same, and must be a batch node: only a batch node's context gets the run's answer (`executor/run_scope.rs`); any other node's always says `None`.
 
 ## Windows Portability (Engine)
 

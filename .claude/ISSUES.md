@@ -14,9 +14,10 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
+Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82), October 27, 2026. Batches keep their numbers.
+
 | #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Engine file operations     | ISS-82                                                 | Follow-ups to the file-safety work (ISS-59, ISS-60)                                                                                                                                                                                                                                                             |
 | 2   | TUI correctness            | ISS-98, ISS-66, ISS-97                                 | ISS-98 loses unsaved edits; ISS-66 hides the cursor; ISS-97 points TUI users at a CLI flag                                                                                                                                                                                                                      |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
 | 4   | Engine file naming         | ISS-17, ISS-33, ISS-34                                 | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33)                                                                                                  |
@@ -59,7 +60,6 @@ Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
-| ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
 | ISS-84 | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
 | ISS-85 | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
 | ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
@@ -284,15 +284,6 @@ The ISS-22 fix refuses every `{{…}}` in the output node's `directory` that no 
 
 - **Fix:** refuse an unclosed `{{` in the folder in `fill_output_directory`, and have `bnto check` run its placeholder-form check on the output node's `directory`.
 - **Regression test:** `out-{{ctx.date` is refused by `bnto run` with no folder made, and `bnto check` flags it.
-
-### ISS-82: Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds
-
-**Found:** October 25, 2026 (designing the ISS-59 fix; see [file-copy-held-files.md](decisions/file-copy-held-files.md), rows 7 to 12).
-
-Flat, `file-move` refuses a batch that holds one file twice before anything moves ("in the run more than once"), and `file-delete` deletes it once and counts the rest as missing. Inside a `loop`, each iteration hands the node one file, so neither sees the other. `bnto run` with `F/a.txt` given twice and `loop { file-move into O }` moves it in iteration 1, then fails iteration 2 with "`F/a.txt` doesn't exist". `loop { file-copy to O, file-delete }` on the same input deletes it in iteration 1, then fails iteration 2's copy. Across a fan-out the same happens to a branch that runs later (engine-execution.md's "Watch for"). Nothing is lost beyond what the recipe asked for, but the run stops partway instead of being refused up front.
-
-- **Fix:** have `file-move` and `file-delete` ask `ProcessContext::held_elsewhere` about each source before acting, and refuse, before anything moves or is deleted, a source a later iteration or branch still reads, as `file-copy` does for destinations.
-- **Regression test:** the two loop recipes above are refused before anything moves or is deleted, naming the file.
 
 ### ISS-84: E2E specs pass `navigateToRecipe` a page heading it ignores
 
