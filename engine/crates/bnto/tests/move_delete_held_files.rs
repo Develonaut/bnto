@@ -189,6 +189,10 @@ fn a_branch_delete_of_a_file_the_output_branch_reads_is_refused() {
     let stderr = stderr(&output);
     assert!(!output.status.success(), "{stderr}");
     assert!(stderr.contains("File delete refused"), "{stderr}");
+    assert!(
+        stderr.contains("a later step still reads it as a.txt"),
+        "{stderr}"
+    );
     assert_eq!(
         std::fs::read_to_string(&a).unwrap(),
         "AAAA",
@@ -218,6 +222,10 @@ fn a_refusal_after_earlier_iterations_moved_files_claims_only_its_own_step() {
         stderr.contains("File move refused, this step moved nothing"),
         "{stderr}"
     );
+    assert!(
+        stderr.contains("a later step still reads it as a.txt"),
+        "{stderr}"
+    );
     assert_eq!(
         std::fs::read_to_string(out.path().join("b.txt")).unwrap(),
         "BBBB"
@@ -243,6 +251,10 @@ fn a_loop_delete_of_one_file_given_twice_is_refused() {
     assert!(!output.status.success(), "{stderr}");
     assert!(
         stderr.contains("File delete refused, this step deleted nothing"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("a later step still reads it as a.txt"),
         "{stderr}"
     );
     assert!(a.exists(), "never deleted");

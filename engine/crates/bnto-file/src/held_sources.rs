@@ -28,4 +28,4 @@ pub(crate) fn held_sources<'a>(
 
 /// What to do instead, after a refusal's listing.
 pub(crate) const HINT: &str =
-    "Give each file once, or copy it (file-copy) where a later step still needs it.";
+    "Copy the file instead (file-copy) where a later step still needs it, or give it once.";

@@ -2,7 +2,7 @@
 
 **Created:** October 25, 2026
 **Status:** Decided by Ryan on October 25, 2026: option 1 (the executor tracks the files it still holds, and `file-copy` asks through a new `ProcessContext` method before replacing a file). Built on branch `design/iss-59`, which fixes ISS-59. Up-front refusals for `file-move` and `file-delete` followed as ISS-82, now fixed: both ask `held_elsewhere` about each source (`bnto-file/src/held_sources.rs`).
-**Applies to:** `engine/crates/bnto-core/src/executor/` (`held.rs`, `run_scope.rs`, `node_events.rs`, `container.rs`, `flow.rs`, `routed.rs`, `primitive.rs`, `mod.rs`), `bnto-core/src/context.rs` and `file_stamp.rs`, `bnto-file/src/copy.rs`, `copy_newer.rs`, `copy_batch/refusal.rs` and `readers.rs`. Related: ISS-60 (time limit), ISS-58 (loop `{{item.*}}`), [file-copy-batch.md](file-copy-batch.md).
+**Applies to:** `engine/crates/bnto-core/src/executor/` (`held.rs`, `run_scope.rs`, `node_events.rs`, `container.rs`, `flow.rs`, `routed.rs`, `primitive.rs`, `mod.rs`), `bnto-core/src/context.rs` and `file_stamp.rs`, `bnto-file/src/copy.rs`, `copy_newer.rs`, `copy_batch/refusal.rs` and `readers.rs`; for ISS-82, `bnto-file/src/held_sources.rs`, `move/mod.rs` and `delete/mod.rs`. Related: ISS-60 (time limit), ISS-58 (loop `{{item.*}}`), [file-copy-batch.md](file-copy-batch.md).
 
 ## The defect, reproduced
 
