@@ -18,7 +18,7 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), O
 
 | #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2   | TUI correctness            | ISS-66, ISS-97, ISS-101                                | ISS-66 hides the cursor; ISS-97 points TUI users at a CLI flag; ISS-101 shows key hints a prompt ignores                                                                                                                                                                                                        |
+| 2   | TUI correctness            | ISS-97, ISS-101                                        | ISS-97 points TUI users at a CLI flag; ISS-101 shows key hints a prompt ignores                                                                                                                                                                                                                                 |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
 | 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                        | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                              |
 | 5   | Engine templating          | ISS-35, ISS-58                                         | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                |
@@ -53,7 +53,6 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), O
 | ISS-45  | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
 | ISS-57  | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58  | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
-| ISS-66  | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
 | ISS-67  | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 | ISS-70  | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
 | ISS-73  | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
@@ -220,15 +219,6 @@ A per-file node inside a loop gets `{{item.*}}` from the file's current metadata
 
 - **Fix:** for a node that fills items itself (`resolves_items`), inside a loop, fill only the loop's keys and leave the rest as written, so the node fills them from each file's metadata. Not for `shell-run`, which also declares `resolves_items` but fills only inside `each` groups: a leftover `{{item.*}}` elsewhere in its command must still be refused.
 - **Regression test:** inside a loop, `file-inspect` then `file-copy` with `destination: "<dir>/{{item.extension}}"` copies each file into its extension's folder.
-
-### ISS-66: Down past the last home recipe hides the selection until you press Up as many times
-
-**Found:** October 25, 2026 (fixing ISS-32: a journey that pressed Down too often ran off the Recipes pane).
-
-On the home screen, `CursorDown` in the Recipes pane adds 1 to `recipes_cursor` with no upper bound (`engine/crates/bnto/src/tui/screens/home.rs:133-139`). Its comment says "app.rs clamps if needed", but nothing does: the only other write is `saturating_sub(1)` on Up. Past the last recipe no row matches the cursor (`render_home_panes.rs:84`), so the `▸` marker disappears and the pane scrolls back to the top. The user has to press Up once for every extra Down before a recipe is selected again. Enter still opens the last recipe, because only the confirm path clamps (`app_helpers/home_detail.rs:57`).
-
-- **Fix:** stop at the last recipe in `CursorDown`, the way the Library pane bounds its cursor (it wraps with `%`; pick one behaviour for both panes), and correct the comment.
-- **Regression test:** a `home.rs` unit test pressing Down more times than there are recipes keeps the cursor on the last one, and a render check that the marker stays on screen.
 
 ### ISS-67: `update_notice.rs` opens its ptys in parallel with no lock
 

@@ -100,7 +100,7 @@ impl HomeModel {
 
 /// Pure state transition for the home screen.
 #[expect(clippy::too_many_lines)]
-pub fn update(model: HomeModel, msg: HomeMessage) -> HomeModel {
+pub fn update(model: HomeModel, msg: HomeMessage, recipes: usize) -> HomeModel {
     match msg {
         HomeMessage::NextPane => {
             let idx = pane_index(model.focused);
@@ -122,43 +122,42 @@ pub fn update(model: HomeModel, msg: HomeMessage) -> HomeModel {
                 ..model
             }
         }
-        HomeMessage::CursorDown => match model.focused {
-            HomePane::Library if !model.library_names.is_empty() => {
-                let next = (model.library_cursor + 1) % model.library_names.len();
-                HomeModel {
-                    library_cursor: next,
-                    ..model
-                }
-            }
-            HomePane::Recipes => {
-                // Cursor bound is checked at render time against browser.recipes.len().
-                // Here we just increment — app.rs clamps if needed.
-                HomeModel {
-                    recipes_cursor: model.recipes_cursor + 1,
-                    ..model
-                }
-            }
-            _ => model, // No-op on action panes or empty library
-        },
-        HomeMessage::CursorUp => match model.focused {
-            HomePane::Library if !model.library_names.is_empty() => {
-                let prev = if model.library_cursor == 0 {
-                    model.library_names.len() - 1
-                } else {
-                    model.library_cursor - 1
-                };
-                HomeModel {
-                    library_cursor: prev,
-                    ..model
-                }
-            }
-            HomePane::Recipes => HomeModel {
-                recipes_cursor: model.recipes_cursor.saturating_sub(1),
-                ..model
-            },
-            _ => model,
-        },
+        HomeMessage::CursorDown => step(model, recipes, wrap_next),
+        HomeMessage::CursorUp => step(model, recipes, wrap_prev),
     }
+}
+
+/// Move the focused list's cursor with `wrap`; an empty list or an action
+/// pane leaves it alone. Both lists wrap at their ends (ISS-66).
+fn step(model: HomeModel, recipes: usize, wrap: fn(usize, usize) -> Option<usize>) -> HomeModel {
+    match model.focused {
+        HomePane::Library => {
+            let moved = wrap(model.library_cursor, model.library_names.len());
+            HomeModel {
+                library_cursor: moved.unwrap_or(model.library_cursor),
+                ..model
+            }
+        }
+        HomePane::Recipes => HomeModel {
+            recipes_cursor: wrap(model.recipes_cursor, recipes).unwrap_or(model.recipes_cursor),
+            ..model
+        },
+        HomePane::NewRecipe | HomePane::Settings => model,
+    }
+}
+
+/// One down a `len`-item list, from the last back to the first. `None` when
+/// the list is empty. A cursor past the end counts as on the last item.
+fn wrap_next(cursor: usize, len: usize) -> Option<usize> {
+    (len > 0).then(|| (cursor.min(len - 1) + 1) % len)
+}
+
+/// One up a `len`-item list, from the first round to the last.
+fn wrap_prev(cursor: usize, len: usize) -> Option<usize> {
+    (len > 0).then(|| match cursor.min(len - 1) {
+        0 => len - 1,
+        at => at - 1,
+    })
 }
 
 /// Find the index of a pane in the cycling order.
@@ -198,6 +197,9 @@ pub fn list_library_recipes(dir: &std::path::Path) -> Vec<String> {
 mod tests {
     use super::*;
 
+    /// The Recipes pane's length in these tests.
+    const RECIPES: usize = 3;
+
     #[test]
     fn initial_state_focuses_library() {
         let m = HomeModel::new(vec![]);
@@ -209,7 +211,7 @@ mod tests {
     #[test]
     fn next_pane_cycles_library_to_recipes() {
         let m = HomeModel::new(vec![]);
-        let m = update(m, HomeMessage::NextPane);
+        let m = update(m, HomeMessage::NextPane, RECIPES);
         assert_eq!(m.focused, HomePane::Recipes);
     }
 
@@ -217,7 +219,7 @@ mod tests {
     fn next_pane_cycles_recipes_to_new_recipe() {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::Recipes;
-        let m = update(m, HomeMessage::NextPane);
+        let m = update(m, HomeMessage::NextPane, RECIPES);
         assert_eq!(m.focused, HomePane::NewRecipe);
     }
 
@@ -225,7 +227,7 @@ mod tests {
     fn next_pane_cycles_new_recipe_to_settings() {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::NewRecipe;
-        let m = update(m, HomeMessage::NextPane);
+        let m = update(m, HomeMessage::NextPane, RECIPES);
         assert_eq!(m.focused, HomePane::Settings);
     }
 
@@ -233,14 +235,14 @@ mod tests {
     fn next_pane_cycles_settings_to_library() {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::Settings;
-        let m = update(m, HomeMessage::NextPane);
+        let m = update(m, HomeMessage::NextPane, RECIPES);
         assert_eq!(m.focused, HomePane::Library);
     }
 
     #[test]
     fn prev_pane_cycles_library_to_settings() {
         let m = HomeModel::new(vec![]);
-        let m = update(m, HomeMessage::PrevPane);
+        let m = update(m, HomeMessage::PrevPane, RECIPES);
         assert_eq!(m.focused, HomePane::Settings);
     }
 
@@ -248,14 +250,14 @@ mod tests {
     fn prev_pane_cycles_recipes_to_library() {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::Recipes;
-        let m = update(m, HomeMessage::PrevPane);
+        let m = update(m, HomeMessage::PrevPane, RECIPES);
         assert_eq!(m.focused, HomePane::Library);
     }
 
     #[test]
     fn cursor_down_in_library_moves() {
         let m = HomeModel::new(vec!["a".into(), "b".into(), "c".into()]);
-        let m = update(m, HomeMessage::CursorDown);
+        let m = update(m, HomeMessage::CursorDown, RECIPES);
         assert_eq!(m.library_cursor, 1);
     }
 
@@ -263,7 +265,7 @@ mod tests {
     fn cursor_up_in_library_moves() {
         let mut m = HomeModel::new(vec!["a".into(), "b".into()]);
         m.library_cursor = 1;
-        let m = update(m, HomeMessage::CursorUp);
+        let m = update(m, HomeMessage::CursorUp, RECIPES);
         assert_eq!(m.library_cursor, 0);
     }
 
@@ -271,14 +273,14 @@ mod tests {
     fn cursor_wraps_at_library_end() {
         let mut m = HomeModel::new(vec!["a".into(), "b".into()]);
         m.library_cursor = 1;
-        let m = update(m, HomeMessage::CursorDown);
+        let m = update(m, HomeMessage::CursorDown, RECIPES);
         assert_eq!(m.library_cursor, 0);
     }
 
     #[test]
     fn cursor_wraps_at_library_start() {
         let m = HomeModel::new(vec!["a".into(), "b".into()]);
-        let m = update(m, HomeMessage::CursorUp);
+        let m = update(m, HomeMessage::CursorUp, RECIPES);
         assert_eq!(m.library_cursor, 1);
     }
 
@@ -286,7 +288,7 @@ mod tests {
     fn cursor_down_in_recipes_moves() {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::Recipes;
-        let m = update(m, HomeMessage::CursorDown);
+        let m = update(m, HomeMessage::CursorDown, RECIPES);
         assert_eq!(m.recipes_cursor, 1);
     }
 
@@ -295,16 +297,46 @@ mod tests {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::Recipes;
         m.recipes_cursor = 2;
-        let m = update(m, HomeMessage::CursorUp);
+        let m = update(m, HomeMessage::CursorUp, RECIPES);
         assert_eq!(m.recipes_cursor, 1);
     }
 
     #[test]
-    fn cursor_up_in_recipes_saturates_at_zero() {
+    fn cursor_up_from_the_first_recipe_wraps_to_the_last() {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::Recipes;
         m.recipes_cursor = 0;
-        let m = update(m, HomeMessage::CursorUp);
+        let m = update(m, HomeMessage::CursorUp, RECIPES);
+        assert_eq!(m.recipes_cursor, RECIPES - 1);
+    }
+
+    #[test]
+    fn cursor_down_past_the_last_recipe_wraps_to_the_first() {
+        // RED (ISS-66): the cursor ran past the list, hiding the selection.
+        let mut m = HomeModel::new(vec![]);
+        m.focused = HomePane::Recipes;
+        m.recipes_cursor = RECIPES - 1;
+        let m = update(m, HomeMessage::CursorDown, RECIPES);
+        assert_eq!(m.recipes_cursor, 0);
+    }
+
+    #[test]
+    fn many_downs_never_leave_the_list() {
+        let mut m = HomeModel::new(vec![]);
+        m.focused = HomePane::Recipes;
+        for _ in 0..10 {
+            m = update(m, HomeMessage::CursorDown, RECIPES);
+            assert!(m.recipes_cursor < RECIPES, "cursor {}", m.recipes_cursor);
+        }
+    }
+
+    #[test]
+    fn the_cursor_stays_put_in_an_empty_recipes_pane() {
+        let mut m = HomeModel::new(vec![]);
+        m.focused = HomePane::Recipes;
+        let m = update(m, HomeMessage::CursorDown, 0);
+        assert_eq!(m.recipes_cursor, 0, "Down moved in an empty pane");
+        let m = update(m, HomeMessage::CursorUp, 0);
         assert_eq!(m.recipes_cursor, 0);
     }
 
@@ -313,7 +345,7 @@ mod tests {
         for pane in [HomePane::NewRecipe, HomePane::Settings] {
             let mut m = HomeModel::new(vec![]);
             m.focused = pane;
-            let m = update(m, HomeMessage::CursorDown);
+            let m = update(m, HomeMessage::CursorDown, RECIPES);
             assert_eq!(m.library_cursor, 0);
             assert_eq!(m.recipes_cursor, 0);
         }
@@ -322,7 +354,7 @@ mod tests {
     #[test]
     fn cursor_noop_on_empty_library() {
         let m = HomeModel::new(vec![]);
-        let m = update(m, HomeMessage::CursorDown);
+        let m = update(m, HomeMessage::CursorDown, RECIPES);
         assert_eq!(m.library_cursor, 0);
     }
 

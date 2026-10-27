@@ -48,14 +48,16 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
             ..model
         },
         HomeConfirmResult::RecipeAtIndex(idx) => {
-            if model.browser.recipes.is_empty() {
+            // The cursor is a position in the list the pane shows (`filtered`,
+            // narrowed by a browser search), not in every recipe (ISS-66).
+            let shown = &model.browser.filtered;
+            let Some(&recipe) = shown.get(idx.min(shown.len().saturating_sub(1))) else {
                 return AppModel {
                     status_message: Some("No recipes available".into()),
                     ..model
                 };
-            }
-            let clamped = idx.min(model.browser.recipes.len() - 1);
-            let slug = model.browser.recipes[clamped].slug.clone();
+            };
+            let slug = model.browser.recipes[recipe].slug.clone();
             let start_dir = resolve_start_dir();
             let entry = DetailOrigin::Home.entry(&model.catalog, &slug);
             let detail =
