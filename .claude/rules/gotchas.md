@@ -132,6 +132,12 @@ CI runs its Rust and TypeScript jobs only when a change touches a path those job
 
 `scripts/ci/changed-surfaces.test.ts` (in `task check:scripts` and CI) fails when a `$TURBO_ROOT$` input in any `turbo.json` isn't on the web list, a root path the engine's Rust code reads through a `../` literal isn't on the engine list, or a `scripts/` or `recipes/` path a gated `ci.yml` job runs isn't on that job's list. Other reads (a TypeScript test's `readFileSync` of a root file) are a manual step: add the path to the list in the same PR.
 
+## A `loading.tsx` Can Steal a Page's LCP
+
+Every page renders per request (`next build` marks them `ƒ`, recipe pages included, ISS-99), so a route's `loading.tsx` is streamed first: the server sends the layout with the fallback in the page's place, and the page follows in a hidden `<div id="S:…">` that a script swaps in. A first paint before the swap shows the skeleton and the layout's footer, whose mascot then becomes the LCP image. Lighthouse's `lcp-discovery-insight` fails on it (it's lazy, not high priority), and only on some runs: the v0.19.0 release failed on `/compress-images` this way.
+
+**Fix:** give a route a `loading.tsx` only when its page awaits real work. Recipe pages read a static registry and have none (removed in #801). `e2e/pages/recipe-page-loading.spec.ts` fails on a streamed fallback (`<template id="B:`) or a hero that comes after the footer in the HTML.
+
 ## Turbopack + Node.js Subpath Imports on Vercel
 
 Turbopack on Vercel does NOT support Node.js subpath imports (`#components/*` via `package.json` `imports` field). Builds fail with `Module not found: Can't resolve '#components/...'`. Setting `turbopack.root` to the monorepo root makes it worse — breaks the `imports` field resolution entirely. `resolveAlias` workarounds also fail.

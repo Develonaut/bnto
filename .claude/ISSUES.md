@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-99**.
+- **IDs never get reused.** The next one is **ISS-100**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -51,6 +51,7 @@
 | ISS-96 | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
 | ISS-97 | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
 | ISS-98 | Quitting the TUI from the recipe editor drops unsaved edits without asking                            | tui         | Open                                             |
+| ISS-99 | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
 
 ---
 
@@ -418,3 +419,12 @@ Leaving the editor with Esc asks about unsaved changes (`EditorMessage::Back` �
 
 - **Fix:** with a dirty editor, have `Quit` and `Upgrade` open the same unsaved-changes prompt, and quit (and upgrade) after Save or Discard.
 - **Regression test:** with `editor.dirty` set, `Quit` and `Upgrade` leave `should_quit` false and show the prompt; Discard then quits.
+
+### ISS-99: Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static
+
+**Found:** October 27, 2026 (the v0.19.0 release's Lighthouse failure; see gotchas.md, "A `loading.tsx` Can Steal a Page's LCP").
+
+`next build` lists every route but a few metadata files as `ƒ (Dynamic)`, `/[bnto]` included, though `app/(app)/[bnto]/page.tsx` sets `generateStaticParams` and `dynamicParams = false` and says "Pre-render all registered slugs at build time". So the SEO pages render on every request instead of being served as static HTML. The likely cause is the root layout's `ConvexAuthNextjsServerProvider` (`apps/web/app/layout.tsx:85`), which reads the auth cookie; not yet confirmed.
+
+- **Fix:** find what opts the tree out of static rendering (`next build` with the provider moved off the public routes, or Next's dynamic-usage logging), and keep the public pages static.
+- **Regression test:** `next build` lists `/[bnto]` (and `/`, `/faq`, `/pricing`, `/privacy`) as static (`●` or `○`).
