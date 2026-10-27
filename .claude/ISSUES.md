@@ -25,7 +25,6 @@
 | ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
-| ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
@@ -178,15 +177,6 @@ A loop with `outputPersistence: "progressive"` copies each iteration's files int
 
 - **Fix:** decide what progressive persistence means per mode: either only in write mode, or always, with those files listed. Then make the CLI and the TUI agree.
 - **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched (or lists what it wrote), in `bnto run` and the TUI bridge.
-
-### ISS-47: Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image
-
-**Found:** October 24, 2026 (cold review of the homepage LCP fix, #753, measured with Playwright).
-
-The recipe pages (the SEO landing pages) have the homepage's problem: `/compress-images` preloads `Logo.svg`, `sushi-thumbsup.svg` and `sushi-onigiri.svg`, and onigiri, the FAQ mascot (`_utils/sectionMascots.ts:18`, rendered by `app/(app)/[bnto]/_components/RecipeFaqSection.tsx:18`), sits about 7,000 px down on mobile. The likely LCP image, `RecipeHeroMascot` (250-630 px down), has no `fetchPriority`.
-
-- **Fix:** as on the homepage (#753): lazy below-the-fold images, `fetchPriority="high"` on the hero.
-- **Regression test:** extend `e2e/pages/homepage-loading.spec.ts`'s checks to a recipe page; the Lighthouse `lcp-discovery-insight` assertion already covers every recipe URL once its LCP is the image.
 
 ### ISS-57: `errorCategory` reports `out_of_memory` for any message containing `oom`
 

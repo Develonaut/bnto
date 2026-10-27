@@ -8,6 +8,10 @@ interface SectionHeaderProps {
   mascotHeight?: number;
 }
 
+/**
+ * A below-the-fold section's heading. Its mascot loads lazily so it never
+ * competes with the page's LCP image (ISS-47).
+ */
 export function SectionHeader({
   label,
   title,
@@ -23,6 +27,7 @@ export function SectionHeader({
           <img
             src={mascot}
             alt=""
+            loading="lazy"
             className="w-auto"
             style={{ height: mascotHeight }}
             aria-hidden

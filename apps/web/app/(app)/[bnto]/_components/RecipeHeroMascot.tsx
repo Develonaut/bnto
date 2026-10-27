@@ -11,6 +11,7 @@ export function RecipeHeroMascot({ category }: { category: string }) {
         <img
           src={src}
           alt=""
+          fetchPriority="high"
           aria-hidden
           className="h-40 w-auto drop-shadow-lg sm:h-56 md:h-72 lg:h-80"
         />
