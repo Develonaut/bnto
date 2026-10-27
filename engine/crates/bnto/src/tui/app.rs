@@ -18,11 +18,13 @@ use super::app_helpers::{
     handle_open_folder, handle_open_library, handle_open_settings_picker, handle_open_wizard,
     handle_preview_confirm, handle_preview_requested, handle_recipe_selected,
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
-    handle_wizard_form,
+    handle_wizard_form, request_quit, settle_pending_exit,
 };
 mod detail_entry;
 mod init;
 mod message;
+#[cfg(test)]
+mod quit_tests;
 #[cfg(test)]
 mod shadowed_recipe_tests;
 
@@ -60,6 +62,13 @@ pub enum DetailOrigin {
     Home,
     Browser,
     Library,
+}
+
+/// A quit waiting on the editor's "save?" answer (ISS-98).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PendingExit {
+    /// Run `bnto upgrade` once the TUI has closed (U was pressed).
+    pub upgrade: bool,
 }
 
 /// Which screen the TUI is currently showing.
@@ -115,6 +124,8 @@ pub struct AppModel {
     pub update_notice: Option<String>,
     /// Run `bnto upgrade` once the TUI has closed (U was pressed).
     pub upgrade_on_exit: bool,
+    /// A quit held while the editor asks about unsaved changes (ISS-98).
+    pub pending_exit: Option<PendingExit>,
     /// Which settings field opened the picker (None = normal recipe picker).
     pub settings_picker_field: Option<String>,
     /// Param overrides from detail screen, carried through picker to execution.
@@ -143,6 +154,7 @@ impl std::fmt::Debug for AppModel {
             .field("wizard", &self.wizard.is_some())
             .field("status_message", &self.status_message)
             .field("upgrade_on_exit", &self.upgrade_on_exit)
+            .field("pending_exit", &self.pending_exit)
             .field("settings_picker_field", &self.settings_picker_field)
             .field("param_overrides", &self.param_overrides.len())
             .finish_non_exhaustive()
@@ -155,7 +167,6 @@ impl std::fmt::Debug for AppModel {
 /// Routing is split in three tiers: screen flow here, per-screen message
 /// forwarding in `update_screen`, and recipe authoring and settings in
 /// `update_authoring`.
-#[expect(clippy::too_many_lines)]
 pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
         AppMessage::RecipeSelected { slug } => handle_recipe_selected(model, slug),
@@ -173,10 +184,7 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         AppMessage::OpenFolder => handle_open_folder(model),
         AppMessage::PreviewRequested { slug } => handle_preview_requested(model, slug),
         AppMessage::PreviewConfirm { slug } => handle_preview_confirm(model, slug),
-        AppMessage::Quit => AppModel {
-            should_quit: true,
-            ..model
-        },
+        AppMessage::Quit => request_quit(model, false),
         msg => update_screen(model, msg),
     }
 }
@@ -245,20 +253,19 @@ fn update_authoring(model: AppModel, msg: AppMessage) -> AppModel {
     }
 }
 
-/// Quit to run `bnto upgrade`, when there's a newer release to install.
+/// Quit to run `bnto upgrade`, when there's a newer release to install;
+/// unsaved editor changes are asked about first.
 fn upgrade_on_exit(model: AppModel) -> AppModel {
-    let upgrade = model.update_notice.is_some();
-    AppModel {
-        should_quit: model.should_quit || upgrade,
-        upgrade_on_exit: upgrade,
-        ..model
+    if model.update_notice.is_none() {
+        return model;
     }
+    request_quit(model, true)
 }
 
 /// Editor and wizard messages — the last routing tier.
 fn update_editing(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
-        AppMessage::Editor(msg) => handle_editor(model, msg),
+        AppMessage::Editor(msg) => settle_pending_exit(handle_editor(model, msg)),
         AppMessage::EditorForm(form_msg) => handle_editor_form(model, form_msg),
         AppMessage::Wizard(msg) => handle_wizard(model, msg),
         AppMessage::WizardForm(form_msg) => handle_wizard_form(model, form_msg),

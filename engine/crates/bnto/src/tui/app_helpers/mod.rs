@@ -9,6 +9,7 @@ mod editor;
 mod home_detail;
 mod library;
 mod navigation;
+mod quit;
 mod results;
 mod settings;
 mod wizard;
@@ -28,6 +29,7 @@ pub(crate) use library::{
     handle_open_library,
 };
 pub(crate) use navigation::handle_back;
+pub(crate) use quit::{request_quit, settle_pending_exit};
 pub(crate) use results::{handle_open_file, handle_open_folder};
 pub(crate) use settings::{
     handle_open_settings_picker, handle_settings_path_confirmed, handle_telemetry_toggled,

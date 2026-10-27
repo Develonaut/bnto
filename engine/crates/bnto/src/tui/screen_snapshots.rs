@@ -7,9 +7,10 @@ use std::path::PathBuf;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{Terminal, backend::TestBackend};
 
-use super::app::{AppMessage, AppModel, update};
+use super::app::{AppMessage, AppModel, DetailOrigin, Screen, update};
 use super::keys::handle_key;
 use super::render::draw_frame;
+use super::screens::editor::EditorScreenModel;
 use super::screens::picker::PickerModel;
 use super::theme::ThemeVariant;
 use crate::storage::paths::BntoPaths;
@@ -110,6 +111,19 @@ fn update_available() -> Session {
     session
 }
 
+/// The editor on a modified recipe after `q`: it asks to save (ISS-98).
+fn editor_asking_to_save() -> Session {
+    let mut session = Session::new();
+    let mut editor = bnto_core::editor::EditorModel::new();
+    editor.recipe_name = "Draft".into();
+    editor.dirty = true;
+    session.model.screen = Screen::Editor {
+        from: DetailOrigin::Home,
+    };
+    session.model.editor = Some(EditorScreenModel::new(editor));
+    session.press(&[KeyCode::Char('q')])
+}
+
 /// Each screen the snapshots cover, by name.
 fn screens() -> Vec<(&'static str, Session)> {
     let detail = |slug: &str| {
@@ -144,6 +158,7 @@ fn screens() -> Vec<(&'static str, Session)> {
         ("execution_consent", consent()),
         ("results_with_message", results_with_message()),
         ("results_written_in_place", results_written_in_place()),
+        ("editor_asking_to_save", editor_asking_to_save()),
     ]
 }
 

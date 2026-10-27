@@ -86,6 +86,7 @@ impl AppModel {
             status_message: None,
             update_notice: None,
             upgrade_on_exit: false,
+            pending_exit: None,
             settings_picker_field: None,
             param_overrides: HashMap::new(),
             registry,
