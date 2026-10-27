@@ -21,6 +21,8 @@ use super::app_helpers::{
     handle_wizard_form, request_quit, settle_pending_exit,
 };
 mod detail_entry;
+#[cfg(test)]
+mod home_cursor_tests;
 mod init;
 mod message;
 #[cfg(test)]
@@ -193,7 +195,7 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
 fn update_screen(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
         AppMessage::Home(msg) => AppModel {
-            home: home_update(model.home, msg),
+            home: home_update(model.home, msg, model.browser.filtered.len()),
             ..model
         },
         AppMessage::Library(ref msg) => handle_library(model, msg),
