@@ -35,4 +35,4 @@ expression: "session.screen(width, height)"
             │                                                                                              │
             │                                                                                              │
             ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
-            ↑↓ navigate  ◂▸ theme  Enter browse  Esc back             22 recipes  ·  v[version]  ·  Los Angeles
+            ↑↓ navigate  ◂▸ theme  Enter browse  Esc back  q quit     22 recipes  ·  v[version]  ·  Los Angeles

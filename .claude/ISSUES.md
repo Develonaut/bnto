@@ -14,11 +14,10 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), October 27, 2026. Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101). Batches keep their numbers.
 
 | #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2   | TUI correctness            | ISS-101                                                | ISS-101 shows key hints a prompt ignores                                                                                                                                                                                                                                                                        |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
 | 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                        | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                              |
 | 5   | Engine templating          | ISS-35, ISS-58                                         | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                |
@@ -73,7 +72,6 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), O
 | ISS-96  | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
 | ISS-99  | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
 | ISS-100 | `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files   | engine      | Open                                             |
-| ISS-101 | The TUI editor's footer lists navigation keys while a delete or save question captures every key      | tui         | Open                                             |
 
 ---
 
@@ -405,12 +403,3 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** say "this step moved nothing" in `refused`, or name the moves earlier iterations made, as `file-copy` names earlier copies (`copy_batch/refusal.rs`, `recorded_writes`); the second needs the run to record moves.
 - **Regression test:** the loop above fails without claiming nothing moved, and `O/b.txt` holds `b.txt`'s content.
-
-### ISS-101: The TUI editor's footer lists navigation keys while a delete or save question captures every key
-
-**Found:** October 27, 2026 (cold review of the ISS-98 fix).
-
-While the editor asks "Delete '…'? (y/n)" or "Save changes? (y: save, n: discard, Esc: keep editing)", `keys/editor.rs` takes only those keys, and `keys/mod.rs`'s `capturing_handler` routes everything to it. The footer still shows the editor's usual hints (`↑↓ navigate  Enter expand  a add  d delete`, `screen.rs` `help_hints`), none of which do anything then. See `snapshots/bnto__tui__screen_snapshots__editor_asking_to_save_120x36.snap`, line 38.
-
-- **Fix:** while either question is open, the footer shows its keys (`y save  n discard  Esc keep editing`, or `y delete  n keep`).
-- **Regression test:** the `editor_asking_to_save` snapshot's footer shows the question's keys.

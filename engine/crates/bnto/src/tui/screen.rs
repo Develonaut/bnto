@@ -42,16 +42,12 @@ impl Screen {
         }
     }
 
-    /// Contextual key hints for the help bar.
+    /// The screen's own key hints. The footer adds the keys every screen
+    /// shares, or a mode's keys instead (`footer_hints`).
     #[expect(clippy::too_many_lines)]
     pub fn help_hints(&self) -> Vec<(&'static str, &'static str)> {
         match self {
-            Self::Home => vec![
-                ("Tab", "pane"),
-                ("↑↓", "navigate"),
-                ("Enter", "select"),
-                ("q", "quit"),
-            ],
+            Self::Home => vec![("Tab", "pane"), ("↑↓", "navigate"), ("Enter", "select")],
             Self::Library => vec![
                 ("↑↓", "navigate"),
                 ("/", "search"),
@@ -66,7 +62,6 @@ impl Screen {
                 ("Enter", "select"),
                 ("a", "add to library"),
                 ("s", "settings"),
-                ("q", "quit"),
             ],
             Self::Detail { .. } => vec![
                 ("↑↓", "navigate"),
@@ -90,7 +85,6 @@ impl Screen {
                 ("o", "open file"),
                 ("O", "open folder"),
                 ("r", "run another"),
-                ("q", "quit"),
             ],
             Self::Preview { .. } => vec![("↑↓", "navigate"), ("Enter", "confirm"), ("Esc", "back")],
             Self::Settings => vec![
