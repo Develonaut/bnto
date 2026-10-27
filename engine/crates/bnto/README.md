@@ -245,7 +245,8 @@ src/
     +-- render_execution.rs # Execution screen renderer
     +-- render_picker.rs   # File picker renderer
     +-- render_results.rs  # Results screen renderer
-    +-- screen.rs          # Screen titles and help hints
+    +-- screen.rs          # Screen titles and each screen's own key hints
+    +-- footer_hints.rs    # Footer hints: a mode's or the screen's keys, then the shared ones
     +-- theme.rs           # Theme variants and style helpers
     +-- screens/
     |   +-- browser.rs     # Recipe browser model + update

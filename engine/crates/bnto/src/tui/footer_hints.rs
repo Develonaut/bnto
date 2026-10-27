@@ -1,8 +1,8 @@
 // The footer's key hints, composed from three layers so each is extended in
 // one place (ISS-101, decisions/tui-footer-hints.md):
 // - a mode's keys (a question, a rename, consent, a run in progress, the
-//   settings picker), or else the
-//   screen's own keys (`Screen::help_hints`), come first;
+//   settings picker), or else the screen's own keys (`Screen::help_hints`),
+//   come first;
 // - then the base keys every screen shares (`BASE`), unless a mode takes
 //   every key (a question, a search box), where `q` is an answer or a letter.
 // The footer drops hints from the end when it's narrow, so the screen's keys
