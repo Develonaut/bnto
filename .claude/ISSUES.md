@@ -426,5 +426,5 @@ Leaving the editor with Esc asks about unsaved changes (`EditorMessage::Back` �
 
 `next build` lists every route but a few metadata files as `ƒ (Dynamic)`, `/[bnto]` included, though `app/(app)/[bnto]/page.tsx` sets `generateStaticParams` and `dynamicParams = false` and says "Pre-render all registered slugs at build time". So the SEO pages render on every request instead of being served as static HTML. The likely cause is the root layout's `ConvexAuthNextjsServerProvider` (`apps/web/app/layout.tsx:85`), which reads the auth cookie; not yet confirmed.
 
-- **Fix:** find what opts the tree out of static rendering (`next build` with the provider moved off the public routes, or Next's dynamic-usage logging), and keep the public pages static.
+- **Fix:** find what opts the tree out of static rendering (`next build` with the provider moved off the public routes, or Next's dynamic-usage logging), and keep the public pages static. Then update gotchas.md's "A `loading.tsx` Can Steal a Page's LCP", which assumes pages render per request.
 - **Regression test:** `next build` lists `/[bnto]` (and `/`, `/faq`, `/pricing`, `/privacy`) as static (`●` or `○`).

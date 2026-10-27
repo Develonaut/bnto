@@ -136,7 +136,7 @@ CI runs its Rust and TypeScript jobs only when a change touches a path those job
 
 Every page renders per request (`next build` marks them `ƒ`, recipe pages included, ISS-99), so a route's `loading.tsx` is streamed first: the server sends the layout with the fallback in the page's place, and the page follows in a hidden `<div id="S:…">` that a script swaps in. A first paint before the swap shows the skeleton and the layout's footer, whose mascot then becomes the LCP image. Lighthouse's `lcp-discovery-insight` fails on it (it's lazy, not high priority), and only on some runs: the v0.19.0 release failed on `/compress-images` this way.
 
-**Fix:** give a route a `loading.tsx` only when its page awaits real work. Recipe pages read a static registry and have none (removed in #801). `e2e/pages/recipe-page-loading.spec.ts` fails on a streamed fallback (`<template id="B:`) or a hero that comes after the footer in the HTML.
+**Fix:** give a route a `loading.tsx` only when its page awaits real work. Recipe pages read a static registry and have none (removed in #801). `e2e/pages/recipe-page-loading.spec.ts` fails on a streamed fallback (`<template id="B:`) or a hero `<img>` that comes after the footer's in the HTML.
 
 ## Turbopack + Node.js Subpath Imports on Vercel
 

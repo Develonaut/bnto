@@ -31,8 +31,10 @@ for (const { path, hero } of PAGES) {
     const html = await (await request.get(path)).text();
 
     expect(html).not.toContain('<template id="B:');
-    expect(html.indexOf(hero)).toBeGreaterThan(-1);
-    expect(html.indexOf(hero)).toBeLessThan(html.indexOf(FOOTER_MASCOT));
+    // The <img> tags, not the hero's preload link in <head>.
+    const heroImg = html.indexOf(`src="${hero}"`);
+    expect(heroImg).toBeGreaterThan(-1);
+    expect(heroImg).toBeLessThan(html.indexOf(`src="${FOOTER_MASCOT}"`));
   });
 
   test.describe(`${path} loading @browser`, () => {
