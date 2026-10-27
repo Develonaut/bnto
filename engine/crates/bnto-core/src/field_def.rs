@@ -112,6 +112,16 @@ pub struct FieldOption {
 }
 
 impl FieldDef {
+    /// The label a form shows the field under.
+    pub fn label(&self) -> &str {
+        match self {
+            Self::String { label, .. }
+            | Self::Number { label, .. }
+            | Self::Boolean { label, .. }
+            | Self::Enum { label, .. } => label,
+        }
+    }
+
     /// The display order for this field (lower = first).
     pub fn order(&self) -> u32 {
         match self {
@@ -343,5 +353,19 @@ mod tests {
         assert!(!json.contains("default"));
         assert!(!json.contains("placeholder"));
         assert!(!json.contains("order"));
+    }
+
+    #[test]
+    fn every_kind_of_field_gives_its_label() {
+        let kinds = [
+            r#"{"type":"string","label":"Name"}"#,
+            r#"{"type":"number","label":"Name"}"#,
+            r#"{"type":"boolean","label":"Name"}"#,
+            r#"{"type":"enum","label":"Name","options":[]}"#,
+        ];
+        for json in kinds {
+            let field: FieldDef = serde_json::from_str(json).unwrap();
+            assert_eq!(field.label(), "Name", "{json}");
+        }
     }
 }

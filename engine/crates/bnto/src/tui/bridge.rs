@@ -1210,7 +1210,9 @@ mod tests {
             &trust,
         ));
         assert!(
-            matches!(&events[..], [BridgeEvent::Error(e)] if e.contains("\"title\"")),
+            matches!(&events[..], [BridgeEvent::Error(e)]
+                if e.contains("Title is empty: fill it in on the recipe's form")
+                    && !e.contains("-p")),
             "{events:?}"
         );
     }

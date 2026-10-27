@@ -18,7 +18,7 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), O
 
 | #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2   | TUI correctness            | ISS-97, ISS-101                                        | ISS-97 points TUI users at a CLI flag; ISS-101 shows key hints a prompt ignores                                                                                                                                                                                                                                 |
+| 2   | TUI correctness            | ISS-101                                                | ISS-101 shows key hints a prompt ignores                                                                                                                                                                                                                                                                        |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
 | 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                        | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                              |
 | 5   | Engine templating          | ISS-35, ISS-58                                         | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                |
@@ -71,7 +71,6 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), O
 | ISS-94  | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
 | ISS-95  | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
 | ISS-96  | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
-| ISS-97  | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
 | ISS-99  | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
 | ISS-100 | `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files   | engine      | Open                                             |
 | ISS-101 | The TUI editor's footer lists navigation keys while a delete or save question captures every key      | tui         | Open                                             |
@@ -388,15 +387,6 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** end the footer by the recipe's input mode, as `run_hint` does, from one shared function.
 - **Regression test:** a dry run of a `mode: "none"` recipe ends `Run with: bnto run <path>` with no placeholder; a file recipe ends `<files...>`.
-
-### ISS-97: The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have
-
-**Found:** October 26, 2026 (cold review of the ISS-77 fix).
-
-Since the ISS-77 fix the TUI refuses an empty field before consent with `refuse_unfilled` (`engine/crates/bnto/src/unfilled_fields.rs`), whose line reads `field "title" (node "say") is unset: pass -p title=...`. In the TUI a field is filled on the recipe's detail form, not with `-p`.
-
-- **Fix:** let the caller word the remedy (`-p title=...` for the CLI, "fill Title on the recipe's form" for the TUI), from one list of missing fields.
-- **Regression test:** a TUI bridge run with an empty field reports it without `-p`; `bnto run` still names `-p`.
 
 ### ISS-99: Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static
 

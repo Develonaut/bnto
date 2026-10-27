@@ -1,17 +1,37 @@
-// `bnto run` and `bnto dry-run` stop before consent when a `{{fields.*}}`
-// has nothing to fill it, and say which `-p` would. The engine's pre-flight
-// refuses the same run (`bnto_core::missing_fields`); checking here first
-// means nobody approves a run that would be refused.
+// `bnto run`, `bnto dry-run` and a TUI run stop before consent when a
+// `{{fields.*}}` has nothing to fill it, and say how to fill it: which `-p`
+// would on the command line, which form field in the TUI (ISS-97). The
+// engine's pre-flight refuses the same run (`bnto_core::missing_fields`);
+// checking here first means nobody approves a run that would be refused.
 
-use bnto_core::PipelineDefinition;
 use bnto_core::first_processing_node_id;
 use bnto_core::missing_fields::{MissingField, missing_fields};
+use bnto_core::{PipelineDefinition, PipelineNode};
 
 use crate::input::apply_param_overrides;
 
-/// Why `definition_json`, with `param_overrides` applied, can't run: one line
-/// per unfilled field reference. `Ok` when every reference has a value.
+/// How a refusal says to fill a field.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FillWith {
+    /// The command line: `-p field=...`.
+    Flag,
+    /// The TUI: the recipe's form, which shows each field by its label.
+    Form,
+}
+
+/// Why `definition_json`, with `param_overrides` applied, can't run, for the
+/// command line: one line per unfilled field reference, naming the `-p` that
+/// fills it. `Ok` when every reference has a value.
 pub fn refuse_unfilled(definition_json: &str, param_overrides: &[String]) -> Result<(), String> {
+    refuse_unfilled_with(definition_json, param_overrides, FillWith::Flag)
+}
+
+/// `refuse_unfilled`, saying how to fill each field the `fill` way.
+pub fn refuse_unfilled_with(
+    definition_json: &str,
+    param_overrides: &[String],
+    fill: FillWith,
+) -> Result<(), String> {
     let mut def: PipelineDefinition =
         serde_json::from_str(definition_json).map_err(|e| format!("Invalid recipe JSON: {e}"))?;
     let default_node = first_processing_node_id(&def);
@@ -20,19 +40,43 @@ pub fn refuse_unfilled(definition_json: &str, param_overrides: &[String]) -> Res
     if missing.is_empty() {
         return Ok(());
     }
-    Err(missing.iter().map(line).collect::<Vec<_>>().join("\n"))
+    let lines: Vec<String> = missing.iter().map(|m| line(m, &def.nodes, fill)).collect();
+    Err(lines.join("\n"))
 }
 
-/// One unfilled reference: the `-p` that fills a declared field, or the
-/// engine's reason when nothing in scope declares it.
-fn line(missing: &MissingField) -> String {
-    match &missing.declared_by {
-        Some(owner) => format!(
-            "field \"{field}\" (node \"{owner}\") is unset: pass -p {field}=...",
-            field = missing.field
+/// One unfilled reference: how to fill a declared field, or the engine's
+/// reason when nothing in scope declares it.
+fn line(missing: &MissingField, nodes: &[PipelineNode], fill: FillWith) -> String {
+    let field = &missing.field;
+    match (&missing.declared_by, fill) {
+        (Some(owner), FillWith::Flag) => {
+            format!("field \"{field}\" (node \"{owner}\") is unset: pass -p {field}=...")
+        }
+        (Some(owner), FillWith::Form) => format!(
+            "{} is empty: fill it in on the recipe's form",
+            label(nodes, owner, field)
         ),
-        None => format!("node \"{}\": {}", missing.node_id, missing.message()),
+        (None, _) => format!("node \"{}\": {}", missing.node_id, missing.message()),
     }
+}
+
+/// The label `owner` declares `field` with, or the field's name without one.
+fn label(nodes: &[PipelineNode], owner: &str, field: &str) -> String {
+    find(nodes, owner)
+        .and_then(|node| node.fields.get(field))
+        .map(bnto_core::FieldDef::label)
+        .filter(|label| !label.is_empty())
+        .map_or_else(|| field.to_string(), str::to_string)
+}
+
+/// The node with `id`, at any depth.
+fn find<'a>(nodes: &'a [PipelineNode], id: &str) -> Option<&'a PipelineNode> {
+    nodes.iter().find_map(|node| {
+        if node.id == id {
+            return Some(node);
+        }
+        find(node.children.as_deref().unwrap_or_default(), id)
+    })
 }
 
 #[cfg(test)]
@@ -99,5 +143,23 @@ mod tests {
             "fields": { "format": { "type": "string", "label": "Format", "default": "mp4" } },
             "parameters": { "command": "echo", "args": ["{{fields.format}}"] } }] }"#;
         assert_eq!(refuse_unfilled(json, &[]), Ok(()));
+    }
+
+    // --- The TUI's wording (ISS-97) ---
+
+    #[test]
+    fn on_the_form_an_unset_field_names_its_label_and_no_p() {
+        let err = refuse_unfilled_with(&release_verify_shape(""), &[], FillWith::Form).unwrap_err();
+        assert_eq!(err, "Version is empty: fill it in on the recipe's form");
+    }
+
+    #[test]
+    fn on_the_form_a_field_without_a_label_goes_by_its_name() {
+        let json = r#"{ "nodes": [{ "id": "g", "type": "group",
+            "fields": { "dest": { "type": "string", "label": "" } },
+            "nodes": [{ "id": "s", "type": "shell-run",
+                "parameters": { "command": "ls", "args": ["{{fields.dest}}"] } }] }] }"#;
+        let err = refuse_unfilled_with(json, &[], FillWith::Form).unwrap_err();
+        assert_eq!(err, "dest is empty: fill it in on the recipe's form");
     }
 }
