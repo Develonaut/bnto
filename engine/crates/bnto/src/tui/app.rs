@@ -111,8 +111,10 @@ pub struct AppModel {
     pub paths: BntoPaths,
     /// Transient status bar message (e.g. "Settings saved" or "Failed to save").
     pub status_message: Option<String>,
-    /// "bnto 0.17.0 available, run bnto upgrade" when a newer release is out.
+    /// "bnto 0.17.0 available, U to upgrade" when a newer release is out.
     pub update_notice: Option<String>,
+    /// Run `bnto upgrade` once the TUI has closed (U was pressed).
+    pub upgrade_on_exit: bool,
     /// Which settings field opened the picker (None = normal recipe picker).
     pub settings_picker_field: Option<String>,
     /// Param overrides from detail screen, carried through picker to execution.
@@ -140,6 +142,7 @@ impl std::fmt::Debug for AppModel {
             .field("editor", &self.editor.is_some())
             .field("wizard", &self.wizard.is_some())
             .field("status_message", &self.status_message)
+            .field("upgrade_on_exit", &self.upgrade_on_exit)
             .field("settings_picker_field", &self.settings_picker_field)
             .field("param_overrides", &self.param_overrides.len())
             .finish_non_exhaustive()
@@ -227,6 +230,7 @@ fn update_authoring(model: AppModel, msg: AppMessage) -> AppModel {
             update_notice: Some(notice),
             ..model
         },
+        AppMessage::Upgrade => upgrade_on_exit(model),
         AppMessage::Settings(msg) => {
             let settings = model.settings.map(|s| settings_update(s, msg));
             AppModel { settings, ..model }
@@ -238,6 +242,16 @@ fn update_authoring(model: AppModel, msg: AppMessage) -> AppModel {
         }
         AppMessage::SettingsPathConfirmed => handle_settings_path_confirmed(model),
         msg => update_editing(model, msg),
+    }
+}
+
+/// Quit to run `bnto upgrade`, when there's a newer release to install.
+fn upgrade_on_exit(model: AppModel) -> AppModel {
+    let upgrade = model.update_notice.is_some();
+    AppModel {
+        should_quit: model.should_quit || upgrade,
+        upgrade_on_exit: upgrade,
+        ..model
     }
 }
 
@@ -522,6 +536,24 @@ mod tests {
     fn quit_sets_should_quit() {
         let app = update(default_model(), AppMessage::Quit);
         assert!(app.should_quit);
+    }
+
+    #[test]
+    fn upgrade_quits_to_upgrade_when_a_newer_release_is_out() {
+        let model = AppModel {
+            update_notice: Some("bnto 99.0.0 available, U to upgrade".into()),
+            ..default_model()
+        };
+        let app = update(model, AppMessage::Upgrade);
+        assert!(app.should_quit);
+        assert!(app.upgrade_on_exit);
+    }
+
+    #[test]
+    fn upgrade_does_nothing_without_a_newer_release() {
+        let app = update(default_model(), AppMessage::Upgrade);
+        assert!(!app.should_quit);
+        assert!(!app.upgrade_on_exit);
     }
 
     #[test]

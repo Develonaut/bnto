@@ -24,4 +24,4 @@ expression: "session.screen(width, height)"
       ╭ S E T T I N G S ────╮│   Generate Thumbnails                     │
       │  Preferences        ││   Optimize Images for Web                 │
       ╰─────────────────────╯╰───────────────────────────────────────────╯
-      Tab pane         bnto 99.0.0 available, run bnto upgrade  ·  v[version]
+      Tab pane             bnto 99.0.0 available, U to upgrade  ·  v[version]

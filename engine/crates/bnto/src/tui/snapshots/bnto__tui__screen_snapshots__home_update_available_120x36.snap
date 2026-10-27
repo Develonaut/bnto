@@ -35,4 +35,4 @@ expression: "session.screen(width, height)"
             ╭ S E T T I N G S ──────────────╮│   Rename CSV Columns                                        │
             │  Preferences                  ││   Standardize CSV                                           │
             ╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────╯
-            Tab pane  ↑↓ navigate  Enter select  q quit  bnto 99.0.0 available, run bnto upgrade  ·  v[version]
+            Tab pane  ↑↓ navigate  Enter select  q quit      bnto 99.0.0 available, U to upgrade  ·  v[version]

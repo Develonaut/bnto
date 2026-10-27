@@ -101,4 +101,7 @@ pub enum AppMessage {
     OpenFolder,
     /// Quit the application.
     Quit,
+    /// Quit, then run `bnto upgrade` in the terminal (U, while a newer
+    /// release is out).
+    Upgrade,
 }

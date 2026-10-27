@@ -1,7 +1,7 @@
 # CLI Upgrade Notices + `bnto upgrade` -- 3 PRs
 
 **Created:** October 21, 2026
-**Status:** Shipped in v0.17.0: PR 1 (#693), PR 2 (#694), PR 3 (#695). Follow-up (October 22, 2026): an open TUI looks again every hour (#709).
+**Status:** Shipped in v0.17.0: PR 1 (#693), PR 2 (#694), PR 3 (#695). Follow-up (October 22, 2026): an open TUI looks again every hour (#709). Follow-up (October 27, 2026, Ryan's request): pressing U while the notice shows closes the TUI and runs `bnto upgrade` in the terminal, so cargo's output and the result show there. Not while a run is on screen, where a stray U would cut it short.
 **Related:** [releases.md](../scopes/process/releases.md#one-number-everywhere), [tui-data-persistence.md](tui-data-persistence.md), [environment-variables.md](../environment-variables.md)
 
 ## Context
@@ -28,7 +28,7 @@ Since #677, one version number covers the release tag, crates.io and `bnto --ver
 | CLI notice                          | Before a command runs, one line on stderr: `bnto 0.17.0 is available (you have 0.16.1). Run bnto upgrade.` Never on stdout. _Changed in PR 1:_ printing after the command doesn't work when commands end with `process::exit`. The TUI (which gets its own notice in PR 3) and `bnto upgrade` don't show it.                                                                                                               |
 | `bnto upgrade`                      | When the running binary lives in cargo's bin dir (`$CARGO_HOME/bin`, default `~/.cargo/bin`), run `cargo install bnto --locked` with no shell and inherited stdio, then print old → new. Otherwise print how to upgrade for the detected install, without guessing. `--check` reports whether an upgrade exists, refreshing the cache now, and installs nothing.                                                           |
 | Windows                             | A running `.exe` can't be overwritten, and `bnto upgrade` is itself running. Rename the current exe to `bnto.old.exe` (allowed while it runs), let cargo install the new one, and delete `bnto.old.exe` on the next start. Verified in Windows CI.                                                                                                                                                                         |
-| TUI notice                          | Read the cache at startup, then look again every hour on a background thread for as long as the TUI is open (`update_check/watch.rs`). A look reads the cache, so it picks up another `bnto`'s check, and asks the network only once the cache is a day old. When newer, the status line's right side shows `bnto 0.17.0 available, run bnto upgrade`. No modal, no network on the render thread.                          |
+| TUI notice                          | Read the cache at startup, then look again every hour on a background thread for as long as the TUI is open (`update_check/watch.rs`). A look reads the cache, so it picks up another `bnto`'s check, and asks the network only once the cache is a day old. When newer, the status line's right side shows `bnto 0.17.0 available, U to upgrade`. No modal, no network on the render thread.                              |
 
 ---
 

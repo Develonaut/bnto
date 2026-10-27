@@ -86,6 +86,7 @@ impl Tui {
 
     /// Like [`Tui::launch`], with the update check on and its cache saying
     /// `latest` is out (checked just now, so nothing reaches the network).
+    /// U's `bnto upgrade` reads a local index listing `latest`.
     #[allow(dead_code)] // each journey file uses a subset
     pub fn launch_with_update(cols: u16, rows: u16, latest: &str) -> Self {
         Self::launch_full(cols, rows, &[], &[], Some(latest))
@@ -137,6 +138,7 @@ impl Tui {
         if let Some(latest) = update {
             seed_update_cache(homes.1.path(), latest);
             allow_update_check(&mut cmd);
+            local_update_index(&mut cmd, homes.1.path(), latest);
         }
         let (pair, child) = {
             let _one_at_a_time = OPEN_PTY.lock().unwrap_or_else(PoisonError::into_inner);
@@ -291,6 +293,18 @@ fn seed_update_cache(bnto_home: &std::path::Path, latest: &str) {
     std::fs::create_dir_all(&cache).unwrap();
     let json = format!(r#"{{"checkedAt":{now},"latest":"{latest}"}}"#);
     std::fs::write(cache.join("update-check.json"), json).unwrap();
+}
+
+/// Point `bnto upgrade` at a local index listing `latest`, so pressing U
+/// never reaches crates.io.
+fn local_update_index(cmd: &mut CommandBuilder, bnto_home: &std::path::Path, latest: &str) {
+    let index = bnto_home.join("index");
+    let line = format!("{{\"name\":\"bnto\",\"vers\":\"{latest}\",\"yanked\":false}}\n");
+    std::fs::write(&index, line).unwrap();
+    cmd.env(
+        "BNTO_UPDATE_INDEX_URL",
+        format!("file://{}", index.display()),
+    );
 }
 
 /// Let the update check run: no opt-out, and not CI (CI turns it off).

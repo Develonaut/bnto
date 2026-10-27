@@ -403,7 +403,7 @@ None to nodes or recipes. `bnto --help` gains a command, and there's no help gol
 Four places announce a new version. Each gains a pointer to the notes:
 
 - **The CLI notice** (`update_check/notice.rs:5-8`, printed by `update_check/mod.rs:36`) gains a second line: `What's new: https://bnto.io/changelog#0.19.0`. The first line is unchanged. It stays on stderr.
-- **The TUI notice** (`tui_notice()`, `notice.rs:10-13`) becomes `bnto 0.19.0: bnto upgrade · bnto changelog`. That's 3 columns longer than today's `bnto 0.19.0 available, run bnto upgrade`, so the 80×24 status line still has room for the `Tab pane` hint. A URL wouldn't fit (see Design).
+- **The TUI notice** (`tui_notice()`, `notice.rs`) becomes `bnto 0.19.0: U upgrade · bnto changelog`. It keeps the U key (added October 27, 2026, after this plan). That's 3 columns longer than today's `bnto 0.19.0 available, U to upgrade` and 1 shorter than the old `bnto 0.19.0 available, run bnto upgrade`, so the 80×24 status line still has room for the `Tab pane` hint. A URL wouldn't fit (see Design).
 - **`bnto upgrade --check`** prints `notice()` instead of its own copy of the first line (`upgrade/mod.rs:30`), so it gets the link too.
 - **After a successful install,** `bnto upgrade` shows the new version's notes. It runs `<exe> changelog <new version>`, with the path resolved before the install (`upgrade/mod.rs:38`). On Linux, `current_exe()` read after the install would end in `(deleted)`. This step is best-effort and never changes the exit code:
   - It runs with `BNTO_NO_UPDATE_CHECK=1`, `BNTO_TELEMETRY_DISABLED=1` and null stdin, with its output captured. The telemetry opt-out keeps it from sending a `changelog` command event the user didn't type.
@@ -423,9 +423,9 @@ Four places announce a new version. Each gains a pointer to the notes:
 - `engine/crates/bnto/src/upgrade/mod.rs`: `--check` uses `notice()`; `install()` calls `whats_new` after "Upgraded …" (l.49-50)
 - `engine/crates/bnto/src/tui/screen_snapshots.rs`, two places:
   - `update_available()` (l.277-282) hard-codes the notice string on l.280. It builds it with `update_check::tui_notice(Version(99, 0, 0))` instead, so the snapshot follows the real text.
-  - `the_bottom_bar_status_is_never_overwritten` (l.327-353) finds the notice by `" available, run bnto upgrade"` (l.342), which the new text doesn't contain. It finds the start of `tui_notice(Version(99, 0, 0))` instead.
+  - `the_bottom_bar_status_is_never_overwritten` (l.327-353) finds the notice by `" available, U to upgrade"`, which the new text doesn't contain. It finds the start of `tui_notice(Version(99, 0, 0))` instead.
 - `engine/crates/bnto/src/tui/app.rs`: the `update_notice` doc comment (l.114) quotes the new text
-- `engine/crates/bnto/tests/tui_journeys.rs`: TJ10 (`tj10_a_newer_release_shows_in_the_status_line`) waits for `bnto 99.0.0: bnto upgrade · bnto changelog` instead of the old text (l.264)
+- `engine/crates/bnto/tests/tui_journeys.rs`: TJ10 (`tj10_a_newer_release_shows_in_the_status_line`) and TJ15 wait for `bnto 99.0.0: U upgrade · bnto changelog` instead of the old text (l.264)
 - `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_80x24.snap`
 - `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_120x36.snap`
 - `engine/crates/bnto/tests/update_notice.rs`: `a_newer_cached_release_is_mentioned` (l.73-83). Its first-line assert still passes (`contains`); add one for the link line
