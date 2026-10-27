@@ -18,7 +18,7 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), O
 
 | #   | Batch                      | Issues                                                 | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2   | TUI correctness            | ISS-98, ISS-66, ISS-97                                 | ISS-98 loses unsaved edits; ISS-66 hides the cursor; ISS-97 points TUI users at a CLI flag                                                                                                                                                                                                                      |
+| 2   | TUI correctness            | ISS-66, ISS-97                                         | ISS-66 hides the cursor; ISS-97 points TUI users at a CLI flag                                                                                                                                                                                                                                                  |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
 | 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                        | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                              |
 | 5   | Engine templating          | ISS-35, ISS-58                                         | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                |
@@ -73,7 +73,6 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805), O
 | ISS-95  | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
 | ISS-96  | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
 | ISS-97  | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
-| ISS-98  | Quitting the TUI from the recipe editor drops unsaved edits without asking                            | tui         | Open                                             |
 | ISS-99  | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
 | ISS-100 | `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files   | engine      | Open                                             |
 
@@ -407,15 +406,6 @@ Since the ISS-77 fix the TUI refuses an empty field before consent with `refuse_
 
 - **Fix:** let the caller word the remedy (`-p title=...` for the CLI, "fill Title on the recipe's form" for the TUI), from one list of missing fields.
 - **Regression test:** a TUI bridge run with an empty field reports it without `-p`; `bnto run` still names `-p`.
-
-### ISS-98: Quitting the TUI from the recipe editor drops unsaved edits without asking
-
-**Found:** October 27, 2026 (cold review of the TUI's U-to-upgrade key).
-
-Leaving the editor with Esc asks about unsaved changes (`EditorMessage::Back` → `confirming_dirty_exit`). Quitting doesn't. When no field is being edited, `q` is a global key (`tui/event.rs`, `map_global_key`), and `AppMessage::Quit` only sets `should_quit` (`tui/app.rs`, the `Quit` arm), so the TUI exits and the edits are gone. U (quit and upgrade, while a newer release is out) does the same through `upgrade_on_exit`.
-
-- **Fix:** with a dirty editor, have `Quit` and `Upgrade` open the same unsaved-changes prompt, and quit (and upgrade) after Save or Discard.
-- **Regression test:** with `editor.dirty` set, `Quit` and `Upgrade` leave `should_quit` false and show the prompt; Discard then quits.
 
 ### ISS-99: Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static
 

@@ -60,6 +60,15 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
         lines.push(Line::from(""));
     }
 
+    // Unsaved-changes question: Back, or a quit (ISS-98), on a modified recipe.
+    if editor_screen.confirming_dirty_exit {
+        lines.push(Line::from(Span::styled(
+            "  Save changes? (y: save, n: discard, Esc: keep editing)",
+            theme.heading(),
+        )));
+        lines.push(Line::from(""));
+    }
+
     // Node list.
     if editor.nodes.is_empty() {
         lines.push(Line::from(Span::styled(

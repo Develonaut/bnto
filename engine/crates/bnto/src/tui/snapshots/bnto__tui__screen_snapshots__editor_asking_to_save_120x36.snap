@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ E D I T O R ─────────────────────────────────────────────────────────────────────────────────╮
+            │  Draft                                                                                       │
+            │  [modified]                                                                                  │
+            │                                                                                              │
+            │  Save changes? (y: save, n: discard, Esc: keep editing)                                      │
+            │                                                                                              │
+            │  No nodes. Press 'a' to add one.                                                             │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            ↑↓ navigate  Enter expand  a add  d delete  J/K reorder   22 recipes  ·  v[version]  ·  Los Angeles
