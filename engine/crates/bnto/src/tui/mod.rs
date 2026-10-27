@@ -9,6 +9,7 @@ mod bridge;
 mod detail_fit;
 pub mod event;
 mod file_window;
+mod footer_hints;
 pub mod format;
 mod keys;
 pub mod palette;

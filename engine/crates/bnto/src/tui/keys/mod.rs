@@ -57,6 +57,12 @@ fn upgrade_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         .then_some(AppMessage::Upgrade)
 }
 
+/// Whether a search, question or field-editing mode takes every key, so
+/// global keys (`q` to quit) don't apply. The footer asks too (`footer_hints`).
+pub(super) fn captures_keys(model: &AppModel) -> bool {
+    capturing_handler(model).is_some()
+}
+
 /// The screen's handler when a search, modal or field-editing mode is
 /// active — those modes capture every key, ahead of global keys.
 #[expect(clippy::too_many_lines)]

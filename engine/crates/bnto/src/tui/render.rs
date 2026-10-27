@@ -8,6 +8,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
 use super::app::{AppModel, Screen};
+use super::footer_hints::footer_hints;
 use super::render_detail::draw_detail;
 use super::render_editor::draw_editor;
 use super::render_execution::draw_execution;
@@ -181,23 +182,9 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
 /// Render the shared bottom bar: help hints (left) + status info (right).
 ///
 /// All screens use this — rendered inside the app frame for consistent positioning.
-#[expect(clippy::too_many_lines)]
 pub fn draw_bottom_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    // Help hints (left-aligned).
-    // Settings picker shows directory-selection hints instead of file-selection hints.
-    let hints = if model.settings_picker_field.is_some()
-        && matches!(&model.screen, Screen::Picker { .. })
-    {
-        vec![
-            ("↑↓", "navigate"),
-            ("h/l", "parent/enter"),
-            (".", "hidden"),
-            ("Tab", "select dir"),
-            ("Esc", "back"),
-        ]
-    } else {
-        model.screen.help_hints()
-    };
+    // Key hints (left-aligned): mode, screen and base layers.
+    let hints = footer_hints(model);
     // Status info (right-aligned), drawn first: the hints get what's left.
     // A transient message wins, then an available upgrade, then the counts.
     let version = env!("CARGO_PKG_VERSION");
