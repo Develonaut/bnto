@@ -3,7 +3,7 @@
 // Each module contains pure-ish helper functions used by `update()` in `app.rs`.
 // Re-exported here so `app.rs` imports from `super::app_helpers::*`.
 
-mod consent;
+pub(crate) mod consent;
 mod detail_view;
 mod editor;
 mod home_detail;

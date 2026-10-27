@@ -14,17 +14,20 @@ use bnto_engine::run_pipeline;
 
 use crate::context::NativeContext;
 use crate::dry_run::files::FilePreview;
-use crate::recipe_output_dir::recipe_output_dir;
 use crate::run_watchdog::{self, Watched};
+use crate::trust_gate::ConsentRequest;
 use crate::{host_support, input, io, run_limit};
 
 mod events;
 mod output;
+mod precheck;
 mod reporter;
 
 pub use events::map_pipeline_event;
 use output::extract_file_metadata;
 pub use output::{FileResultMeta, build_output_files};
+pub use precheck::ConsentCheck;
+use precheck::{Ready, RunArgs};
 use reporter::{channel_reporter, progressive_dir};
 
 /// Message sent from the bridge thread back to the TUI event loop.
@@ -33,6 +36,12 @@ pub enum BridgeEvent {
     /// A pipeline progress event from the engine. A finished iteration's
     /// progressive files are already written when it arrives.
     Progress(PipelineEvent),
+    /// The run passed its checks and needs the user to allow its commands.
+    /// Send on `reply` to go ahead; drop it to stop the run.
+    ConsentNeeded {
+        request: ConsentRequest,
+        reply: mpsc::Sender<()>,
+    },
     /// Pipeline finished — output files written to this directory.
     Done(RunDone),
     /// Pipeline or setup failed with an error message.
@@ -63,19 +72,22 @@ struct BridgeJob {
     selected_files: Vec<PathBuf>,
     param_overrides: HashMap<String, String>,
     preview_mode: bool,
+    consent: ConsentCheck,
 }
 
 /// Spawn a background thread that runs the pipeline for the given recipe.
 ///
 /// Returns a Receiver that the TUI event loop polls each tick.
-/// The thread runs the engine with the given definition JSON,
-/// writes output files, then sends a Done or Error event.
+/// The thread checks the run, asks for consent if it needs it, runs the
+/// engine with the given definition JSON, writes output files, then sends a
+/// Done or Error event.
 pub fn spawn_pipeline(
     slug: String,
     definition_json: String,
     selected_files: Vec<PathBuf>,
     param_overrides: HashMap<String, String>,
     preview_mode: bool,
+    consent: ConsentCheck,
 ) -> mpsc::Receiver<BridgeEvent> {
     let (tx, rx) = mpsc::channel();
     let job = BridgeJob {
@@ -84,6 +96,7 @@ pub fn spawn_pipeline(
         selected_files,
         param_overrides,
         preview_mode,
+        consent,
     };
     thread::spawn(move || run_bridge(tx, &job));
     rx
@@ -107,26 +120,21 @@ fn run_bridge_in(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob, ctx: NativeCon
     }
 }
 
-/// Prepare inputs, run the pipeline, then write (or preview) the results.
-/// A recipe with no branch for this OS stops first, as `bnto run` does.
-#[expect(clippy::too_many_lines)]
+/// Check the run and get consent, run the pipeline, then write (or preview)
+/// the results.
 fn try_run_bridge(
     tx: &mpsc::Sender<BridgeEvent>,
     job: &BridgeJob,
     ctx: &NativeContext,
 ) -> Result<(), String> {
-    let host = bnto_core::HostPlatform::current();
-    if let Some(why) = host_support::unsupported_host(&job.slug, &job.definition_json, host) {
-        return Err(why);
-    }
-    let (args, override_args) = input_args(job);
-    // Prepare inputs (validates files, applies param overrides to definition).
-    let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
+    let Some(ready) = checked(tx, job, ctx)? else {
+        return Ok(());
+    };
     let mode = resolve_mode(&job.definition_json);
-    let output_dir = resolve_output_dir(job, &mode, ctx, &prepared)?;
+    let output_dir = resolve_output_dir(job, &mode, ready.recipe_dir);
     let reporter = channel_reporter(tx, progressive_dir(job.preview_mode, &mode, &output_dir));
     // Run the pipeline (blocking — this is why we're on a background thread).
-    let Some(result) = run_watched(tx, prepared, &reporter, ctx)? else {
+    let Some(result) = run_watched(tx, ready.prepared, &reporter, ctx)? else {
         return Ok(());
     };
     if job.preview_mode {
@@ -141,6 +149,27 @@ fn try_run_bridge(
     io::write_results_with_mode(&result, &mode, &output_dir, false)?;
     send_done(tx, output_dir, &mode, result, file_metadata, message);
     Ok(())
+}
+
+/// Everything `bnto run` checks before it asks for consent, then consent.
+/// A recipe with no branch for this OS stops first. `None`: not allowed.
+fn checked(
+    tx: &mpsc::Sender<BridgeEvent>,
+    job: &BridgeJob,
+    ctx: &NativeContext,
+) -> Result<Option<Ready>, String> {
+    let host = bnto_core::HostPlatform::current();
+    if let Some(why) = host_support::unsupported_host(&job.slug, &job.definition_json, host) {
+        return Err(why);
+    }
+    let (args, overrides) = input_args(job);
+    let run = RunArgs {
+        slug: &job.slug,
+        definition_json: &job.definition_json,
+        args: &args,
+        overrides: &overrides,
+    };
+    precheck::check_then_consent(tx, &run, &job.consent, ctx)
 }
 
 /// Run the pipeline under the recipe's time limit. `None` when the run was
@@ -209,26 +238,19 @@ fn resolve_mode(definition_json: &str) -> String {
         .unwrap_or_else(|_| "write".to_string())
 }
 
-/// Resolve the output directory.
-///
-/// The recipe's own folder is filled first in every mode, as `bnto run`
-/// does, so a placeholder nothing fills stops the run before any step.
+/// Resolve the output directory, after consent. The recipe's own folder
+/// (`recipe_dir`) was filled before it, in every mode, as `bnto run` does,
+/// so a placeholder nothing fills stopped the run before any step.
 /// Preview mode writes nothing (empty string). Overwrite mode reports the
 /// source directory, since files are renamed in place.
-fn resolve_output_dir(
-    job: &BridgeJob,
-    mode: &str,
-    ctx: &NativeContext,
-    prepared: &input::PreparedInput,
-) -> Result<String, String> {
-    let recipe_dir = recipe_output_dir(&prepared.definition_json, ctx, &prepared.files)?;
-    Ok(if job.preview_mode {
+fn resolve_output_dir(job: &BridgeJob, mode: &str, recipe_dir: Option<String>) -> String {
+    if job.preview_mode {
         String::new()
     } else if mode == "overwrite" {
         source_dir(&job.selected_files)
     } else {
         run_output_dir(&job.slug, recipe_dir)
-    })
+    }
 }
 
 /// Directory of the first selected file (or ".").
@@ -327,6 +349,14 @@ mod tests {
     use crate::process_registry::ProcessRegistry;
     use crate::tui::screens::results::ResultsModel;
 
+    /// Treated as the shipped recipe, so the run never waits for consent.
+    fn no_consent() -> ConsentCheck {
+        ConsentCheck {
+            bundled: true,
+            trusted_file: PathBuf::from("no-trust-file.json"),
+        }
+    }
+
     /// Far longer than a stopped run may take, far shorter than the hang.
     const STOP_DEADLINE: Duration = Duration::from_secs(60);
 
@@ -362,6 +392,7 @@ mod tests {
             selected_files: vec![],
             param_overrides: HashMap::new(),
             preview_mode: true,
+            consent: no_consent(),
         };
         let (tx, rx) = mpsc::channel();
         let started = Instant::now();
@@ -393,6 +424,7 @@ mod tests {
             selected_files: vec![],
             param_overrides: HashMap::new(),
             preview_mode: true,
+            consent: no_consent(),
         };
         let ctx = NativeContext::current_dir().unwrap().with_dry_run(true);
         let (tx, rx) = mpsc::channel();
@@ -439,6 +471,7 @@ mod tests {
             selected_files,
             param_overrides: HashMap::new(),
             preview_mode: false,
+            consent: no_consent(),
         };
         let (tx, rx) = mpsc::channel();
         run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
@@ -492,6 +525,7 @@ mod tests {
                 selected_files: vec![photo.clone()],
                 param_overrides: HashMap::new(),
                 preview_mode,
+                consent: no_consent(),
             };
             let (tx, rx) = mpsc::channel();
             run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
@@ -526,6 +560,7 @@ mod tests {
             selected_files: vec![photo],
             param_overrides: HashMap::from([("output:sub".to_string(), "final".to_string())]),
             preview_mode: false,
+            consent: no_consent(),
         };
         let (tx, rx) = mpsc::channel();
         run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
@@ -712,6 +747,7 @@ mod tests {
             selected_files: vec![a, b],
             param_overrides: HashMap::new(),
             preview_mode: false,
+            consent: no_consent(),
         };
         let (tx, rx) = mpsc::channel();
         run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
@@ -994,5 +1030,188 @@ mod tests {
         }];
         let outputs = build_output_files(&meta);
         assert!(outputs.is_empty(), "{outputs:?}");
+    }
+
+    // --- Checks before consent, then consent (ISS-77, ISS-78) ---
+
+    /// A shell step (`git`, on every CI runner; `echo` is no program on
+    /// Windows) with the output folder `directory`.
+    fn shell_recipe_json(directory: &std::path::Path) -> String {
+        serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "say", "type": "shell-run",
+              "parameters": { "command": "git", "args": ["--version"] } },
+            { "id": "output", "type": "output", "parameters": {
+                "mode": "write", "directory": directory.to_string_lossy() } }
+        ] })
+        .to_string()
+    }
+
+    /// A job for a recipe nobody has approved, with an empty trust store.
+    fn untrusted_job(definition_json: String, trust: &tempfile::TempDir) -> BridgeJob {
+        BridgeJob {
+            slug: "probe".into(),
+            definition_json,
+            selected_files: Vec::new(),
+            param_overrides: HashMap::new(),
+            preview_mode: false,
+            consent: ConsentCheck {
+                bundled: false,
+                trusted_file: trust.path().join("trusted.json"),
+            },
+        }
+    }
+
+    /// Start `job` on its own thread: it blocks while it waits for consent.
+    fn start(job: BridgeJob) -> (mpsc::Receiver<BridgeEvent>, std::thread::JoinHandle<()>) {
+        let (tx, rx) = mpsc::channel();
+        let handle = std::thread::spawn(move || {
+            run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
+        });
+        (rx, handle)
+    }
+
+    #[test]
+    fn a_refused_run_reports_its_error_without_asking_for_consent() {
+        let trust = tempfile::tempdir().unwrap();
+        let out = trust.path().join("{{env.BNTO_ISS77_UNDECLARED}}");
+        let (rx, handle) = start(untrusted_job(shell_recipe_json(&out), &trust));
+        handle.join().unwrap();
+        let events: Vec<BridgeEvent> = rx.try_iter().collect();
+        assert!(
+            matches!(&events[..], [BridgeEvent::Error(e)] if e.contains("BNTO_ISS77_UNDECLARED")),
+            "{events:?}"
+        );
+    }
+
+    #[test]
+    fn a_checked_run_waits_for_consent_and_stops_when_it_is_dropped() {
+        let trust = tempfile::tempdir().unwrap();
+        let out = trust.path().join("out");
+        let (rx, handle) = start(untrusted_job(shell_recipe_json(&out), &trust));
+        let Ok(BridgeEvent::ConsentNeeded { request, reply }) = rx.recv() else {
+            panic!("expected a request for consent");
+        };
+        assert_eq!(request.commands, vec!["git --version"]);
+        assert!(!out.exists(), "the folder was made before consent");
+        drop(reply);
+        handle.join().unwrap();
+        assert!(
+            rx.try_iter().next().is_none(),
+            "a declined run reported back"
+        );
+        assert!(!out.exists(), "a declined run made its folder");
+    }
+
+    #[test]
+    fn an_allowed_run_goes_on_to_finish() {
+        let trust = tempfile::tempdir().unwrap();
+        let out = trust.path().join("out");
+        let (rx, handle) = start(untrusted_job(shell_recipe_json(&out), &trust));
+        let Ok(BridgeEvent::ConsentNeeded { reply, .. }) = rx.recv() else {
+            panic!("expected a request for consent");
+        };
+        reply.send(()).unwrap();
+        handle.join().unwrap();
+        let last = rx.try_iter().last();
+        assert!(matches!(last, Some(BridgeEvent::Done(_))), "{last:?}");
+    }
+
+    /// A rename whose prefix reads `{{vars.<key>}}`.
+    fn vars_prefix_recipe_json(key: &str) -> String {
+        serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+            { "id": "rename", "type": "file-rename",
+              "parameters": { "prefix": format!("{{{{vars.{key}}}}}-") } },
+            { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+        ] })
+        .to_string()
+    }
+
+    #[test]
+    fn a_var_is_filled_from_its_bnto_var_environment_variable() {
+        // SAFETY: set_var races any concurrent getenv in this test binary;
+        // like the repo's other env tests, it uses a name nothing else reads.
+        unsafe { std::env::set_var("BNTO_VAR_ISS78PREFIX", "filled") };
+        let done = run_on_photo("vars", vars_prefix_recipe_json("Iss78Prefix"));
+        assert_eq!(listed(&done), ["filled-photo.txt"]);
+    }
+
+    #[test]
+    fn consent_shows_and_pins_the_filled_value_of_a_var() {
+        // SEC-29: the prompt shows what runs, and the approval is pinned to
+        // it, so a changed value asks again.
+        // SAFETY: as above, a name nothing else reads.
+        unsafe { std::env::set_var("BNTO_VAR_ISS78ARG", "--version") };
+        let trust = tempfile::tempdir().unwrap();
+        let json = serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "say", "type": "shell-run",
+              "parameters": { "command": "git", "args": ["{{vars.Iss78Arg}}"] } }
+        ] })
+        .to_string();
+        let (rx, handle) = start(untrusted_job(json.clone(), &trust));
+        let Ok(BridgeEvent::ConsentNeeded { request, reply }) = rx.recv() else {
+            panic!("expected a request for consent");
+        };
+        assert_eq!(request.commands, vec!["git --version"]);
+        let filled = crate::vars::apply(&json, &[]).unwrap();
+        assert_eq!(request.hash, crate::trust::definition_hash(&filled));
+        drop(reply);
+        handle.join().unwrap();
+    }
+
+    /// An untrusted shell step whose arg is `arg`, with a field `title` that
+    /// has no default (so the run needs it filled).
+    fn shell_reading_json(arg: &str) -> String {
+        serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "say", "type": "shell-run",
+              "fields": { "title": { "type": "string", "label": "Title" } },
+              "parameters": { "command": "git", "args": [arg] } }
+        ] })
+        .to_string()
+    }
+
+    /// The events a run of `job` sends until its bridge ends. Fails if it
+    /// asks for consent; failing drops the request's reply, which stops it.
+    fn events_of(job: BridgeJob) -> Vec<BridgeEvent> {
+        let (rx, handle) = start(job);
+        let events = rx
+            .into_iter()
+            .inspect(|e| {
+                assert!(
+                    !matches!(e, BridgeEvent::ConsentNeeded { .. }),
+                    "asked first"
+                )
+            })
+            .collect();
+        handle.join().unwrap();
+        events
+    }
+
+    #[test]
+    fn an_unset_var_is_refused_before_consent() {
+        // A shell step reads it, so a check after consent would ask first.
+        let trust = tempfile::tempdir().unwrap();
+        let json = shell_reading_json("{{vars.Iss78Unset}}");
+        let events = events_of(untrusted_job(json, &trust));
+        assert!(
+            matches!(&events[..], [BridgeEvent::Error(e)] if e.contains("{{vars.Iss78Unset}}")),
+            "{events:?}"
+        );
+    }
+
+    #[test]
+    fn an_empty_field_is_refused_before_consent() {
+        let trust = tempfile::tempdir().unwrap();
+        let events = events_of(untrusted_job(
+            shell_reading_json("{{fields.title}}"),
+            &trust,
+        ));
+        assert!(
+            matches!(&events[..], [BridgeEvent::Error(e)] if e.contains("\"title\"")),
+            "{events:?}"
+        );
     }
 }

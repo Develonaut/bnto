@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-97**.
+- **IDs never get reused.** The next one is **ISS-98**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -35,8 +35,6 @@
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
 | ISS-76 | A TUI whose terminal restore fails skips the kept-files report                                        | tui         | Open                                             |
-| ISS-77 | The TUI asks to allow a shell recipe's commands for a run it then refuses                             | tui         | Open                                             |
-| ISS-78 | The TUI never fills `{{vars.*}}`: a step gets the text as written                                     | tui         | Open                                             |
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
 | ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
 | ISS-83 | A `file-copy` whose source is gone says it failed to write the destination                            | engine      | Open                                             |
@@ -53,6 +51,7 @@
 | ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
 | ISS-95 | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
 | ISS-96 | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
+| ISS-97 | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
 
 ---
 
@@ -252,7 +251,7 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 
 - **What happens:** `bnto run watermark-images photo.jpg --yes -o out` exits 1 with `Node 'overlay': param "overlay" (Overlay Image) is required`, and leaves an empty `out/`. A recipe that needs approval asks for it first, then is refused. `bnto dry-run watermark-images photo.jpg` ends with `Run with: bnto run watermark-images <input>`, a command that would be refused, and the run's message doesn't name the `-p` that fills it.
 - **Why:** the check is in the engine's pre-flight (`executor/raw_params.rs`, called from `execute_pipeline`, `executor/mod.rs:193`), which `bnto run` reaches after `check_trust` (`bnto/src/run.rs:85`) and after `progressive_dir` makes the `-o` folder (`run.rs:230-234`). Undeclared params and `validate_raw` refusals have always been checked there too. Unfilled `{{fields.*}}`, inputs and the output folder's placeholders (since the ISS-22 fix) are refused before consent ("so nobody approves a run the engine would refuse", `run.rs:75-83`).
-- **Fix:** have `bnto run` and `bnto dry-run` run the raw-param checks (undeclared, required with no value, `validate_raw`) on the definition with `-p` applied, before consent and before any folder is made, naming the `-p node:param=…` that fills a required one, as `refuse_unfilled` does for fields.
+- **Fix:** have `bnto run` and `bnto dry-run` run the raw-param checks (undeclared, required with no value, `validate_raw`) on the definition with `-p` applied, before consent and before any folder is made, naming the `-p node:param=…` that fills a required one, as `refuse_unfilled` does for fields. The TUI makes its pre-consent checks in `tui/bridge/precheck.rs` (`check_then_consent`, [decision](decisions/tui-consent-in-bridge.md)); add the same check there.
 - **Regression test:** a CLI test: a bundled recipe left with an empty required param is refused before consent, names the `-p`, and creates no `-o` folder. The dry run says so too.
 
 ### ISS-75: The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file
@@ -271,24 +270,6 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 
 - **Fix:** run the report whatever the restore returns (after it, so the warning lands on the normal screen), then return the restore error, or the run's error first if both failed.
 - **Regression test:** with a restore that fails, the kept-files report still runs.
-
-### ISS-77: The TUI asks to allow a shell recipe's commands for a run it then refuses
-
-**Found:** October 25, 2026 (fixing ISS-22).
-
-`bnto run` checks a run's `{{fields.*}}`, inputs and output folder before it asks to allow a shell recipe's commands (`engine/crates/bnto/src/run.rs:77-85`), so nobody approves a run that is then refused. The TUI asks first: `consent::gate` (`tui/app_helpers/consent.rs:13-20`) decides only whether the recipe is trusted, and the checks run after the user allows, on the bridge thread: inputs and the output folder in `try_run_bridge` (`tui/bridge.rs:121-123`), unfilled fields in the engine's pre-flight. For an untrusted shell recipe whose output folder names an unset secret, or with a field left empty, the TUI shows the consent prompt, and allowing it ends in an error. Nothing runs and no folder is made, so this is a wasted approval, not a safety gap.
-
-- **Fix:** run the same checks before `consent::gate` holds the run (the TUI knows the files and form values then), and show the refusal instead of the prompt. Preparing inputs walks picked folders, so keep it off the update thread (the bridge does it on its own thread today).
-- **Regression test:** an untrusted shell recipe whose output folder reads an undeclared `{{env.*}}` goes straight to the error, with no consent prompt.
-
-### ISS-78: The TUI never fills `{{vars.*}}`: a step gets the text as written
-
-**Found:** October 25, 2026 (cold review of the ISS-22 fix).
-
-Run vars (`--vars` files, `BNTO_VAR_<KEY>`) are the consumer's to fill ([recipe-fields.md](strategy/recipe-fields.md#active-namespaces)). `bnto run` and `bnto dry-run` do (`vars::apply`, `engine/crates/bnto/src/run.rs:274`, `inspect.rs:35`), and refuse an unset key. Nothing under `engine/crates/bnto/src/tui/` calls it, and the engine leaves a `{{vars.*}}` as written (`interpolated_value`, `bnto-core/src/executor/template.rs`, `_ => None`). So a recipe that `bnto run` fills from `BNTO_VAR_DRIVE` runs in the TUI with the literal text `{{vars.Drive}}` in its step's params, and in its output folder it's refused ("has no value") even with `BNTO_VAR_DRIVE` set.
-
-- **Fix:** fill vars in the TUI from `BNTO_VAR_<KEY>` (it has no `--vars` files), or refuse a run with any left, before consent.
-- **Regression test:** a TUI bridge run of a recipe whose step reads `{{vars.X}}`, with `BNTO_VAR_X` set, gets the value; with it unset, the run is refused naming `{{vars.X}}`.
 
 ### ISS-79: An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it
 
@@ -438,3 +419,12 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** end the footer by the recipe's input mode, as `run_hint` does, from one shared function.
 - **Regression test:** a dry run of a `mode: "none"` recipe ends `Run with: bnto run <path>` with no placeholder; a file recipe ends `<files...>`.
+
+### ISS-97: The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have
+
+**Found:** October 26, 2026 (cold review of the ISS-77 fix).
+
+Since the ISS-77 fix the TUI refuses an empty field before consent with `refuse_unfilled` (`engine/crates/bnto/src/unfilled_fields.rs`), whose line reads `field "title" (node "say") is unset: pass -p title=...`. In the TUI a field is filled on the recipe's detail form, not with `-p`.
+
+- **Fix:** let the caller word the remedy (`-p title=...` for the CLI, "fill Title on the recipe's form" for the TUI), from one list of missing fields.
+- **Regression test:** a TUI bridge run with an empty field reports it without `-p`; `bnto run` still names `-p`.

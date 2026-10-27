@@ -176,10 +176,7 @@ fn start_from_detail(
         .as_ref()
         .map(|d| d.definition_json.clone())
         .unwrap_or_default();
-    let execution = Some(consent::gate(
-        builder(&slug, files, overrides, definition_json),
-        &model,
-    ));
+    let execution = Some(builder(&slug, files, overrides, definition_json));
     AppModel {
         screen: Screen::Execution { slug, from },
         execution,
@@ -212,13 +209,10 @@ pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
         .as_ref()
         .map(|d| d.definition_json.clone())
         .unwrap_or_default();
-    let execution = Some(consent::gate(
-        ExecutionModel::with_inputs(&slug, files, overrides, definition_json),
-        &model,
-    ));
+    let exec = ExecutionModel::with_inputs(&slug, files, overrides, definition_json);
     AppModel {
         screen: Screen::Execution { slug, from },
-        execution,
+        execution: Some(exec),
         param_overrides: HashMap::new(),
         ..model
     }
@@ -268,13 +262,10 @@ pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel 
             )
         })
         .unwrap_or_default();
-    let execution = Some(consent::gate(
-        ExecutionModel::with_inputs(&slug, files, overrides, definition_json),
-        &model,
-    ));
+    let exec = ExecutionModel::with_inputs(&slug, files, overrides, definition_json);
     AppModel {
         screen: Screen::Execution { slug, from },
-        execution,
+        execution: Some(exec),
         preview: None,
         param_overrides: HashMap::new(),
         ..model

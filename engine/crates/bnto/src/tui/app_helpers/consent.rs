@@ -1,22 +1,28 @@
-// Consent before a TUI run (SEC-19). A run of an untrusted shell recipe
-// waits on the execution screen until the user allows its commands; the
-// pipeline bridge only starts a run that is Idle, so it can't start one
-// that is still waiting.
+// Consent before a TUI run (SEC-19). The run's bridge checks the run first,
+// as `bnto run` does (ISS-77), then for an untrusted shell recipe asks here
+// and waits: the execution screen holds the run until the user allows its
+// commands, and only then does the bridge go on.
 
 use super::super::app::AppModel;
+use super::super::bridge::ConsentCheck;
 use super::super::screens::execution::{ExecutionModel, ExecutionStatus};
 use crate::catalog::RecipeSource;
-use crate::trust::TrustStore;
-use crate::trust_gate;
+use crate::trust_gate::{self, ConsentRequest};
 
-/// Hold `exec` for consent when its recipe needs it.
-pub(crate) fn gate(exec: ExecutionModel, model: &AppModel) -> ExecutionModel {
-    let store = TrustStore::load(&model.paths.trusted_file());
-    let bundled = is_bundled_definition(model, &exec.slug, &exec.definition_json);
-    match trust_gate::consent_needed(&exec.definition_json, &exec.slug, bundled, &store) {
-        Some(request) => exec.awaiting_consent(request),
-        None => exec,
+/// What the run's bridge needs to decide consent: whether `definition_json`
+/// is the shipped recipe, and where approvals are kept.
+pub(crate) fn consent_check(model: &AppModel, slug: &str, definition_json: &str) -> ConsentCheck {
+    ConsentCheck {
+        bundled: is_bundled_definition(model, slug, definition_json),
+        trusted_file: model.paths.trusted_file(),
     }
+}
+
+/// The bridge's checks passed and the run needs consent: hold it on the
+/// execution screen until the user answers.
+pub(crate) fn hold(model: AppModel, request: ConsentRequest) -> AppModel {
+    let execution = model.execution.map(|e| e.awaiting_consent(request));
+    AppModel { execution, ..model }
 }
 
 /// Bundled means the exact shipped definition, not just its slug: an
