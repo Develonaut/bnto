@@ -14,7 +14,7 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Batches keep their numbers.
 
 | #   | Batch                      | Issues                                                          | Why                                                                                                                                                                                                                                                                                                             |
 | --- | -------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
