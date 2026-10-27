@@ -77,10 +77,25 @@ pub fn launch_tui(
         paths,
     );
     logger.flush();
-    terminal::restore(&mut terminal)?;
-    // After the restore, so the warning lands on the normal screen.
-    crate::exit_report::report_kept_on_exit();
-    result
+    end_session(
+        result,
+        || terminal::restore(&mut terminal),
+        crate::exit_report::report_kept_on_exit,
+    )
+}
+
+/// Restore the terminal, then report kept files whatever the restore did: a
+/// kept staging folder or parked file may hold the only copy (ISS-76). After
+/// the restore, so the warning lands on the normal screen. The run's error
+/// comes first when both failed.
+fn end_session(
+    result: io::Result<()>,
+    restore: impl FnOnce() -> io::Result<()>,
+    report: impl FnOnce(),
+) -> io::Result<()> {
+    let restored = restore();
+    report();
+    result.and(restored)
 }
 
 #[cfg(test)]
@@ -88,6 +103,39 @@ mod tests {
     use crossterm::event::{KeyCode, KeyEvent};
 
     use super::*;
+
+    // --- Ending a session (ISS-76) ---
+
+    fn failed(what: &str) -> io::Result<()> {
+        Err(io::Error::other(what.to_string()))
+    }
+
+    #[test]
+    fn kept_files_are_reported_when_the_restore_fails() {
+        let mut reported = false;
+        let ended = end_session(Ok(()), || failed("restore"), || reported = true);
+        assert!(reported, "the kept-files report was skipped");
+        assert_eq!(ended.unwrap_err().to_string(), "restore");
+    }
+
+    #[test]
+    fn the_runs_error_comes_first_when_both_fail() {
+        let mut reported = false;
+        let ended = end_session(failed("run"), || failed("restore"), || reported = true);
+        assert!(reported);
+        assert_eq!(ended.unwrap_err().to_string(), "run");
+    }
+
+    #[test]
+    fn the_report_follows_the_restore() {
+        let order = std::cell::RefCell::new(Vec::new());
+        let restore = || {
+            order.borrow_mut().push("restore");
+            Ok(())
+        };
+        end_session(Ok(()), restore, || order.borrow_mut().push("report")).unwrap();
+        assert_eq!(*order.borrow(), ["restore", "report"]);
+    }
     use app::{AppMessage, AppModel, Screen, update};
     use keys::handle_key;
     use screens::browser::BrowserMessage;

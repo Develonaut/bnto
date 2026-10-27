@@ -34,7 +34,6 @@
 | ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
-| ISS-76 | A TUI whose terminal restore fails skips the kept-files report                                        | tui         | Open                                             |
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
 | ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
 | ISS-83 | A `file-copy` whose source is gone says it failed to write the destination                            | engine      | Open                                             |
@@ -261,15 +260,6 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 - **What happens:** `bnto check` notes Watermark Images' overlay as `left for run time; give it with bnto run -p overlay:overlay=<value>`, but the value must be the image as base64 text. `bnto run watermark-images photo.jpg --yes -o out -p overlay:overlay=photo.jpg` fails with `Invalid base64 in overlay parameter` (`engine/crates/bnto-image/src/overlay/params.rs:69`). Nothing in `engine/crates/bnto/src` reads a file-type param from a path, so the recipe is out of reach from the CLI in practice; `check/run_time/mod.rs:180` documents that "a file param takes its base64 text".
 - **Fix:** let `-p` give a `File` param as a path that the CLI reads and encodes, and say so in the note. ISS-74's `-p` hint should then name a path, not a blob.
 - **Regression test:** a CLI test: `bnto run watermark-images photo.jpg -p overlay:overlay=<logo.png path>` writes a watermarked image.
-
-### ISS-76: A TUI whose terminal restore fails skips the kept-files report
-
-**Found:** October 25, 2026 (cold review of the ISS-53 fix).
-
-`launch_tui` (`engine/crates/bnto/src/tui/mod.rs:80`) runs `terminal::restore(&mut terminal)?` before `exit_report::report_kept_on_exit()`. If the restore fails, the `?` returns early: no warning names a staging folder a stopped write kept or a file a stopped move parked, though either may hold the only copy of a file. The run loop's own `result` is dropped too, so the user sees only the restore error.
-
-- **Fix:** run the report whatever the restore returns (after it, so the warning lands on the normal screen), then return the restore error, or the run's error first if both failed.
-- **Regression test:** with a restore that fails, the kept-files report still runs.
 
 ### ISS-79: An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it
 
