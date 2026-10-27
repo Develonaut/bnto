@@ -25,6 +25,16 @@ const PAGES = [
 ];
 
 for (const { path, hero } of PAGES) {
+  test(`${path} sends the hero before the footer, with no streamed fallback @browser`, async ({
+    request,
+  }) => {
+    const html = await (await request.get(path)).text();
+
+    expect(html).not.toContain('<template id="B:');
+    expect(html.indexOf(hero)).toBeGreaterThan(-1);
+    expect(html.indexOf(hero)).toBeLessThan(html.indexOf(FOOTER_MASCOT));
+  });
+
   test.describe(`${path} loading @browser`, () => {
     test.beforeEach(async ({ page }) => {
       await page.goto(path);
@@ -36,14 +46,6 @@ for (const { path, hero } of PAGES) {
         .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
 
       expect([...preloads].sort()).toEqual([LOGO, hero].sort());
-    });
-
-    test("sends the hero before the footer, with no streamed fallback", async ({ request }) => {
-      const html = await (await request.get(path)).text();
-
-      expect(html).not.toContain('<template id="B:');
-      expect(html.indexOf(hero)).toBeGreaterThan(-1);
-      expect(html.indexOf(hero)).toBeLessThan(html.indexOf(FOOTER_MASCOT));
     });
 
     test("fetches the hero mascot at high priority", async ({ page }) => {
