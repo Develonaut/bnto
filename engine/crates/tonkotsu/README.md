@@ -10,16 +10,16 @@ Follows TEA (The Elm Architecture): `FormModel` holds state, `update()` is a pur
 
 ## Field Types
 
-| Field         | Builder       | What It Does                                          |
-| ------------- | ------------- | ----------------------------------------------------- |
-| `TextInput`   | `text()`      | Single-line text with placeholder and validation      |
-| `TextArea`    | `textarea()`  | Multi-line text with line wrapping                    |
-| `Select`      | `select()`    | Single-choice from options with arrow-key cycling     |
-| `MultiSelect` | `multiselect()`| Multi-choice with checkbox toggling                  |
-| `Number`      | `number()`    | Bounded number with step size and suffix annotation   |
-| `Confirm`     | `confirm()`   | Yes/No toggle                                         |
-| `FilePath`    | `file_path()` | Filesystem path with browse and autocomplete          |
-| `Note`        | `note()`      | Read-only display text (non-interactive)              |
+| Field         | Builder         | What It Does                                        |
+| ------------- | --------------- | --------------------------------------------------- |
+| `TextInput`   | `text()`        | Single-line text with placeholder and validation    |
+| `TextArea`    | `textarea()`    | Multi-line text with line wrapping                  |
+| `Select`      | `select()`      | Single-choice from options with arrow-key cycling   |
+| `MultiSelect` | `multiselect()` | Multi-choice with checkbox toggling                 |
+| `Number`      | `number()`      | Bounded number with step size and suffix annotation |
+| `Confirm`     | `confirm()`     | Yes/No toggle                                       |
+| `FilePath`    | `file_path()`   | Filesystem path with browse and autocomplete        |
+| `Note`        | `note()`        | Read-only display text (non-interactive)            |
 
 ## Usage
 
@@ -32,6 +32,10 @@ let form = FormModel::new(vec![
     select("format").label("Format").options(vec!["JPEG", "PNG", "WebP"]).build(),
 ]);
 ```
+
+## Key Hints
+
+`key_hints(&form)` returns the keys the focused field takes while it's being edited (text: `Enter save  Esc cancel`; a dropdown: `Enter pick  Esc cancel  ↑↓ choose`; and so on, commit and cancel first), or `None` when no field is being edited. A host shows them in its footer. They sit beside `keys.rs`, which maps the same keys, and a test checks that every hinted key does something in its state.
 
 ## Grouping
 
@@ -56,6 +60,7 @@ src/
 ├── form_nav.rs       # Form navigation (focus, tab order)
 ├── group.rs          # FieldGroup for visual grouping
 ├── keys.rs           # Key event → FormMessage mapping
+├── key_hints.rs      # The keys an editing field takes, for a footer
 ├── messages.rs       # FormMessage enum variants
 ├── render.rs         # render_form() → Vec<Line>
 ├── theme.rs          # FormTheme trait + DefaultTheme

@@ -12,11 +12,11 @@ Each screen hard-coded its whole hint list in `Screen::help_hints`. Keys that wo
 
 `footer_hints(model)` builds the list from three layers, each extended in one place:
 
-1. **A mode's keys, or else the screen's own.** A mode is a state that changes which keys work (`mode_hints`): the editor's and the library's delete questions, the editor's save question, a library rename, consent, a run in progress, and the settings picker. Without one, `Screen::help_hints` gives the screen's own keys, with nothing every screen shares.
+1. **A mode's keys, or else the screen's own.** A mode is a state that changes which keys work (`mode_hints`): a search box (Browser, Library, Picker), the editor's node picker, the editor's and the library's delete questions, the editor's save question, a library rename, a field being edited (Editor, Detail, Wizard), consent, a run in progress or finished, and the settings picker. Without one, `Screen::help_hints` gives the screen's own keys, with nothing every screen shares.
 2. **Then the base keys** (`BASE`: `q quit`), which work on every screen.
 3. **Except where a mode takes every key.** The key router's own test (`keys::captures_keys`, the `capturing_handler` that sends every key to a search box, a question or a field being edited) decides it, so the footer can't disagree with the keys: in a search box `q` is typed, and in a question it's no answer.
 
-The footer drops hints from the end when it's narrow, so the screen's or mode's keys outlast the base ones. At 80 columns the status leaves about 25 columns, so a mode's hints are kept short (`y save  n discard  Esc stay`, `y allow  n/Esc cancel`) to fit whole.
+The footer drops hints from the end when it's narrow, so the screen's or mode's keys outlast the base ones. At 80 columns the status leaves about 28 columns. So a mode lists its commit and cancel keys first (`Enter pick  Esc cancel  ↑↓ choose`, `Space pick  Esc cancel  l open…`), and what drops is navigation or a convenience key; the short sets (`y save  n discard  Esc stay`) fit whole.
 
 ## Extending it
 
@@ -24,9 +24,9 @@ The footer drops hints from the end when it's narrow, so the screen's or mode's 
 - **A screen's key:** add it to that screen's arm of `Screen::help_hints`.
 - **A new mode:** add a branch to `mode_hints`. If the mode takes every key, it's already in `capturing_handler`, and the base keys hide on their own.
 
-## Not yet covered
+## Fields being edited
 
-Search boxes (Browser, Picker, Library) and field editing (Editor, Detail, Wizard), and the editor's node picker, capture every key too. The footer hides `q` there but still shows the screen's normal hints. Each needs its own short set (ISS-102).
+A field's keys depend on its state (text, a text area, a dropdown, a multi-select, the file browser), and tonkotsu maps them. So tonkotsu says which keys work too: `tonkotsu::key_hints(&form)`, beside its `keys.rs` and tested against it, so every hinted key does something in that state (ISS-102). The footer asks it for any field being edited.
 
 ## Alternatives considered
 
