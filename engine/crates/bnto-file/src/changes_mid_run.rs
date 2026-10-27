@@ -16,6 +16,7 @@ pub(crate) struct ChangesMidRun<F: Fn() + Send + Sync> {
 }
 
 impl<F: Fn() + Send + Sync> ChangesMidRun<F> {
+    /// Run `change` just before the batch starts its `at`-th file.
     pub(crate) fn before_file(at: usize, change: F) -> Self {
         Self {
             calls: AtomicUsize::new(0),
