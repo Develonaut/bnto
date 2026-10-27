@@ -122,42 +122,42 @@ pub fn update(model: HomeModel, msg: HomeMessage, recipes: usize) -> HomeModel {
                 ..model
             }
         }
-        HomeMessage::CursorDown => match model.focused {
-            HomePane::Library if !model.library_names.is_empty() => {
-                let next = (model.library_cursor + 1) % model.library_names.len();
-                HomeModel {
-                    library_cursor: next,
-                    ..model
-                }
-            }
-            HomePane::Recipes if recipes > 0 => HomeModel {
-                recipes_cursor: (model.recipes_cursor.min(recipes - 1) + 1) % recipes,
-                ..model
-            },
-            _ => model, // No-op on action panes, or an empty Library or Recipes pane
-        },
-        HomeMessage::CursorUp => match model.focused {
-            HomePane::Library if !model.library_names.is_empty() => {
-                let prev = if model.library_cursor == 0 {
-                    model.library_names.len() - 1
-                } else {
-                    model.library_cursor - 1
-                };
-                HomeModel {
-                    library_cursor: prev,
-                    ..model
-                }
-            }
-            HomePane::Recipes if recipes > 0 => HomeModel {
-                recipes_cursor: match model.recipes_cursor.min(recipes - 1) {
-                    0 => recipes - 1,
-                    at => at - 1,
-                },
-                ..model
-            },
-            _ => model,
-        },
+        HomeMessage::CursorDown => step(model, recipes, wrap_next),
+        HomeMessage::CursorUp => step(model, recipes, wrap_prev),
     }
+}
+
+/// Move the focused list's cursor with `wrap`; an empty list or an action
+/// pane leaves it alone. Both lists wrap at their ends (ISS-66).
+fn step(model: HomeModel, recipes: usize, wrap: fn(usize, usize) -> Option<usize>) -> HomeModel {
+    match model.focused {
+        HomePane::Library => {
+            let moved = wrap(model.library_cursor, model.library_names.len());
+            HomeModel {
+                library_cursor: moved.unwrap_or(model.library_cursor),
+                ..model
+            }
+        }
+        HomePane::Recipes => HomeModel {
+            recipes_cursor: wrap(model.recipes_cursor, recipes).unwrap_or(model.recipes_cursor),
+            ..model
+        },
+        HomePane::NewRecipe | HomePane::Settings => model,
+    }
+}
+
+/// One down a `len`-item list, from the last back to the first. `None` when
+/// the list is empty. A cursor past the end counts as on the last item.
+fn wrap_next(cursor: usize, len: usize) -> Option<usize> {
+    (len > 0).then(|| (cursor.min(len - 1) + 1) % len)
+}
+
+/// One up a `len`-item list, from the first round to the last.
+fn wrap_prev(cursor: usize, len: usize) -> Option<usize> {
+    (len > 0).then(|| match cursor.min(len - 1) {
+        0 => len - 1,
+        at => at - 1,
+    })
 }
 
 /// Find the index of a pane in the cycling order.
@@ -335,6 +335,7 @@ mod tests {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::Recipes;
         let m = update(m, HomeMessage::CursorDown, 0);
+        assert_eq!(m.recipes_cursor, 0, "Down moved in an empty pane");
         let m = update(m, HomeMessage::CursorUp, 0);
         assert_eq!(m.recipes_cursor, 0);
     }
