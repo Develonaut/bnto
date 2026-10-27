@@ -296,7 +296,8 @@ fn seed_update_cache(bnto_home: &std::path::Path, latest: &str) {
 }
 
 /// Point `bnto upgrade` at a local index listing `latest`, so pressing U
-/// never reaches crates.io.
+/// never reaches crates.io, and at an empty cargo home, so the binary never
+/// counts as a cargo install and nothing installs.
 fn local_update_index(cmd: &mut CommandBuilder, bnto_home: &std::path::Path, latest: &str) {
     let index = bnto_home.join("index");
     let line = format!("{{\"name\":\"bnto\",\"vers\":\"{latest}\",\"yanked\":false}}\n");
@@ -305,6 +306,7 @@ fn local_update_index(cmd: &mut CommandBuilder, bnto_home: &std::path::Path, lat
         "BNTO_UPDATE_INDEX_URL",
         format!("file://{}", index.display()),
     );
+    cmd.env("CARGO_HOME", bnto_home.join("cargo"));
 }
 
 /// Let the update check run: no opt-out, and not CI (CI turns it off).

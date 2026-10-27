@@ -403,7 +403,7 @@ None to nodes or recipes. `bnto --help` gains a command, and there's no help gol
 Four places announce a new version. Each gains a pointer to the notes:
 
 - **The CLI notice** (`update_check/notice.rs:5-8`, printed by `update_check/mod.rs:36`) gains a second line: `What's new: https://bnto.io/changelog#0.19.0`. The first line is unchanged. It stays on stderr.
-- **The TUI notice** (`tui_notice()`, `notice.rs`) becomes `bnto 0.19.0: U upgrade · bnto changelog`. It keeps the U key (added October 27, 2026, after this plan). That's 3 columns longer than today's `bnto 0.19.0 available, U to upgrade` and 1 shorter than the old `bnto 0.19.0 available, run bnto upgrade`, so the 80×24 status line still has room for the `Tab pane` hint. A URL wouldn't fit (see Design).
+- **The TUI notice** (`tui_notice()`, `notice.rs`) becomes `bnto 0.19.0: U upgrade · bnto changelog`. It keeps the U key (added October 27, 2026, after this plan). That's 4 columns longer than today's `bnto 0.19.0 available, U to upgrade` and as long as the old `bnto 0.19.0 available, run bnto upgrade`, which fit, so the 80×24 status line still has room for the `Tab pane` hint. A URL wouldn't fit (see Design).
 - **`bnto upgrade --check`** prints `notice()` instead of its own copy of the first line (`upgrade/mod.rs:30`), so it gets the link too.
 - **After a successful install,** `bnto upgrade` shows the new version's notes. It runs `<exe> changelog <new version>`, with the path resolved before the install (`upgrade/mod.rs:38`). On Linux, `current_exe()` read after the install would end in `(deleted)`. This step is best-effort and never changes the exit code:
   - It runs with `BNTO_NO_UPDATE_CHECK=1`, `BNTO_TELEMETRY_DISABLED=1` and null stdin, with its output captured. The telemetry opt-out keeps it from sending a `changelog` command event the user didn't type.
@@ -440,7 +440,7 @@ Four places announce a new version. Each gains a pointer to the notes:
 ```rust
 /// "bnto 0.19.0 is available (you have 0.18.2). Run `bnto upgrade`.\nWhat's new: https://bnto.io/changelog#0.19.0"
 pub fn notice(current: Version, latest: Version) -> String;
-/// "bnto 0.19.0: bnto upgrade · bnto changelog"
+/// "bnto 0.19.0: U upgrade · bnto changelog"
 pub fn tui_notice(latest: Version) -> String;
 /// After an upgrade: the new binary's notes for `latest`, else the link. Never fails.
 pub fn show_whats_new(exe: &Path, latest: Version);
@@ -451,7 +451,7 @@ pub fn show_whats_new(exe: &Path, latest: Version);
 **Unit (`notice.rs`):**
 
 - `notice()` is the unchanged first line, then `What's new: https://bnto.io/changelog#0.17.0`;
-- `tui_notice(Version(0, 17, 0))` is exactly `bnto 0.17.0: bnto upgrade · bnto changelog`. This replaces `the_tui_form_fits_a_status_line` and fails today.
+- `tui_notice(Version(0, 17, 0))` is exactly `bnto 0.17.0: U upgrade · bnto changelog`. This replaces `the_tui_form_fits_a_status_line` and fails today.
 - A width guard (it passes today too): `Line::from(tui_notice(Version(99, 99, 99))).width()` is at most 44. That's display width; `.len()` would count `·` as 2 bytes.
 
 **TUI:**
@@ -511,4 +511,4 @@ Release after PRs 1–5, so the next release is the first whose notes appear on 
 | CJ12 | The update notice links what changed     | With a cached 99.0.0, `bnto list` in a terminal; then `bnto upgrade --check`                                        | Both print the unchanged first line, then `What's new: https://bnto.io/changelog#99.0.0`. Opt-out, CI and piped runs print neither                                                     | `a_newer_cached_release_is_mentioned` in `tests/update_notice.rs`; `check_reports_a_newer_release_and_caches_it` in `tests/upgrade.rs` (PR 5) |
 | CJ13 | `bnto upgrade` shows what changed        | `bnto upgrade` on a cargo install (fake cargo), with a new binary that has 99.0.0's notes and with one that doesn't | After "Upgraded …": the new binary's notes, or `What's new in 99.0.0: https://bnto.io/changelog#99.0.0` and never the child's error; exit 0 both ways. A failed install prints neither | `cj13_*` and `a_failed_cargo_install_says_so` in `tests/upgrade.rs` (PR 5)                                                                    |
 
-**Update `.claude/journeys/tui.md`'s TJ10** (Upgrade notice, l.57). Its pass criteria become: the status line shows `bnto X: bnto upgrade · bnto changelog`. Its test, `tj10_a_newer_release_shows_in_the_status_line` (`tests/tui_journeys.rs:260-265`), waits for that text (PR 5).
+**Update `.claude/journeys/tui.md`'s TJ10** (Upgrade notice, l.57). Its pass criteria become: the status line shows `bnto X: U upgrade · bnto changelog`. Its test, `tj10_a_newer_release_shows_in_the_status_line` (`tests/tui_journeys.rs:260-265`), waits for that text (PR 5).

@@ -1,8 +1,8 @@
 # TUI — User Journey Test Matrix
 
 **Domain:** `bnto tui`, the terminal UI. Covers home, library, recipe detail, file picking, consent, live execution and results.
-**Status:** Snapshots (#681) and journeys TJ1–TJ3, TJ5, TJ6 and TJ10–TJ14 run on every PR in the CI Gate. The other journeys are planned.
-**Last Updated:** October 25, 2026
+**Status:** Snapshots (#681) and journeys TJ1–TJ3, TJ5, TJ6 and TJ10–TJ15 run on every PR in the CI Gate. The other journeys are planned.
+**Last Updated:** October 27, 2026
 
 ---
 
