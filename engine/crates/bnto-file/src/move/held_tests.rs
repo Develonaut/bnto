@@ -18,7 +18,10 @@ fn test_a_move_of_a_file_a_later_step_reads_is_refused_before_any_move() {
         .expect("the move is refused");
 
     let text = err.to_string();
-    assert!(text.contains("File move refused, nothing moved"), "{text}");
+    assert!(
+        text.contains("File move refused, this step moved nothing"),
+        "{text}"
+    );
     assert!(
         text.contains(&format!(
             "{}: a later step still reads it as b.wav",

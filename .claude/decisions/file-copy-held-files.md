@@ -186,7 +186,7 @@ Order:
 2. **PR 2, ISS-60 (built):** the run's limit on `RunScope`, checked by `file-copy`, `file-move` and `file-delete` before each file. The method is named `check_time_limit`, after the executor's own check, rather than `time_is_up`. See engine-execution.md's [Run Time Limit](../strategy/engine-execution.md#run-time-limit-settingstimeout).
 3. **ISS-58:** independent; any time.
 
-Whether `file-move` and `file-delete` should also refuse a source `held_elsewhere` up front (rows 8 and 10) was logged as ISS-82 and is now done: rows 8 and 10 are refused before anything moves or is deleted, naming the file. An iteration's own file is out of its loop frame, so moving or deleting it stays allowed.
+Whether `file-move` and `file-delete` should also refuse a source `held_elsewhere` up front (rows 8 and 10) was logged as ISS-82 and is now done: rows 8 and 10 are refused before anything moves or is deleted, naming the file. An iteration's own file is out of its loop frame, so moving or deleting it stays allowed. One change from before: `loop { file-delete }` with one file given twice is now refused in the first iteration (the second iteration's slot holds it), where it used to delete it once and skip the second as missing. The flat recipe still does that (row 11), as the batch sees both items.
 
 ## What was built
 

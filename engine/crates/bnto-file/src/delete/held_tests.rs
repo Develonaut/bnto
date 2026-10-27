@@ -18,7 +18,7 @@ fn test_a_delete_of_a_file_a_later_step_reads_is_refused_before_any_delete() {
 
     let text = err.to_string();
     assert!(
-        text.contains("File delete refused, nothing deleted"),
+        text.contains("File delete refused, this step deleted nothing"),
         "{text}"
     );
     assert!(

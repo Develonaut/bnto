@@ -1,5 +1,6 @@
 // The files a run still holds outside the step that's running, for a batch
-// node that would replace one (`ProcessContext::held_elsewhere`, ISS-59).
+// node that would replace, move or delete one (`ProcessContext::held_elsewhere`,
+// ISS-59, ISS-82).
 //
 // A loop holds its other iterations' files: later ones, and finished ones
 // whose results still read from their sources. A graph level holds the files
@@ -27,7 +28,8 @@ struct Held {
     path: PathBuf,
     name: String,
     /// Read on the first lookup that needs it, then kept: a lookup runs once
-    /// per copy that would replace a file, so this keeps a loop linear.
+    /// per copy that would replace a file and per move or delete source, so
+    /// each file is stat'd once however many lookups compare against it.
     stamp: OnceLock<Option<Stamp>>,
 }
 

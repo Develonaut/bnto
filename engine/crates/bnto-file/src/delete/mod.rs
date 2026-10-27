@@ -178,8 +178,9 @@ fn refuse_held(targets: &[Target], ctx: &dyn ProcessContext) -> Result<(), BntoE
         return Ok(());
     }
     let text = relocate::listing(&held, ("file", "files"));
+    // "This step": earlier loop iterations may have deleted files already.
     Err(BntoError::InvalidInput(format!(
-        "File delete refused, nothing deleted: {text}\n  {HINT}"
+        "File delete refused, this step deleted nothing: {text}\n  {HINT}"
     )))
 }
 

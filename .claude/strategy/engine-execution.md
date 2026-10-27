@@ -101,7 +101,7 @@ A batch node gets the files its level hands it, but the run can still hold other
 - `record_write(path)` and `recorded_writes()`: the files the run has written so far.
 - `check_time_limit()`: `BntoError::TimedOut` once the run has passed its time limit (see [Run Time Limit](#run-time-limit-settingstimeout)).
 
-`file-copy` refuses an `overwrite`/`newer` copy onto a held file, and once earlier copies have run, the refusal names them. In the browser nothing is ever held: it has no files on disk. Decision: [file-copy-held-files.md](../decisions/file-copy-held-files.md).
+`file-copy` refuses an `overwrite`/`newer` copy onto a held file, and once earlier copies have run, the refusal names them. `file-move` and `file-delete` refuse to move or delete a held file, before the step acts (ISS-82). A loop iteration's own file isn't held while it runs, so moving or deleting it stays allowed. In the browser nothing is ever held: it has no files on disk. Decision: [file-copy-held-files.md](../decisions/file-copy-held-files.md).
 
 ### Node Output Metadata
 

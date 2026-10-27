@@ -69,7 +69,10 @@ fn a_move_of_a_file_another_iteration_reads_is_refused() {
     let stderr = stderr(&output);
     assert!(!output.status.success(), "{stderr}");
     assert!(stderr.contains("File move refused"), "{stderr}");
-    assert!(stderr.contains("a.txt"), "{stderr}");
+    assert!(
+        stderr.contains("a later step still reads it as a.txt"),
+        "{stderr}"
+    );
     assert!(!stderr.contains("doesn't exist"), "{stderr}");
     assert_eq!(std::fs::read_to_string(&a).unwrap(), "AAAA", "never moved");
     assert!(!out.path().join("a.txt").exists(), "{stderr}");
@@ -95,7 +98,10 @@ fn a_delete_of_a_file_another_iteration_reads_is_refused() {
     let stderr = stderr(&output);
     assert!(!output.status.success(), "{stderr}");
     assert!(stderr.contains("File delete refused"), "{stderr}");
-    assert!(stderr.contains("a.txt"), "{stderr}");
+    assert!(
+        stderr.contains("a later step still reads it as a.txt"),
+        "{stderr}"
+    );
     assert_eq!(
         std::fs::read_to_string(&a).unwrap(),
         "AAAA",
@@ -188,4 +194,56 @@ fn a_branch_delete_of_a_file_the_output_branch_reads_is_refused() {
         "AAAA",
         "never deleted"
     );
+}
+
+#[test]
+fn a_refusal_after_earlier_iterations_moved_files_claims_only_its_own_step() {
+    // `b` moves in iteration 1; iteration 2 holds `a`, which iteration 3
+    // still reads, so it is refused without claiming nothing moved at all.
+    let inputs = temp_output_dir();
+    let out = temp_output_dir();
+    let (a, b) = (inputs.path().join("a.txt"), inputs.path().join("b.txt"));
+    std::fs::write(&a, "AAAA").unwrap();
+    std::fs::write(&b, "BBBB").unwrap();
+    let mv = json!({
+        "id": "mv", "type": "file-move",
+        "parameters": { "destination": out.path().to_str().unwrap() }
+    });
+
+    let output = run_loop(&[mv], &[&b, &a, &a]);
+
+    let stderr = stderr(&output);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(
+        stderr.contains("File move refused, this step moved nothing"),
+        "{stderr}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(out.path().join("b.txt")).unwrap(),
+        "BBBB"
+    );
+    assert_eq!(std::fs::read_to_string(&a).unwrap(), "AAAA", "never moved");
+}
+
+#[test]
+fn a_loop_delete_of_one_file_given_twice_is_refused() {
+    // Flat, the batch deletes it once and skips the second as missing. In a
+    // loop the second iteration still holds it, so the first is refused.
+    let inputs = temp_output_dir();
+    let a = inputs.path().join("a.txt");
+    std::fs::write(&a, "AAAA").unwrap();
+    let rm = json!({
+        "id": "rm", "type": "file-delete",
+        "parameters": { "base": inputs.path().to_str().unwrap() }
+    });
+
+    let output = run_loop(&[rm], &[&a, &a]);
+
+    let stderr = stderr(&output);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(
+        stderr.contains("File delete refused, this step deleted nothing"),
+        "{stderr}"
+    );
+    assert!(a.exists(), "never deleted");
 }

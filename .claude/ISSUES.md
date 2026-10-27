@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-100**.
+- **IDs never get reused.** The next one is **ISS-101**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
@@ -20,7 +20,7 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82), Octobe
 | --- | -------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2   | TUI correctness            | ISS-98, ISS-66, ISS-97                                 | ISS-98 loses unsaved edits; ISS-66 hides the cursor; ISS-97 points TUI users at a CLI flag                                                                                                                                                                                                                      |
 | 3   | Checks before a run starts | ISS-75, ISS-74, ISS-79, ISS-96, ISS-73                 | `-p` can't give a file param a path (ISS-75, first: ISS-74's hint names one); a required param refused after consent and `-o` (ISS-74); an unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73) |
-| 4   | Engine file naming         | ISS-17, ISS-33, ISS-34                                 | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33)                                                                                                  |
+| 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                        | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                              |
 | 5   | Engine templating          | ISS-35, ISS-58                                         | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                |
 | 6   | Small code cleanups        | ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | Dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag                                                                                                                                                                                            |
 | 7   | Tooling and tests          | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18  | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                           |
@@ -36,45 +36,46 @@ Done: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82), Octobe
 
 ## Open issues
 
-| ID     | Issue                                                                                                 | Area        | Status                                           |
-| ------ | ----------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
-| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404                                           | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`                                      | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set                                         | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
-| ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
-| ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
-| ISS-34 | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                | engine      | Open                                             |
-| ISS-35 | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
-| ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
-| ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
-| ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
-| ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
-| ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
-| ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
-| ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
-| ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
-| ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
-| ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
-| ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
-| ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
-| ISS-84 | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
-| ISS-85 | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
-| ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
-| ISS-88 | `FileUpload` context errors and two web comments name dot-notation components                         | ui          | Open                                             |
-| ISS-89 | In a fresh worktree, `task seo:audit` fails at the first URL with no hint: there's no `.env.local`    | tooling     | Open                                             |
-| ISS-90 | `@bnto/form` exports `FormStoreProvider` and four hooks nothing outside it uses                       | form        | Open                                             |
-| ISS-91 | 28 TS files use `React.*` namespace types the import rule bans                                        | web         | Open                                             |
-| ISS-92 | Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked                                 | tooling     | Open                                             |
-| ISS-93 | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
-| ISS-94 | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
-| ISS-95 | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
-| ISS-96 | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
-| ISS-97 | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
-| ISS-98 | Quitting the TUI from the recipe editor drops unsaved edits without asking                            | tui         | Open                                             |
-| ISS-99 | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
+| ID      | Issue                                                                                                 | Area        | Status                                           |
+| ------- | ----------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
+| ISS-7   | The CLI's telemetry notice links `bnto.io/telemetry`, a 404                                           | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-8   | Most CLI integration tests run `bnto` against the real `~/.bnto`                                      | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-12  | Released CLIs send no telemetry: the PostHog key is never set                                         | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-17  | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-18  | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-29  | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
+| ISS-31  | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
+| ISS-33  | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
+| ISS-34  | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                | engine      | Open                                             |
+| ISS-35  | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
+| ISS-37  | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
+| ISS-44  | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
+| ISS-45  | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
+| ISS-57  | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
+| ISS-58  | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
+| ISS-66  | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
+| ISS-67  | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
+| ISS-70  | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
+| ISS-73  | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
+| ISS-74  | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
+| ISS-75  | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
+| ISS-79  | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
+| ISS-84  | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
+| ISS-85  | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
+| ISS-86  | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
+| ISS-88  | `FileUpload` context errors and two web comments name dot-notation components                         | ui          | Open                                             |
+| ISS-89  | In a fresh worktree, `task seo:audit` fails at the first URL with no hint: there's no `.env.local`    | tooling     | Open                                             |
+| ISS-90  | `@bnto/form` exports `FormStoreProvider` and four hooks nothing outside it uses                       | form        | Open                                             |
+| ISS-91  | 28 TS files use `React.*` namespace types the import rule bans                                        | web         | Open                                             |
+| ISS-92  | Nothing type-checks the `scripts/` folders: `tsx` runs them unchecked                                 | tooling     | Open                                             |
+| ISS-93  | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
+| ISS-94  | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
+| ISS-95  | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
+| ISS-96  | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
+| ISS-97  | The TUI's empty-field refusal says to `pass -p`, a flag the TUI doesn't have                          | tui         | Open                                             |
+| ISS-98  | Quitting the TUI from the recipe editor drops unsaved edits without asking                            | tui         | Open                                             |
+| ISS-99  | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
+| ISS-100 | `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files   | engine      | Open                                             |
 
 ---
 
@@ -424,3 +425,12 @@ Leaving the editor with Esc asks about unsaved changes (`EditorMessage::Back` �
 
 - **Fix:** find what opts the tree out of static rendering (`next build` with the provider moved off the public routes, or Next's dynamic-usage logging), and keep the public pages static. Then update gotchas.md's "A `loading.tsx` Can Steal a Page's LCP", which assumes pages render per request.
 - **Regression test:** `next build` lists `/[bnto]` (and `/`, `/faq`, `/pricing`, `/privacy`) as static (`●` or `○`).
+
+### ISS-100: `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files
+
+**Found:** October 27, 2026 (cold review of the ISS-82 fix).
+
+`move/plan.rs`'s `refused` prefixes every `file-move` refusal with "File move refused, nothing moved": a move that would replace a file (`refuse_conflicts`), a bad destination, a bad path. That's true of a flat batch. Inside a loop it describes only the refusing iteration: `loop { file-move into O }` over `b.txt`, then an `a.txt` whose destination `O/a.txt` already exists, moves `b.txt` in iteration 1 and then says "nothing moved". Reproduced with the `bnto` built from the ISS-82 branch, in a sandbox: `O/` ends with `a.txt` (the old one) and `b.txt`, and the run fails "File move refused, nothing moved: 1 conflict". The ISS-82 refusals say "this step moved nothing" instead, so the node now words the same situation two ways.
+
+- **Fix:** say "this step moved nothing" in `refused`, or name the moves earlier iterations made, as `file-copy` names earlier copies (`copy_batch/refusal.rs`, `recorded_writes`); the second needs the run to record moves.
+- **Regression test:** the loop above fails without claiming nothing moved, and `O/b.txt` holds `b.txt`'s content.
