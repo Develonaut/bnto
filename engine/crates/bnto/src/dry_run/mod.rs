@@ -13,7 +13,7 @@ mod host_skip;
 mod shell;
 mod shell_note;
 
-use bnto_core::{Dependency, HostPlatform, InputMode, PipelineDefinition};
+use bnto_core::{Dependency, HostPlatform, InputMode, PipelineDefinition, resolve_input_mode};
 use bnto_engine::deps::collect_pipeline_dependencies;
 
 use files::FilePreview;
@@ -75,7 +75,7 @@ pub fn dry_run_recipe(
         duration_ms: preview.duration_ms,
         warnings: [refused, preview.warnings].concat(),
         time_limit: def.time_limit_secs(),
-        input_mode: bnto_core::resolve_input_mode(&def),
+        input_mode: resolve_input_mode(&def),
     })
 }
 

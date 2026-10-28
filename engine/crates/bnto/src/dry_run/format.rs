@@ -311,7 +311,6 @@ mod tests {
     fn format_shows_the_runs_time_limit() {
         let result = DryRunResult {
             time_limit: Some(90),
-            input_mode: bnto_core::InputMode::FileUpload,
             ..make_shell_result()
         };
         let output = format_dry_run_plain(&result);

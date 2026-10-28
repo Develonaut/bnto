@@ -4,10 +4,10 @@ use bnto_core::os_support::{describe_os, recipe_os};
 use bnto_core::pipeline::{is_container_node, is_io_node};
 use bnto_core::{HostPlatform, InputMode, PipelineDefinition, resolve_input_mode};
 
-use crate::run_input::with_run_input;
 use bnto_engine::deps::{ScopedDependency, scoped_pipeline_dependencies};
 
 use crate::catalog::RecipeCatalog;
+use crate::run_input::with_run_input;
 
 /// Structured recipe details ready for display.
 #[derive(Debug)]

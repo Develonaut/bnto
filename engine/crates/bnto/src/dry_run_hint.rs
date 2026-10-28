@@ -1,7 +1,8 @@
 // The command lines bnto suggests from what a run or dry run was given: the
 // `bnto dry-run` a declined run suggests, and the `bnto run` a dry run's
-// footer suggests (ending by the recipe's input mode). Each repeats the recipe and the `-p` values and `--vars`
-// files, each quoted so the line pastes into a shell as printed.
+// footer suggests (ending by the recipe's input mode). Each repeats the
+// recipe and the `-p` values and `--vars` files, each quoted so the line
+// pastes into a shell as printed.
 
 use bnto_core::InputMode;
 
