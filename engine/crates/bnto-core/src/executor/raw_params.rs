@@ -17,6 +17,7 @@ use crate::undeclared_params::undeclared_params;
 /// The first param a node's processor refuses as the recipe wrote it.
 #[derive(Debug, Clone)]
 pub struct RawParamProblem<'a> {
+    /// The node whose params are refused.
     pub node: &'a PipelineNode,
     /// What's wrong, without the node: `param "logo" (Logo) is required`.
     pub message: String,

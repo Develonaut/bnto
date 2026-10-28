@@ -17,6 +17,11 @@ const SHELL_THEN_OVERLAY: &str = r#"{ "id": "shell-then-overlay", "name": "Shell
     { "id": "stamp", "type": "image-overlay", "parameters": { "overlay": "" } },
     { "id": "output", "type": "output" }] }"#;
 
+/// One shell step and nothing else.
+const SAY: &str = r#"{ "id": "say", "name": "Say",
+  "nodes": [{ "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    { "id": "say", "type": "shell-run", "parameters": { "command": "echo", "args": ["hi"] } }] }"#;
+
 fn stderr(output: &std::process::Output) -> String {
     String::from_utf8_lossy(&output.stderr).into_owned()
 }
@@ -97,6 +102,28 @@ fn dry_run_with_the_param_given_passes_the_check() {
         .unwrap();
     let err = stderr(&output);
     assert!(output.status.success(), "{err}");
+}
+
+#[test]
+fn dry_run_refuses_a_p_naming_a_param_a_shell_step_lacks() {
+    // The dry run doesn't execute a shell recipe, so before this only `bnto
+    // run` refused it, in pre-flight.
+    let sandbox = Sandbox::new();
+    let recipe = sandbox.bnto_home().with_file_name("say.bnto.json");
+    std::fs::write(&recipe, SAY).unwrap();
+    let output = sandbox
+        .command()
+        .arg("dry-run")
+        .arg(&recipe)
+        .args(["-p", "say:timout=30"])
+        .output()
+        .unwrap();
+    let err = stderr(&output);
+    assert_eq!(output.status.code(), Some(1), "{err}");
+    assert!(
+        err.contains("Node 'say': shell-run has no param \"timout\""),
+        "{err}"
+    );
 }
 
 #[test]

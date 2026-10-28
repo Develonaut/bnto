@@ -21,7 +21,8 @@ pub fn refuse_unfilled(definition_json: &str, param_overrides: &[String]) -> Res
     refuse_unfilled_with(definition_json, param_overrides, FillWith::Flag)
 }
 
-/// `refuse_unfilled`, saying how to fill each field the `fill` way.
+/// `refuse_unfilled`, saying how to fill each field and required param the
+/// `fill` way.
 pub fn refuse_unfilled_with(
     definition_json: &str,
     param_overrides: &[String],
