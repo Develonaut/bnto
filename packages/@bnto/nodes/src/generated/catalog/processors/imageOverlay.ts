@@ -18,7 +18,7 @@ export const imageOverlayProcessor: ProcessorDef = {
     {
       name: "overlay",
       label: "Overlay Image",
-      description: "The image to overlay (base64-encoded).",
+      description: "The image to overlay.",
       type: "file" as const,
       accept: ["image/png", "image/jpeg", "image/webp"],
       constraints: { required: true },

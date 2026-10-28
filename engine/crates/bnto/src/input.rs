@@ -188,12 +188,15 @@ fn inject_param_in_nodes(
 ///
 /// If the target node declares a matching field, the field's default is
 /// updated so `collect_field_values()` picks it up. Otherwise, falls back
-/// to raw param injection.
+/// to raw param injection, where a file param's value is a path the CLI
+/// reads (`file_param`).
 pub(crate) fn apply_param_overrides(
     def: &mut PipelineDefinition,
     overrides: &[String],
     default_node_id: Option<&str>,
 ) -> Result<(), String> {
+    // Built only when a raw param needs its type looked up.
+    let registry = std::cell::OnceCell::new();
     for entry in overrides {
         let target = unnamed_target(def, entry, default_node_id)?;
         let (node_id, key, value) = parse_override(entry, target.as_deref())?;
@@ -208,10 +211,24 @@ pub(crate) fn apply_param_overrides(
         // Try updating a declared field on the node first.
         if !apply_node_field_override(def, &node_id, &key, &json_value)? {
             // Not a declared field — inject as raw param.
-            inject_param(def, &node_id, &key, &json_value)?;
+            let raw = raw_param_value(def, &registry, (&node_id, &key), &value)?;
+            inject_param(def, &node_id, &key, &raw.unwrap_or(json_value))?;
         }
     }
     Ok(())
+}
+
+/// A raw param's value from `-p`: a file param's path read as base64, or
+/// `None` to keep the text as given.
+fn raw_param_value(
+    def: &PipelineDefinition,
+    registry: &std::cell::OnceCell<bnto_core::NodeRegistry>,
+    (node_id, key): (&str, &str),
+    value: &str,
+) -> Result<Option<serde_json::Value>, String> {
+    let registry = registry.get_or_init(bnto_engine::create_registry);
+    let read = crate::file_param::read_file_param(&def.nodes, registry, node_id, key, value)?;
+    Ok(read.map(serde_json::Value::String))
 }
 
 /// The node a `key=value` entry that names no node goes to: the one that

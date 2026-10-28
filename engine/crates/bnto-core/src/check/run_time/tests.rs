@@ -94,6 +94,33 @@ impl NodeProcessor for Lax {
     }
 }
 
+/// Requires a file `image`, which `-p` gives as a path.
+struct Upload;
+
+impl NodeProcessor for Upload {
+    fn name(&self) -> &str {
+        "upload"
+    }
+
+    fn metadata(&self) -> NodeMetadata {
+        let file = ParameterType::File { accept: Vec::new() };
+        NodeMetadata {
+            node_type: "upload".to_string(),
+            parameters: vec![required("image", file)],
+            ..Needy.metadata()
+        }
+    }
+
+    fn process(
+        &self,
+        _input: NodeInput,
+        _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        unreachable!("check never runs a node")
+    }
+}
+
 fn required(name: &str, param_type: ParameterType) -> ParameterDef {
     ParameterDef {
         name: name.to_string(),
@@ -112,6 +139,7 @@ fn check(def: Value) -> CheckReport {
     let mut registry = NodeRegistry::new();
     registry.register("needy", Box::new(Needy));
     registry.register("lax", Box::new(Lax));
+    registry.register("upload", Box::new(Upload));
     check_pipeline(&definition, &registry)
 }
 
@@ -126,6 +154,7 @@ fn note(node_id: &str, param: &str) -> RunTimeParam {
         node_id: node_id.to_string(),
         node_type: "needy".to_string(),
         param: param.to_string(),
+        takes_file: false,
     }
 }
 
@@ -295,4 +324,19 @@ fn test_run_time_param_reads_as_node_and_param() {
         note("clean", "base").to_string(),
         "node \"clean\" (needy), param \"base\": left for run time"
     );
+}
+
+#[test]
+fn test_a_left_out_file_param_is_left_for_run_time_as_a_file() {
+    let report = check(json!({ "nodes": [
+        { "id": "wm", "type": "upload", "parameters": { "image": "" } }
+    ] }));
+    assert_eq!(report.findings, Vec::new());
+    let expected = RunTimeParam {
+        node_id: "wm".to_string(),
+        node_type: "upload".to_string(),
+        param: "image".to_string(),
+        takes_file: true,
+    };
+    assert_eq!(report.run_time, vec![expected]);
 }

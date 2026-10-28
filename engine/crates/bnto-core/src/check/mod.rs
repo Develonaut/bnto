@@ -205,13 +205,16 @@ fn add_left_out(node: &PipelineNode, left: LeftOut, report: &mut CheckReport) {
         let message = format!("required, and no run can give it: {reason}");
         report.findings.push(finding(node, Some(&param), message));
     }
-    report
-        .run_time
-        .extend(left.givable.into_iter().map(|param| RunTimeParam {
-            node_id: node.id.clone(),
-            node_type: node.node_type.clone(),
-            param,
-        }));
+    report.run_time.extend(
+        left.givable
+            .into_iter()
+            .map(|(param, takes_file)| RunTimeParam {
+                node_id: node.id.clone(),
+                node_type: node.node_type.clone(),
+                param,
+                takes_file,
+            }),
+    );
 }
 
 /// `always` on an I/O marker: the executor never runs it, so a recipe that

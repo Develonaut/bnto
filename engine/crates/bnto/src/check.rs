@@ -99,10 +99,16 @@ fn finding_only(line: String) -> FileLines {
     }
 }
 
-/// `<path>: note: <param>; give it with bnto run -p <node>:<param>=<value>`.
+/// `<path>: note: <param>; give it with bnto run -p <node>:<param>=<value>`,
+/// or `=<path>` for a file param, which `-p` reads from disk.
 fn note_line(path: &str, param: &RunTimeParam) -> String {
+    let value = if param.takes_file {
+        "<path>"
+    } else {
+        "<value>"
+    };
     format!(
-        "{path}: note: {param}; give it with bnto run -p {}:{}=<value>",
+        "{path}: note: {param}; give it with bnto run -p {}:{}={value}",
         param.node_id, param.param
     )
 }

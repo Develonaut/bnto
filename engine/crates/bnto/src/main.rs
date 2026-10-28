@@ -31,6 +31,7 @@ pub mod dry_run;
 mod dry_run_hint;
 mod exit_report;
 mod field_owner;
+mod file_param;
 mod host_support;
 mod info;
 mod input;

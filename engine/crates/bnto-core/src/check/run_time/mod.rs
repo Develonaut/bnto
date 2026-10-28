@@ -27,6 +27,8 @@ pub struct RunTimeParam {
     pub node_type: String,
     /// The param's name.
     pub param: String,
+    /// True for a file param, which `-p` gives as a path to read.
+    pub takes_file: bool,
 }
 
 impl std::fmt::Display for RunTimeParam {
@@ -45,8 +47,8 @@ impl std::fmt::Display for RunTimeParam {
 pub(super) struct LeftOut {
     /// What the run still refuses with every givable param given.
     pub problems: Vec<String>,
-    /// Needed params `-p` can give.
-    pub givable: Vec<String>,
+    /// Needed params `-p` can give: each name, and whether it takes a file.
+    pub givable: Vec<(String, bool)>,
     /// Needed params no run can give, each with the reason.
     pub blocked: Vec<(String, String)>,
 }
@@ -76,7 +78,8 @@ pub(super) fn left_out(
             Some(reason) => left.blocked.push((def.name.clone(), reason)),
             None => {
                 given.insert(def.name.clone(), stand_in(def));
-                left.givable.push(def.name.clone());
+                let takes_file = matches!(def.param_type, ParameterType::File { .. });
+                left.givable.push((def.name.clone(), takes_file));
             }
         }
     }
@@ -178,8 +181,8 @@ fn first_with_id<'a>(nodes: &'a [PipelineNode], id: &str) -> Option<&'a Pipeline
     })
 }
 
-/// `-p` values are text, numbers or true/false; a file param takes its
-/// base64 text, so only an object is out of reach.
+/// `-p` values are text, numbers or true/false; a file param takes a path
+/// the CLI reads, so only an object is out of reach.
 fn type_reason(param_type: &ParameterType) -> Option<String> {
     matches!(param_type, ParameterType::Object)
         .then(|| "-p gives text, numbers or true/false, not an object".to_string())
