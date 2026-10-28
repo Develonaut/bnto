@@ -39,6 +39,12 @@ pub fn read_file_param(
     Ok(Some(BASE64.encode(bytes)))
 }
 
+/// What a `-p node:key=…` hint shows as the value: `<path>` for a file
+/// param, which `-p` reads from disk, else `<value>`.
+pub fn hint_value(takes_file: bool) -> &'static str {
+    if takes_file { "<path>" } else { "<value>" }
+}
+
 /// `key`'s definition when `node`'s type declares it as a file param.
 fn file_param_def(registry: &NodeRegistry, node: &PipelineNode, key: &str) -> Option<ParameterDef> {
     let processor = registry.resolve(&node.node_type, &node.params)?;

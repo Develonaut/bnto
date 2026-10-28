@@ -72,8 +72,9 @@ pub fn run_recipe(
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
     let raw_json = resolve_vars(&raw_json, flags.vars, &verdict);
-    // Fields, inputs and the output folder are all checked before consent,
-    // so nobody approves a run the engine would refuse (ISS-22).
+    // Fields, params, inputs and the output folder are all checked before
+    // consent, so nobody approves a run the engine would refuse (ISS-22,
+    // ISS-74).
     verdict.or_fail(refuse_unfilled(&raw_json, param_overrides), "Error:");
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");

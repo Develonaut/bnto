@@ -1,14 +1,15 @@
 // What a TUI run checks before it asks to allow a shell recipe's commands,
 // in `bnto run`'s order (ISS-77, ISS-78): fill `{{vars.*}}`, refuse an empty
-// field, prepare the inputs, fill the output folder. Only then does it ask,
-// so nobody approves a run that is refused, and the approval is pinned to the
-// filled values (SEC-29). It runs on the bridge thread: preparing inputs walks
-// picked folders.
+// field or a param a step won't take (ISS-74), prepare the inputs, fill the
+// output folder. Only then does it ask, so nobody approves a run that is
+// refused, and the approval is pinned to the filled values (SEC-29). It runs
+// on the bridge thread: preparing inputs walks picked folders.
 
 use std::path::PathBuf;
 use std::sync::mpsc;
 
 use super::BridgeEvent;
+use crate::fill_with::FillWith;
 use crate::input::{self, PreparedInput};
 use crate::recipe_output_dir::recipe_output_dir;
 use crate::trust::TrustStore;
@@ -48,7 +49,7 @@ pub fn check_then_consent(
     // The TUI has no --vars files: BNTO_VAR_<KEY> fills a var, as for `bnto run`.
     let definition_json = vars::apply(run.definition_json, &[])?;
     // A TUI field is filled on the recipe's form, not with -p (ISS-97).
-    let form = unfilled_fields::FillWith::Form;
+    let form = FillWith::Form;
     unfilled_fields::refuse_unfilled_with(&definition_json, run.overrides, form)?;
     let prepared = input::prepare_inputs(&definition_json, run.args, run.overrides)?;
     let recipe_dir = recipe_output_dir(&prepared.definition_json, ctx, &prepared.files)?;

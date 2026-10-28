@@ -52,7 +52,9 @@ bnto run recipe.bnto.json *.jpg --output ./compressed
 # Override parameters
 bnto run compress-images photo.jpg --param quality=50
 
-# A file param takes a path, which bnto reads (Watermark Images' overlay)
+# A file param takes a path, which bnto reads (Watermark Images' overlay).
+# Left empty, the run is refused before consent and before any folder is
+# made, naming the -p that fills it.
 bnto run watermark-images photo.jpg -p overlay:overlay=logo.png
 
 # Fill {{vars.KEY}} placeholders from JSON files (repeatable; later files win,
@@ -221,6 +223,9 @@ src/
 +-- info.rs                # `bnto info` command (recipe details)
 +-- input.rs               # Input preparation (files, URLs, param overrides)
 +-- file_param.rs          # A file param's `-p` value: a path, read and base64-encoded
++-- fill_with.rs           # How a refusal before a run says to fill something: `-p` or the TUI's form
++-- unfilled_fields.rs     # Refuses before consent (run, dry-run, TUI): an unfilled `{{fields.*}}`, naming the `-p`, then unfilled_params' lines
++-- unfilled_params.rs     # Refuses params a step won't take as written before consent, naming the `-p` for a required one
 +-- install.rs             # `bnto install` command (plan, confirm, run, verify)
 +-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
 +-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands
