@@ -86,7 +86,7 @@ parameters: {
 
 **Phase 1 (this sprint):** Only `file-upload` mode. `text` and `url` are defined in the schema but not implemented in the UI — they're there for forward compatibility and the code editor's schema validation.
 
-**`none` mode (shipped, #526):** The engine resolves `"mode": "none"` to `InputMode::None` (`resolve_input_mode` in `engine/crates/bnto-core/src/pipeline.rs`). The CLI requires no positional args for these recipes and prepares zero input files, `bnto info` prints `Run with: bnto run <slug>` with no `<files...>`, and the TUI skips the file picker and surfaces no input control. A node that needs no input files (e.g. `shell-run`, a batch node that runs once even with none) runs and its output feeds the next node.
+**`none` mode (shipped, #526):** The engine resolves `"mode": "none"` to `InputMode::None` (`resolve_input_mode` in `engine/crates/bnto-core/src/pipeline.rs`). The CLI requires no positional args for these recipes and prepares zero input files, `bnto info` and a dry run's footer print `Run with: bnto run <slug>` with no `<files...>` (`bnto/src/run_input.rs`, ISS-96), and the TUI skips the file picker and surfaces no input control. A node that needs no input files (e.g. `shell-run`, a batch node that runs once even with none) runs and its output feeds the next node.
 
 ### `output` node
 

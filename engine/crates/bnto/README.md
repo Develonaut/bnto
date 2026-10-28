@@ -211,7 +211,8 @@ src/
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run or dry run
 +-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
 +-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
-+-- dry_run_hint.rs        # The quoted `bnto dry-run … -p … --vars …` line a declined run suggests
++-- dry_run_hint.rs        # The quoted commands bnto suggests: a declined run's `bnto dry-run …`, a dry run's `Run with: bnto run …`
++-- run_input.rs           # What a suggested `bnto run` ends with by input mode: nothing, `<url>`, `<text>` or `<files...>`
 +-- shell_word.rs          # Quotes an argument as one sh, zsh or PowerShell word, for printed command lines
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)

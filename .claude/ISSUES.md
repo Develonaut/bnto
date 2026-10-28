@@ -14,11 +14,11 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). In progress: batch 3 (ISS-75 #811, ISS-74 #812). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). In progress: batch 3 (ISS-75 #811, ISS-74 #812, ISS-96 #813). Batches keep their numbers.
 
 | #   | Batch                      | Issues                                                                   | Why                                                                                                                                                                                                                                                                                |
 | --- | -------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3   | Checks before a run starts | ISS-79, ISS-96, ISS-73                                                   | An unclosed `{{` in a folder name (ISS-79); a dry-run footer that always ends in `<input>` (ISS-96); the web runner starting a run with a required param empty (ISS-73)                                                                                                            |
+| 3   | Checks before a run starts | ISS-79, ISS-73                                                           | An unclosed `{{` in a folder name (ISS-79); the web runner starting a run with a required param empty (ISS-73)                                                                                                                                                                     |
 | 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                                          | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100) |
 | 5   | Engine templating          | ISS-35, ISS-58                                                           | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                   |
 | 6   | Small code cleanups        | ISS-103, ISS-104, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag                                                                     |
@@ -67,7 +67,6 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-93  | `@bnto/nodes`'s README lists `src/` files and folders that don't exist                                | docs        | Open                                             |
 | ISS-94  | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                       | tooling     | Open                                             |
 | ISS-95  | The own-version check reports a failed crate download as a changed crate                              | tooling     | Open                                             |
-| ISS-96  | A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none                    | cli         | Open                                             |
 | ISS-99  | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static     | web perf    | Open                                             |
 | ISS-100 | `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files   | engine      | Open                                             |
 | ISS-103 | The TUI editor's node picker can't filter by `j` or `k`: they move the cursor                         | tui         | Open                                             |
@@ -359,15 +358,6 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** return a distinct status when the download or `cargo package` fails, and report it like an unreachable crates.io.
 - **Regression test:** with the download URL failing (a proxy that lets the index through, or a stubbed `curl`), the script doesn't print "changed since".
-
-### ISS-96: A dry run's `Run with:` footer ends in `<input>` even for a recipe that takes none
-
-**Found:** October 26, 2026 (cold review of the ISS-64 fix; the bug predates it).
-
-`DryRunHint::run_command` (`engine/crates/bnto/src/dry_run_hint.rs`) always ends the footer with `<input>`. For a recipe whose input node has `"mode": "none"`, the suggested `bnto run … <input>` fails once a value replaces the placeholder: `Error: This recipe takes no input; got 1 argument(s)`. `bnto info` already picks the ending by input mode (`run_hint` in `engine/crates/bnto/src/info.rs`: none, `<url>`, `<text>` or `<files...>`).
-
-- **Fix:** end the footer by the recipe's input mode, as `run_hint` does, from one shared function.
-- **Regression test:** a dry run of a `mode: "none"` recipe ends `Run with: bnto run <path>` with no placeholder; a file recipe ends `<files...>`.
 
 ### ISS-99: Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static
 

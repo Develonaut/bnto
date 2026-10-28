@@ -1,8 +1,11 @@
 // The command lines bnto suggests from what a run or dry run was given: the
 // `bnto dry-run` a declined run suggests, and the `bnto run` a dry run's
-// footer suggests. Each repeats the recipe and the `-p` values and `--vars`
+// footer suggests (ending by the recipe's input mode). Each repeats the recipe and the `-p` values and `--vars`
 // files, each quoted so the line pastes into a shell as printed.
 
+use bnto_core::InputMode;
+
+use crate::run_input::with_run_input;
 use crate::shell_word::shell_word;
 
 /// What a run or dry run was given that its suggested commands repeat.
@@ -29,10 +32,10 @@ impl<'a> DryRunHint<'a> {
         format!("bnto dry-run {}", self.given())
     }
 
-    /// `bnto run <recipe_arg> -p <param>… --vars <file>… <input>`, the run a
-    /// dry run previews.
-    pub fn run_command(&self) -> String {
-        format!("bnto run {} <input>", self.given())
+    /// `bnto run <recipe_arg> -p <param>… --vars <file>…`, the run a dry run
+    /// previews, ending with the placeholder for `mode`'s input, if any.
+    pub fn run_command(&self, mode: InputMode) -> String {
+        with_run_input(format!("bnto run {}", self.given()), mode)
     }
 
     /// `<recipe_arg> -p <param>… --vars <file>…`, each one shell word.
@@ -98,15 +101,19 @@ mod tests {
         let (version, vars) = (params(&["version=1.2.3"]), params(&["my vars.json"]));
         let hint = DryRunHint::new("drive.bnto.json", &version, &vars);
         assert_eq!(
-            hint.run_command(),
-            "bnto run drive.bnto.json -p version=1.2.3 --vars 'my vars.json' <input>"
+            hint.run_command(InputMode::FileUpload),
+            "bnto run drive.bnto.json -p version=1.2.3 --vars 'my vars.json' <files...>"
         );
     }
 
     #[test]
-    fn the_run_command_for_a_bare_slug_is_just_the_slug() {
+    fn the_run_command_ends_by_the_input_mode() {
         let hint = DryRunHint::new("download-video", &[], &[]);
-        assert_eq!(hint.run_command(), "bnto run download-video <input>");
+        assert_eq!(
+            hint.run_command(InputMode::Url),
+            "bnto run download-video <url>"
+        );
+        assert_eq!(hint.run_command(InputMode::None), "bnto run download-video");
     }
 
     #[test]

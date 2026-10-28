@@ -3,6 +3,8 @@
 use bnto_core::os_support::{describe_os, recipe_os};
 use bnto_core::pipeline::{is_container_node, is_io_node};
 use bnto_core::{HostPlatform, InputMode, PipelineDefinition, resolve_input_mode};
+
+use crate::run_input::with_run_input;
 use bnto_engine::deps::{ScopedDependency, scoped_pipeline_dependencies};
 
 use crate::catalog::RecipeCatalog;
@@ -43,12 +45,7 @@ pub fn print_recipe_info(slug: &str, info: &RecipeInfo) {
 /// Usage hint tailored to the recipe's input mode — a `none` recipe takes
 /// no trailing argument at all, so suggesting `<files...>` is misleading.
 fn run_hint(slug: &str, input_mode: InputMode) -> String {
-    match input_mode {
-        InputMode::None => format!("Run with: bnto run {slug}"),
-        InputMode::Url => format!("Run with: bnto run {slug} <url>"),
-        InputMode::Text => format!("Run with: bnto run {slug} <text>"),
-        InputMode::FileUpload => format!("Run with: bnto run {slug} <files...>"),
-    }
+    with_run_input(format!("Run with: bnto run {slug}"), input_mode)
 }
 
 /// Print dependency details. A dependency only some OSes need says which.

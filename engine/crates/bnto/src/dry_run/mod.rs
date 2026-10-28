@@ -13,7 +13,7 @@ mod host_skip;
 mod shell;
 mod shell_note;
 
-use bnto_core::{Dependency, HostPlatform, PipelineDefinition};
+use bnto_core::{Dependency, HostPlatform, InputMode, PipelineDefinition};
 use bnto_engine::deps::collect_pipeline_dependencies;
 
 use files::FilePreview;
@@ -36,6 +36,8 @@ pub struct DryRunResult {
     pub warnings: Vec<String>,
     /// The recipe's time limit in seconds (`settings.timeout`), if any.
     pub time_limit: Option<u64>,
+    /// What the run takes as input, which the `Run with:` footer ends by.
+    pub input_mode: InputMode,
 }
 
 /// Analyze a recipe and produce a unified dry-run result.
@@ -73,6 +75,7 @@ pub fn dry_run_recipe(
         duration_ms: preview.duration_ms,
         warnings: [refused, preview.warnings].concat(),
         time_limit: def.time_limit_secs(),
+        input_mode: bnto_core::resolve_input_mode(&def),
     })
 }
 

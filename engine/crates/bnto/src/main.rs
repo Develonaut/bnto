@@ -60,6 +60,7 @@ mod progressive_output;
 mod recipe_output_dir;
 mod recipe_source;
 mod run;
+mod run_input;
 mod run_limit;
 mod run_message;
 mod run_output;

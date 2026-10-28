@@ -59,6 +59,6 @@ fn the_run_with_footer_quotes_the_recipe_path_and_params() {
     } else {
         r"'msg=a b $HOME;*'\''x'"
     };
-    let footer = format!("Run with: bnto run 'my print.bnto.json' -p {msg} <input>");
+    let footer = format!("Run with: bnto run 'my print.bnto.json' -p {msg}");
     assert!(out.contains(&footer), "{out}");
 }
