@@ -12,7 +12,7 @@ use bnto_core::metadata::{ParameterDef, ParameterType};
 use bnto_core::{InputMode, PipelineDefinition, PipelineNode, first_processing_node_id};
 
 use crate::file_param::hint_value;
-use crate::unfilled_fields::FillWith;
+use crate::fill_with::FillWith;
 
 /// One line per step in `def` (with `-p` applied) that refuses its params,
 /// saying how to give a required one the `fill` way. A param the run's input

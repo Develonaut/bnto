@@ -8,7 +8,7 @@
 
 ## The problem
 
-`bnto run` checks a run before it asks to allow a shell recipe's commands: it fills `{{vars.*}}` (SEC-29), refuses an empty field, prepares the inputs and fills the output folder. Only then does it ask, so nobody approves a run that is then refused.
+`bnto run` checks a run before it asks to allow a shell recipe's commands: it fills `{{vars.*}}` (SEC-29), refuses an empty field or a param a step won't take (ISS-74), prepares the inputs and fills the output folder. Only then does it ask, so nobody approves a run that is then refused.
 
 The TUI asked first. `consent::gate` held the run on the UI thread when a run started, and the checks ran afterwards, on the bridge thread. An untrusted recipe that would be refused showed the prompt, and allowing it ended in an error (ISS-77). The TUI also never filled `{{vars.*}}` at all (ISS-78).
 

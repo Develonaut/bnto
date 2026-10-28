@@ -9,17 +9,9 @@ use bnto_core::first_processing_node_id;
 use bnto_core::missing_fields::{MissingField, missing_fields};
 use bnto_core::{PipelineDefinition, PipelineNode};
 
+use crate::fill_with::FillWith;
 use crate::input::apply_param_overrides;
 use crate::unfilled_params::param_lines;
-
-/// How a refusal says to fill a field.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FillWith {
-    /// The command line: `-p field=...`.
-    Flag,
-    /// The TUI: the recipe's form, which shows each field by its label.
-    Form,
-}
 
 /// Why `definition_json`, with `param_overrides` applied, can't run, for the
 /// command line: one line per unfilled field reference, naming the `-p` that

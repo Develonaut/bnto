@@ -223,7 +223,8 @@ src/
 +-- info.rs                # `bnto info` command (recipe details)
 +-- input.rs               # Input preparation (files, URLs, param overrides)
 +-- file_param.rs          # A file param's `-p` value: a path, read and base64-encoded
-+-- unfilled_fields.rs     # Refuses an unfilled `{{fields.*}}` before consent, naming the `-p` (run, dry-run, TUI)
++-- fill_with.rs           # How a refusal before a run says to fill something: `-p` or the TUI's form
++-- unfilled_fields.rs     # Refuses before consent (run, dry-run, TUI): an unfilled `{{fields.*}}`, naming the `-p`, then unfilled_params' lines
 +-- unfilled_params.rs     # Refuses params a step won't take as written before consent, naming the `-p` for a required one
 +-- install.rs             # `bnto install` command (plan, confirm, run, verify)
 +-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
