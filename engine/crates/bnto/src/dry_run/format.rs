@@ -126,7 +126,7 @@ fn print_footer(given: &DryRunHint, result: &DryRunResult) {
 
     println!(
         "\n{}",
-        format!("Run with: {}", given.run_command()).dimmed()
+        format!("Run with: {}", given.run_command(result.input_mode)).dimmed()
     );
 }
 
@@ -228,6 +228,7 @@ mod tests {
             duration_ms: None,
             warnings: vec![],
             time_limit: None,
+            input_mode: bnto_core::InputMode::FileUpload,
         }
     }
 
@@ -252,6 +253,7 @@ mod tests {
             duration_ms: Some(245),
             warnings: vec![],
             time_limit: None,
+            input_mode: bnto_core::InputMode::FileUpload,
         }
     }
 
@@ -298,6 +300,7 @@ mod tests {
             duration_ms: None,
             warnings: vec![],
             time_limit: None,
+            input_mode: bnto_core::InputMode::FileUpload,
         };
         let output = format_dry_run_plain(&result);
         assert!(output.contains("No shell commands"));
@@ -331,6 +334,7 @@ mod tests {
             duration_ms: None,
             warnings: vec![],
             time_limit: None,
+            input_mode: bnto_core::InputMode::FileUpload,
         };
         let output = format_dry_run_plain(&result);
         assert!(output.contains("same.txt"));

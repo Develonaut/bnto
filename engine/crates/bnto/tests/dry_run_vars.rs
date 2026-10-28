@@ -57,7 +57,7 @@ fn the_run_with_footer_repeats_the_params_and_vars() {
     let output = dry_run(&sandbox, &args).output().unwrap();
     let out = stdout(&output);
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    let footer = "Run with: bnto run drive.bnto.json -p list:timeout=30 --vars vars.json <input>";
+    let footer = "Run with: bnto run drive.bnto.json -p list:timeout=30 --vars vars.json";
     assert!(out.trim_end().ends_with(footer), "{out}");
 }
 
