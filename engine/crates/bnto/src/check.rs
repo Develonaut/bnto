@@ -12,6 +12,7 @@ use std::process;
 use bnto_core::{NodeRegistry, PipelineDefinition, RunTimeParam, check_pipeline};
 
 use crate::check_targets::{CheckTarget, check_targets};
+use crate::file_param::hint_value;
 
 /// One file's output: finding lines, then note lines.
 #[derive(Debug, Default)]
@@ -102,11 +103,7 @@ fn finding_only(line: String) -> FileLines {
 /// `<path>: note: <param>; give it with bnto run -p <node>:<param>=<value>`,
 /// or `=<path>` for a file param, which `-p` reads from disk.
 fn note_line(path: &str, param: &RunTimeParam) -> String {
-    let value = if param.takes_file {
-        "<path>"
-    } else {
-        "<value>"
-    };
+    let value = hint_value(param.takes_file);
     format!(
         "{path}: note: {param}; give it with bnto run -p {}:{}={value}",
         param.node_id, param.param

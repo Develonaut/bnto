@@ -1216,4 +1216,24 @@ mod tests {
             "{events:?}"
         );
     }
+
+    #[test]
+    fn an_empty_required_param_is_refused_before_consent() {
+        // The shell step needs consent; the overlay step has no image (ISS-74).
+        let trust = tempfile::tempdir().unwrap();
+        let json = serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "say", "type": "shell-run",
+              "parameters": { "command": "git", "args": ["--version"] } },
+            { "id": "stamp", "type": "image-overlay", "parameters": { "overlay": "" } }
+        ] })
+        .to_string();
+        let events = events_of(untrusted_job(json, &trust));
+        assert!(
+            matches!(&events[..], [BridgeEvent::Error(e)]
+                if e.contains("Overlay Image is empty: fill it in on the recipe's form")
+                    && !e.contains("-p")),
+            "{events:?}"
+        );
+    }
 }

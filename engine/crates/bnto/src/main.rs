@@ -72,6 +72,7 @@ mod trust;
 mod trust_gate;
 mod tui;
 mod unfilled_fields;
+mod unfilled_params;
 mod update_check;
 mod upgrade;
 mod vars;

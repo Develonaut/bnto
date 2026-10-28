@@ -1,46 +1,88 @@
 // Pre-flight: each processor checks its params as the recipe wrote them,
 // before templates fill data in: no param it doesn't declare, no required
 // param without a value, and nothing `NodeProcessor::validate_raw` refuses.
-// Run before any step starts, so a refused recipe runs nothing.
+// Run before any step starts, so a refused recipe runs nothing. The CLI and
+// TUI make the same check before consent (`raw_param_problems`, ISS-74).
+
+use std::fmt;
 
 use crate::errors::BntoError;
+use crate::metadata::ParameterDef;
 use crate::pipeline::PipelineNode;
 use crate::processor::NodeProcessor;
 use crate::registry::NodeRegistry;
 use crate::required_params::missing_required;
 use crate::undeclared_params::undeclared_params;
 
+/// The first param a node's processor refuses as the recipe wrote it.
+#[derive(Debug, Clone)]
+pub struct RawParamProblem<'a> {
+    pub node: &'a PipelineNode,
+    /// What's wrong, without the node: `param "logo" (Logo) is required`.
+    pub message: String,
+    /// The param's definition, when the problem is a required param with no
+    /// value, so a caller can say how to give it.
+    pub missing: Option<ParameterDef>,
+}
+
+impl fmt::Display for RawParamProblem<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Node '{}': {}", self.node.id, self.message)
+    }
+}
+
 /// Refuse the run when any node's processor refuses its unfilled params.
 pub(super) fn check_raw_params(
     nodes: &[PipelineNode],
     registry: &NodeRegistry,
 ) -> Result<(), BntoError> {
-    for node in nodes {
-        if let Some(processor) = registry.resolve(&node.node_type, &node.params)
-            && let Some(problem) = first_problem(node, processor)
-        {
-            return Err(BntoError::InvalidInput(format!(
-                "Node '{}': {problem}",
-                node.id
-            )));
-        }
-        if let Some(children) = &node.children {
-            check_raw_params(children, registry)?;
-        }
+    match raw_param_problems(nodes, registry).into_iter().next() {
+        Some(problem) => Err(BntoError::InvalidInput(problem.to_string())),
+        None => Ok(()),
     }
-    Ok(())
 }
 
-/// The first undeclared param, else the first required param with no value,
-/// else the first raw-param refusal.
-fn first_problem(node: &PipelineNode, processor: &dyn NodeProcessor) -> Option<String> {
-    let declared_problem = processor.declared_params().and_then(|declared| {
+/// Each node's first problem, in the order pre-flight walks them: each node,
+/// then its children, before the next node.
+pub fn raw_param_problems<'a>(
+    nodes: &'a [PipelineNode],
+    registry: &NodeRegistry,
+) -> Vec<RawParamProblem<'a>> {
+    let mut problems = Vec::new();
+    for node in nodes {
+        if let Some(processor) = registry.resolve(&node.node_type, &node.params)
+            && let Some((message, missing)) = first_problem(node, processor)
+        {
+            problems.push(RawParamProblem {
+                node,
+                message,
+                missing,
+            });
+        }
+        let children = node.children.as_deref().unwrap_or_default();
+        problems.extend(raw_param_problems(children, registry));
+    }
+    problems
+}
+
+/// The first undeclared param, else the first required param with no value
+/// (with its definition), else the first raw-param refusal.
+fn first_problem(
+    node: &PipelineNode,
+    processor: &dyn NodeProcessor,
+) -> Option<(String, Option<ParameterDef>)> {
+    if let Some(declared) = processor.declared_params() {
         let undeclared = undeclared_params(&node.node_type, &node.params, &declared);
-        let missing = missing_required(&node.params, &declared);
-        let first_undeclared = undeclared.into_iter().next().map(|u| u.message);
-        first_undeclared.or_else(|| missing.into_iter().next().map(|m| m.message))
-    });
-    declared_problem.or_else(|| processor.validate_raw(&node.params).into_iter().next())
+        if let Some(first) = undeclared.into_iter().next() {
+            return Some((first.message, None));
+        }
+        if let Some(first) = missing_required(&node.params, &declared).into_iter().next() {
+            let def = declared.into_iter().find(|def| def.name == first.param);
+            return Some((first.message, def));
+        }
+    }
+    let refused = processor.validate_raw(&node.params).into_iter().next();
+    refused.map(|message| (message, None))
 }
 
 #[cfg(test)]
@@ -220,6 +262,51 @@ mod tests {
         }]));
         let err = check_raw_params(&ns, &registry()).unwrap_err().to_string();
         assert!(err.contains("Node 'p'"), "{err}");
+    }
+
+    // --- Problems as data, for checks made before a run starts (ISS-74) ---
+
+    #[test]
+    fn a_required_param_problem_carries_its_definition() {
+        let ns = nodes(serde_json::json!([
+            { "id": "stamp", "type": "needy", "parameters": { "logo": "" } }
+        ]));
+        let problems = raw_param_problems(&ns, &registry());
+        assert_eq!(problems.len(), 1);
+        assert_eq!(problems[0].node.id, "stamp");
+        assert_eq!(problems[0].message, "param \"logo\" (Logo) is required");
+        let missing = problems[0].missing.as_ref().expect("a required param");
+        assert_eq!(missing.name, "logo");
+        assert_eq!(
+            problems[0].to_string(),
+            "Node 'stamp': param \"logo\" (Logo) is required"
+        );
+    }
+
+    #[test]
+    fn other_problems_carry_no_definition() {
+        let ns = nodes(serde_json::json!([
+            { "id": "p", "type": "picky", "parameters": { "secret": "{{fields.s}}" } }
+        ]));
+        let problems = raw_param_problems(&ns, &registry());
+        assert_eq!(problems.len(), 1);
+        assert!(problems[0].missing.is_none());
+    }
+
+    #[test]
+    fn every_node_with_a_problem_is_listed_in_walk_order() {
+        let ns = nodes(serde_json::json!([
+            { "id": "a", "type": "needy", "parameters": {} },
+            { "id": "g", "type": "group", "children": [
+                { "id": "b", "type": "picky", "parameters": { "extra": 1 } }
+            ] },
+            { "id": "c", "type": "needy", "parameters": { "logo": "x" } }
+        ]));
+        let ids: Vec<String> = raw_param_problems(&ns, &registry())
+            .into_iter()
+            .map(|p| p.node.id.clone())
+            .collect();
+        assert_eq!(ids, ["a", "b"]);
     }
 
     #[test]

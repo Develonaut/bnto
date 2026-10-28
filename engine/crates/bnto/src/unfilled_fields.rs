@@ -1,7 +1,8 @@
 // `bnto run`, `bnto dry-run` and a TUI run stop before consent when a
 // `{{fields.*}}` has nothing to fill it, and say how to fill it: which `-p`
-// would on the command line, which form field in the TUI (ISS-97). The
-// engine's pre-flight refuses the same run (`bnto_core::missing_fields`);
+// would on the command line, which form field in the TUI (ISS-97). Params a
+// step refuses as written are checked here too (`unfilled_params`, ISS-74).
+// The engine's pre-flight refuses the same run (`bnto_core::missing_fields`);
 // checking here first means nobody approves a run that would be refused.
 
 use bnto_core::first_processing_node_id;
@@ -9,6 +10,7 @@ use bnto_core::missing_fields::{MissingField, missing_fields};
 use bnto_core::{PipelineDefinition, PipelineNode};
 
 use crate::input::apply_param_overrides;
+use crate::unfilled_params::param_lines;
 
 /// How a refusal says to fill a field.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -21,7 +23,8 @@ pub enum FillWith {
 
 /// Why `definition_json`, with `param_overrides` applied, can't run, for the
 /// command line: one line per unfilled field reference, naming the `-p` that
-/// fills it. `Ok` when every reference has a value.
+/// fills it, then one per step that refuses its params. `Ok` when nothing is
+/// refused.
 pub fn refuse_unfilled(definition_json: &str, param_overrides: &[String]) -> Result<(), String> {
     refuse_unfilled_with(definition_json, param_overrides, FillWith::Flag)
 }
@@ -37,10 +40,11 @@ pub fn refuse_unfilled_with(
     let default_node = first_processing_node_id(&def);
     apply_param_overrides(&mut def, param_overrides, default_node.as_deref())?;
     let missing = missing_fields(&def.nodes);
-    if missing.is_empty() {
+    let fields = missing.iter().map(|m| line(m, &def.nodes, fill));
+    let lines: Vec<String> = fields.chain(param_lines(&def, fill)).collect();
+    if lines.is_empty() {
         return Ok(());
     }
-    let lines: Vec<String> = missing.iter().map(|m| line(m, &def.nodes, fill)).collect();
     Err(lines.join("\n"))
 }
 

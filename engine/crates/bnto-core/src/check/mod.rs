@@ -23,8 +23,8 @@ use crate::registry::NodeRegistry;
 use crate::renamed::with_node_type_hint;
 use crate::undeclared_params::undeclared_params;
 use edges::{Level, edge_findings};
-pub use run_time::RunTimeParam;
 use run_time::{LeftOut, Subject, left_out, refusals};
+pub use run_time::{RunTimeParam, unreachable_reason};
 
 /// One problem `check_pipeline` found in a recipe.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,6 +1,7 @@
 // What a TUI run checks before it asks to allow a shell recipe's commands,
 // in `bnto run`'s order (ISS-77, ISS-78): fill `{{vars.*}}`, refuse an empty
-// field, prepare the inputs, fill the output folder. Only then does it ask,
+// field or a param a step won't take (ISS-74), prepare the inputs, fill the
+// output folder. Only then does it ask,
 // so nobody approves a run that is refused, and the approval is pinned to the
 // filled values (SEC-29). It runs on the bridge thread: preparing inputs walks
 // picked folders.

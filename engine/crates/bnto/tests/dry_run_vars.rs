@@ -53,11 +53,11 @@ fn dry_run_shows_the_value_a_vars_file_sets() {
 #[test]
 fn the_run_with_footer_repeats_the_params_and_vars() {
     let sandbox = drive_sandbox();
-    let args = ["-p", "version=1.2.3", "--vars", "vars.json"];
+    let args = ["-p", "list:timeout=30", "--vars", "vars.json"];
     let output = dry_run(&sandbox, &args).output().unwrap();
     let out = stdout(&output);
     assert!(output.status.success(), "stderr: {}", stderr(&output));
-    let footer = "Run with: bnto run drive.bnto.json -p version=1.2.3 --vars vars.json <input>";
+    let footer = "Run with: bnto run drive.bnto.json -p list:timeout=30 --vars vars.json <input>";
     assert!(out.trim_end().ends_with(footer), "{out}");
 }
 

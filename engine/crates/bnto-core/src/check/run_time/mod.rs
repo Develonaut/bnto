@@ -135,8 +135,9 @@ fn is_needed(subject: &Subject<'_>, def: &ParameterDef, written: &[String]) -> b
     written.iter().any(|m| !after.contains(m))
 }
 
-/// Why `-p` can't give `def` to `node`, or `None` when it can.
-fn unreachable_reason(
+/// Why `-p` can't give `def` to `node`, or `None` when it can. `root` is
+/// the whole recipe, which `-p` searches for the first node with that id.
+pub fn unreachable_reason(
     node: &PipelineNode,
     def: &ParameterDef,
     root: &[PipelineNode],
