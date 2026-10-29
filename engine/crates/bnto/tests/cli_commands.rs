@@ -2169,7 +2169,7 @@ fn test_move_refuses_two_files_onto_one_path_and_moves_nothing() {
             run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &params, dry_run);
         assert!(!ok, "dry_run={dry_run} stderr: {stderr}");
         assert!(
-            stderr.contains("File move refused, nothing moved"),
+            stderr.contains("File move refused, this step moved nothing"),
             "stderr: {stderr}"
         );
     }

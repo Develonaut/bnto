@@ -1,5 +1,6 @@
 // file-move and file-delete on a file the run still reads outside their
-// batch (ISS-82).
+// batch (ISS-82), and a file-move refusal in a loop after earlier iterations
+// moved files (ISS-100).
 //
 // Inside a loop, each iteration hands the node one file, so a file given
 // twice reaches two iterations. Moving or deleting it in the first used to
@@ -231,6 +232,40 @@ fn a_refusal_after_earlier_iterations_moved_files_claims_only_its_own_step() {
         "BBBB"
     );
     assert_eq!(std::fs::read_to_string(&a).unwrap(), "AAAA", "never moved");
+}
+
+#[test]
+fn a_conflict_after_earlier_iterations_moved_files_claims_only_its_own_step() {
+    // ISS-100: `b` moves in iteration 1; `a`'s destination already holds a
+    // file, so iteration 2 is refused. It used to say "nothing moved".
+    let inputs = temp_output_dir();
+    let out = temp_output_dir();
+    let (a, b) = (inputs.path().join("a.txt"), inputs.path().join("b.txt"));
+    std::fs::write(&a, "AAAA").unwrap();
+    std::fs::write(&b, "BBBB").unwrap();
+    std::fs::write(out.path().join("a.txt"), "OLD").unwrap();
+    let mv = json!({
+        "id": "mv", "type": "file-move",
+        "parameters": { "destination": out.path().to_str().unwrap() }
+    });
+
+    let output = run_loop(&[mv], &[&b, &a]);
+
+    let stderr = stderr(&output);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(
+        stderr.contains("File move refused, this step moved nothing"),
+        "{stderr}"
+    );
+    assert!(!stderr.contains("nothing moved"), "{stderr}");
+    assert_eq!(
+        std::fs::read_to_string(out.path().join("b.txt")).unwrap(),
+        "BBBB"
+    );
+    assert_eq!(
+        std::fs::read_to_string(out.path().join("a.txt")).unwrap(),
+        "OLD"
+    );
 }
 
 #[test]

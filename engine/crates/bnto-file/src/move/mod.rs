@@ -127,10 +127,9 @@ fn refuse_held(moves: &[Move], ctx: &dyn ProcessContext) -> Result<(), BntoError
         return Ok(());
     }
     let text = relocate::listing(&held, ("file", "files"));
-    // "This step": earlier loop iterations may have moved files already.
-    Err(BntoError::InvalidInput(format!(
-        "File move refused, this step moved nothing: {text}\n  {HINT}"
-    )))
+    Err(BntoError::InvalidInput(refused(&format!(
+        "{text}\n  {HINT}"
+    ))))
 }
 
 /// The moves that change a path (a file already in place stays put).

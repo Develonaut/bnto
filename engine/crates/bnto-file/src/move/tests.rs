@@ -267,7 +267,7 @@ fn test_absolute_names_are_refused_and_nothing_moves() {
     for bad in ["/etc/a.wav", r"\a.wav", abs.as_ref()] {
         let err = error(run(tmp.path(), &[("b.wav", "ok/b.wav"), ("a.wav", bad)]));
         assert!(
-            err.contains("nothing moved") && err.contains("absolute"),
+            err.contains("this step moved nothing") && err.contains("absolute"),
             "{bad}: {err}"
         );
         assert_eq!(tree(tmp.path()), vec!["a.wav", "b.wav"], "{bad}");
@@ -315,7 +315,7 @@ fn test_names_windows_cannot_hold_are_refused() {
     let tmp = dir_with(&[("a.wav", "A")]);
     for bad in ["Pistol/CON/a.wav", "Pistol./a.wav", "Pistol/a?.wav"] {
         let err = error(run(tmp.path(), &[("a.wav", bad)]));
-        assert!(err.contains("nothing moved"), "{bad}: {err}");
+        assert!(err.contains("this step moved nothing"), "{bad}: {err}");
     }
     assert_eq!(tree(tmp.path()), vec!["a.wav"]);
 }

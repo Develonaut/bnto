@@ -14,11 +14,11 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815). In progress: batch 4 (ISS-17 #816, ISS-34 #817, ISS-33 #818). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815). In progress: batch 4 (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819). Batches keep their numbers.
 
 | #   | Batch               | Issues                                                                                     | Why                                                                                                                                                                                                                                                                                                           |
 | --- | ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 4   | Engine file nodes   | ISS-100, ISS-107                                                                           | `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100); `pattern` silently dropping the other rename params (ISS-107, a behavior change: `/workflow-expert` first)                                                                                                                                |
+| 4   | Engine file nodes   | ISS-107                                                                                    | `pattern` silently dropping the other rename params (ISS-107, a behavior change: `/workflow-expert` first)                                                                                                                                                                                                    |
 | 5   | Engine templating   | ISS-35, ISS-58                                                                             | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                              |
 | 6   | Small code cleanups | ISS-103, ISS-104, ISS-105, ISS-106, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a removed node's generated doc left behind (ISS-105); `platforms` leaving out `cli` (ISS-106); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag |
 | 7   | Tooling and tests   | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18                                      | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                         |
@@ -62,7 +62,6 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-94  | Codegen never removes a stale `iterationModes.ts` from `src/generated/catalog/`                                         | tooling     | Open                                             |
 | ISS-95  | The own-version check reports a failed crate download as a changed crate                                                | tooling     | Open                                             |
 | ISS-99  | Every web page renders per request; recipe pages' `generateStaticParams` doesn't make them static                       | web perf    | Open                                             |
-| ISS-100 | `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files                     | engine      | Open                                             |
 | ISS-103 | The TUI editor's node picker can't filter by `j` or `k`: they move the cursor                                           | tui         | Open                                             |
 | ISS-104 | The TUI's recipe form shows a file param (Watermark Images' overlay) as a text box, not a file picker                   | tui         | Open                                             |
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
@@ -312,15 +311,6 @@ In `scripts/check-own-version-crates.sh`, `differs_from_published` runs inside a
 
 - **Fix:** find what opts the tree out of static rendering (`next build` with the provider moved off the public routes, or Next's dynamic-usage logging), and keep the public pages static. Then update gotchas.md's "A `loading.tsx` Can Steal a Page's LCP", which assumes pages render per request.
 - **Regression test:** `next build` lists `/[bnto]` (and `/`, `/faq`, `/pricing`, `/privacy`) as static (`●` or `○`).
-
-### ISS-100: `file-move`'s older refusals say "nothing moved" in a loop iteration after earlier ones moved files
-
-**Found:** October 27, 2026 (cold review of the ISS-82 fix).
-
-`move/plan.rs`'s `refused` prefixes every `file-move` refusal with "File move refused, nothing moved": a move that would replace a file (`refuse_conflicts`), a bad destination, a bad path. That's true of a flat batch. Inside a loop it describes only the refusing iteration: `loop { file-move into O }` over `b.txt`, then an `a.txt` whose destination `O/a.txt` already exists, moves `b.txt` in iteration 1 and then says "nothing moved". Reproduced with the `bnto` built from the ISS-82 branch, in a sandbox: `O/` ends with `a.txt` (the old one) and `b.txt`, and the run fails "File move refused, nothing moved: 1 conflict". The ISS-82 refusals say "this step moved nothing" instead, so the node now words the same situation two ways.
-
-- **Fix:** say "this step moved nothing" in `refused`, or name the moves earlier iterations made, as `file-copy` names earlier copies (`copy_batch/refusal.rs`, `recorded_writes`); the second needs the run to record moves.
-- **Regression test:** the loop above fails without claiming nothing moved, and `O/b.txt` holds `b.txt`'s content.
 
 ### ISS-103: The TUI editor's node picker can't filter by `j` or `k`: they move the cursor
 
