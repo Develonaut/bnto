@@ -35,6 +35,7 @@ src/
 │   ├── param_access.rs     # Typed reads from the params map
 │   ├── transform.rs        # Sanitize, find/replace, case, prefix/suffix
 │   ├── naming.rs           # Pattern templates, extension override, counters
+│   ├── raw_checks.rs       # validate_raw: a param the pattern has no token for
 │   └── result_metadata.rs  # originalFilename/newFilename/transformsApplied
 ├── decode/           # FileDecode processor (file-decode)
 │   ├── mod.rs              # NodeProcessor impl (per-file), decoded output
