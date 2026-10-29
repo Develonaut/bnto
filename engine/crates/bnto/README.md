@@ -88,11 +88,10 @@ bnto dry-run backup.bnto.json --vars machine.json
 # {{…}} placeholders, placeholders in the output folder no run can fill (an
 # {{item.*}}, an undeclared {{env.*}}, an unclosed {{), and every edge problem
 # at every level (cycles, edges to unknown or other-level nodes, unwired
-# nodes). A required
-# param left out (or given as "") for `bnto run -p node:param=value` to give
-# is a note, not a finding (`=<path>` for a file param), and `bnto run`
-# refuses it before any step runs;
-# one no `-p` can give (an object, or a node `-p` can't name) is a finding.
+# nodes). A required param left out (or given as "") for `bnto run -p
+# node:param=value` to give is a note, not a finding (`=<path>` for a file
+# param), and `bnto run` refuses it before any step runs; one no `-p` can
+# give (an object, or a node `-p` can't name) is a finding.
 # Prints one line per finding, then a line per note, then
 # `Check: PASS (<n> recipes)` (exit 0) or `Check: FAIL (<n> findings)`
 # (exit 1), with `, <n> notes` added if any
