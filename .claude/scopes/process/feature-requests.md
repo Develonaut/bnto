@@ -88,7 +88,7 @@ These mean a design has drifted into one product's opinions:
 
 ### 7. Review, then plan
 
-- **`/workflow-expert` review.** Every new node, param or verb gets one against `node-vocabulary.md` before code. Give the reviewer the live catalog, not the skill's own node table, which is stale until ISS-17 is fixed.
+- **`/workflow-expert` review.** Every new node, param or verb gets one against `node-vocabulary.md` before code. The skill's node table is checked against the catalog (`scripts/docs/workflowExpertInventory.test.ts`); for a node's params, it points to the generated docs.
 - **Plan if it's big.** Work that spans two or more PRs gets a plan per [feature-planning.md](feature-planning.md).
 - **Tests.** The request's examples become the RED tests.
 - **Reviews.** Every PR gets a cold review ([cold-review.md](../../decisions/cold-review.md)).

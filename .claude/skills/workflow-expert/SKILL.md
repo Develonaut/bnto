@@ -40,7 +40,7 @@ Three principles guide your recipe design:
 
 ### 1. Current Node Inventory
 
-Every node with a processor in `engine/catalog.snapshot.json`, the source of truth. All of them run in the CLI; **Web** marks the ones that also run in the browser, so a recipe for a recipe page uses only Web nodes. For a node's params, defaults and accepted file types, read its generated page, `packages/@bnto/nodes/docs/<node type>.md` (or run `bnto info` on a recipe that uses it). `scripts/docs/workflowExpertInventory.test.ts` fails when this table and the catalog disagree, so a new node lands here in the same PR.
+Every node with a processor in `engine/catalog.snapshot.json`, the source of truth. All of them run in the CLI, though the catalog's `platforms` doesn't always list `cli` (ISS-106); **Web** marks the ones that also run in the browser, so a recipe for a recipe page uses only Web nodes. For a node's params, defaults and accepted file types, read its generated page, `packages/@bnto/nodes/docs/<node type>.md` (or run `bnto info` on a recipe that uses it). `scripts/docs/workflowExpertInventory.test.ts` fails when this table and the catalog disagree, so a new node lands here in the same PR.
 
 | Node type             | Label                | Web |
 | --------------------- | -------------------- | --- |
@@ -198,13 +198,13 @@ test.describe("custom: web-ready image pipeline @editor @browser", () => {
 
 Extend the editor journey matrix with custom recipe tests:
 
-| ID  | Test                               | Pipeline                      | Tag                  | What it verifies                    |
-| --- | ---------------------------------- | ----------------------------- | -------------------- | ----------------------------------- |
-| CR1 | Web-ready image pipeline (3 nodes) | Resize -> Convert -> Compress | `@editor` `@browser` | Multi-image-op chaining             |
-| CR2 | Compress + organize (2 nodes)      | Compress -> Rename            | `@editor` `@browser` | Cross-type chaining (image -> file) |
-| CR3 | Clean & standardize CSV (2 nodes)  | Clean -> Rename Columns       | `@editor` `@browser` | CSV multi-op chaining               |
-| CR4 | Thumbnail generator (3 nodes)      | Resize -> Convert -> Rename   | `@editor` `@browser` | Image + file cross-type chain       |
-| CR5 | Every Web node added individually  | One of each                   | `@editor`            | All node types addable from palette |
+| ID  | Test                               | Pipeline                      | Tag                  | What it verifies                                                                                   |
+| --- | ---------------------------------- | ----------------------------- | -------------------- | -------------------------------------------------------------------------------------------------- |
+| CR1 | Web-ready image pipeline (3 nodes) | Resize -> Convert -> Compress | `@editor` `@browser` | Multi-image-op chaining                                                                            |
+| CR2 | Compress + organize (2 nodes)      | Compress -> Rename            | `@editor` `@browser` | Cross-type chaining (image -> file)                                                                |
+| CR3 | Clean & standardize CSV (2 nodes)  | Clean -> Rename Columns       | `@editor` `@browser` | CSV multi-op chaining                                                                              |
+| CR4 | Thumbnail generator (3 nodes)      | Resize -> Convert -> Rename   | `@editor` `@browser` | Image + file cross-type chain                                                                      |
+| CR5 | Six first nodes added individually | One of each                   | `@editor`            | Compress, resize, convert, rename files, clean CSV and rename columns are addable from the palette |
 
 **CR1-CR4 test real user workflows. CR5 is a completeness check.**
 
@@ -213,7 +213,7 @@ Extend the editor journey matrix with custom recipe tests:
 | Gotcha                                          | Prevention                                                                                                                                                 |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Proposing recipes that need unimplemented nodes | Always cross-reference the inventory. No `pdf`, `archive`, `http-request`, `transform` or `ai` nodes yet                                                   |
-| Forgetting file type boundaries                 | Image ops only accept JPEG/PNG/WebP. CSV ops only accept CSV. Don't chain image -> CSV                                                                     |
+| Forgetting file type boundaries                 | Image ops accept JPEG/PNG/WebP (`image-convert` also SVG). CSV ops only accept CSV. Don't chain image -> CSV                                               |
 | Pipeline order mistakes                         | Resize BEFORE compress (resizing a compressed image re-encodes, losing quality). Convert format BEFORE compress (compression settings are format-specific) |
 | Naming recipes like an engineer                 | "Web-Ready Image Pipeline" not "Multi-Op Image Transform Workflow". Users search for tasks, not architectures                                              |
 | Over-parameterizing recipes                     | Sensible defaults > maximum configurability. A recipe should work with zero config changes                                                                 |
