@@ -14,11 +14,10 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815). In progress: batch 4 (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Batches keep their numbers.
 
 | #   | Batch               | Issues                                                                                              | Why                                                                                                                                                                                                                                                                                                                                                                                           |
 | --- | ------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 4   | Engine file nodes   | ISS-107                                                                                             | `pattern` silently dropping the other rename params (ISS-107, a behavior change: `/workflow-expert` first)                                                                                                                                                                                                                                                                                    |
 | 5   | Engine templating   | ISS-35, ISS-58                                                                                      | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                                                                                              |
 | 6   | Small code cleanups | ISS-103, ISS-104, ISS-105, ISS-106, ISS-108, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a removed node's generated doc left behind (ISS-105); `platforms` leaving out `cli` (ISS-106); a loop's failure line repeating its step's "this step moved nothing" (ISS-108); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag |
 | 7   | Tooling and tests   | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18                                               | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                                                                                                         |
@@ -66,7 +65,6 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-104 | The TUI's recipe form shows a file param (Watermark Images' overlay) as a text box, not a file picker                   | tui         | Open                                             |
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser" | engine      | Open                                             |
-| ISS-107 | `file-rename` ignores `sanitize`, `find`, `case`, `prefix` and `suffix` when `pattern` is set, without saying so        | engine      | Open                                             |
 | ISS-108 | A loop's failure line repeats its step's "this step moved nothing", though the loop moved files in earlier iterations   | engine      | Open                                             |
 
 ---
@@ -125,6 +123,7 @@ Inside a loop the executor fills `{{item.*}}` from the loop's item into a node's
 
 The same happens through `{{fields.*}}`: a field passed as `-p 'x={{file}}'` into `"label": "{{fields.x}}"` gives the file's name. `report` and `assert` do it today (`placeholder::resolve_file`); the ISS-24 fix makes `edit-fields` do it too. Only `shell-run` declares `reserved_tokens` (`bnto-shell/src/run.rs:104`), which SEC-27's `check_reserved` uses to refuse exactly this.
 
+- **`file-rename`'s pattern does it too, since ISS-107:** `apply_pattern` (`bnto-file/src/rename/naming.rs`) fills `{{name}}` first and then replaces `{{ext}}`, `{{index}}`, `{{counter}}` and `{{date}}` across the whole result, so a token in the filled name is filled. Since `{{name}}` became the transformed stem, that covers a `prefix` or `suffix` the recipe wrote (`prefix: "{{date}}-"` with `pattern: "{{name}}.{{ext}}"` puts in the date), as well as a file name carrying a token. Fill each token once, in one pass over the pattern.
 - **Secrets are not reached:** with `secrets: [{"key": "SOME_KEY"}]` set, a cell reading `{{env.SOME_KEY}}` inside the same loop prints as written (`note={{env.SOME_KEY}}`), checked with `main` at #745. Only `{{file}}` and `{{item.*}}` were seen re-filled; recheck any namespace the fix touches.
 - **Fix:** a value filled in from data is never re-scanned. Fill every namespace in one pass over the original template, or escape filled values, rather than adding `reserved_tokens` node by node.
 - **Regression test:** inside a loop, a cell holding `{{file}}`, `{{item.x}}` or `{{env.KEY}}` comes out as written, in `report`, `assert` and `edit-fields`.
@@ -348,15 +347,6 @@ Every processor runs in the CLI, which registers them all (`compress-images` run
 
 - **Fix:** decide what `platforms` means (everywhere a node runs, or only whether it runs in the browser, which is what `metadata.rs`'s browser filter reads), then make every processor's list say it, and the docs with it.
 - **Regression test:** a catalog test that every processor lists `cli` (or whatever the agreed values are), and no value outside the agreed set.
-
-### ISS-107: `file-rename` ignores its other name params when `pattern` is set
-
-**Found:** October 29, 2026 (`/workflow-expert` review of the ISS-34 fix).
-
-`build_final_filename` (`bnto-file/src/rename/naming.rs`) fills `{{name}}` from the original stem, not the transformed one, so with `pattern` set, `sanitize`, `find`/`replace`, `case`, `prefix` and `suffix` run and their result is thrown away. `pattern: "{{name}}.{{ext}}"` plus `prefix: "x-"` on `a.jpg` gives `a.jpg`. Nothing refuses the combination or warns; since ISS-34, `pattern`'s description says it replaces the other name transforms, but a recipe that sets both still runs as if they weren't there.
-
-- **Fix:** either fill `{{name}}` from the transformed stem (so the transforms feed the template), or refuse `pattern` together with any of them in `validate` (a `bnto check` finding). Either changes behavior, so `/workflow-expert` reviews it first.
-- **Regression test:** `pattern` plus `prefix` either applies the prefix inside `{{name}}`, or is refused naming both params.
 
 ### ISS-108: A loop's failure line repeats its step's "this step moved nothing" after earlier iterations moved files
 

@@ -3,7 +3,8 @@
 // A stem can carry a relative folder path (`sub/a` from `file-collect` with
 // `flatten: false`). `find`/`replace` sees the whole path, so it can move a
 // file between folders; the rest change only the name after the last `/`
-// (ISS-34). `pattern` (naming.rs) also sees the whole path.
+// (ISS-34). `pattern` (naming.rs) also sees the whole path, and its
+// `{{name}}` is this module's result (ISS-107).
 
 use regex::Regex;
 

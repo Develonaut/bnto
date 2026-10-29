@@ -2,11 +2,10 @@
 
 use super::param_access::{get_int_param, get_string_param};
 
-/// If a pattern is provided, apply it (overriding the transformed stem).
+/// With a pattern, fill it, `{{name}}` taking the transformed stem.
 /// Otherwise reconstruct from transformed stem + resolved extension.
 pub(super) fn build_final_filename(
     stem: &str,
-    original_stem: &str,
     original_ext: &str,
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> String {
@@ -16,7 +15,7 @@ pub(super) fn build_final_filename(
         let index = get_string_param(params, "index").unwrap_or_else(|| "1".to_string());
         let counter = format_counter(params);
         let date = get_current_date();
-        apply_pattern(&pattern, original_stem, &ext, &index, &counter, &date)
+        apply_pattern(&pattern, stem, &ext, &index, &counter, &date)
     } else if ext.is_empty() {
         stem.to_string()
     } else {

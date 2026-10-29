@@ -75,14 +75,14 @@ export const fileRenameProcessor: ProcessorDef = {
       name: "pattern",
       label: "Pattern",
       description:
-        "Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). Replaces the other name transforms; without {{name}} it drops the folders",
+        "Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). {{name}} is the path after Sanitize, Find/Replace, Case, Prefix and Suffix, and {{ext}} is the Extension if set. Without {{name}} it drops the folders, and those params can't be set",
       type: "string" as const,
       placeholder: "{{name}}-{{counter}}.{{ext}}",
     },
     {
       name: "counterStart",
       label: "Counter Start",
-      description: "Starting number for the {{counter}} variable",
+      description: "Starting number for {{counter}} in Pattern",
       type: "number" as const,
       default: 1,
       constraints: { min: 0, required: false },
@@ -90,7 +90,7 @@ export const fileRenameProcessor: ProcessorDef = {
     {
       name: "counterPad",
       label: "Counter Padding",
-      description: "Zero-pad width for the counter (e.g., 3 → 001, 002)",
+      description: "Zero-pad width for {{counter}} in Pattern (e.g., 3 → 001, 002)",
       type: "number" as const,
       default: 0,
       constraints: { min: 0, max: 10, required: false },
@@ -98,7 +98,8 @@ export const fileRenameProcessor: ProcessorDef = {
     {
       name: "extension",
       label: "Extension",
-      description: "Replace the file extension (without dot)",
+      description:
+        "Replace the file extension (without dot). With Pattern, it fills {{ext}}, and a pattern without {{ext}} can't set it",
       type: "string" as const,
       placeholder: "png",
     },

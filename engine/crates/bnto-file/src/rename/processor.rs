@@ -58,6 +58,11 @@ impl NodeProcessor for RenameFiles {
         }
     }
 
+    /// A param the pattern has no token for, which would do nothing.
+    fn validate_raw(&self, raw: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+        super::raw_checks::raw_problems(raw)
+    }
+
     /// Transform a file's name according to the params. Data passes through unchanged.
     fn process(
         &self,
@@ -74,7 +79,7 @@ impl NodeProcessor for RenameFiles {
         let stem = apply_all_transformations(original_stem, &input.params);
 
         progress.report(60, "Building new filename...");
-        let new_filename = build_final_filename(&stem, original_stem, original_ext, &input.params);
+        let new_filename = build_final_filename(&stem, original_ext, &input.params);
 
         progress.report(90, "Preparing output...");
         let metadata = build_rename_metadata(&input.filename, &new_filename, &input.params);
@@ -420,6 +425,115 @@ mod tests {
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "photo.jpg");
+    }
+
+    // =========================================================================
+    // Pattern wraps the other name params (ISS-107)
+    // =========================================================================
+
+    fn renamed(filename: &str, pairs: &[(&str, &str)]) -> String {
+        let input = make_input(b"data", filename, string_params(pairs));
+        let output = RenameFiles::new()
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+        output.files[0].filename.clone()
+    }
+
+    #[test]
+    fn test_pattern_name_carries_the_prefix() {
+        let name = renamed(
+            "a.jpg",
+            &[("pattern", "{{name}}.{{ext}}"), ("prefix", "x-")],
+        );
+        assert_eq!(name, "x-a.jpg");
+    }
+
+    #[test]
+    fn test_pattern_name_carries_the_sanitized_name() {
+        let pairs = [
+            ("pattern", "{{counter}}-{{name}}.{{ext}}"),
+            ("sanitize", "slugify"),
+        ];
+        assert_eq!(renamed("My File.jpg", &pairs), "1-my-file.jpg");
+    }
+
+    #[test]
+    fn test_pattern_name_carries_the_case_and_keeps_folders() {
+        let pairs = [("pattern", "{{name}}-v2.{{ext}}"), ("case", "upper")];
+        assert_eq!(renamed("sub/a.jpg", &pairs), "sub/A-v2.jpg");
+    }
+
+    #[test]
+    fn test_pattern_name_carries_a_find_replace_move() {
+        let pairs = [
+            ("pattern", "{{name}}.{{ext}}"),
+            ("find", "/"),
+            ("replace", "-"),
+        ];
+        assert_eq!(renamed("sub/a.jpg", &pairs), "sub-a.jpg");
+    }
+
+    // =========================================================================
+    // Params a pattern leaves no token for are refused (ISS-107)
+    // =========================================================================
+
+    fn raw(pairs: &[(&str, &str)]) -> Vec<String> {
+        RenameFiles::new().validate_raw(&string_params(pairs))
+    }
+
+    #[test]
+    fn test_a_name_param_with_no_name_token_is_refused() {
+        let problems = raw(&[("pattern", "{{item.new_name}}"), ("prefix", "x-")]);
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert!(problems[0].contains("'prefix'"), "{problems:?}");
+        assert!(problems[0].contains("{{name}}"), "{problems:?}");
+    }
+
+    #[test]
+    fn test_each_name_param_left_out_is_named_in_one_problem() {
+        let pairs = [
+            ("pattern", "final.{{ext}}"),
+            ("sanitize", "slugify"),
+            ("case", "upper"),
+        ];
+        let problems = raw(&pairs);
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert!(
+            problems[0].contains("'sanitize' and 'case'"),
+            "{problems:?}"
+        );
+    }
+
+    #[test]
+    fn test_an_extension_with_no_ext_token_is_refused() {
+        let problems = raw(&[("pattern", "photo"), ("extension", "png")]);
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert!(problems[0].contains("'extension'"), "{problems:?}");
+        assert!(problems[0].contains("{{ext}}"), "{problems:?}");
+    }
+
+    #[test]
+    fn test_a_number_param_with_no_token_is_refused() {
+        // The rename reads a number as text, so a numeric suffix would be
+        // dropped too.
+        let mut params = string_param("pattern", "final");
+        params.insert("suffix".to_string(), serde_json::json!(2));
+        let problems = RenameFiles::new().validate_raw(&params);
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert!(problems[0].contains("'suffix'"), "{problems:?}");
+    }
+
+    #[test]
+    fn test_params_the_pattern_uses_are_not_refused() {
+        for pairs in [
+            &[("pattern", "{{name}}.{{ext}}"), ("prefix", "x-")][..],
+            &[("pattern", "x"), ("prefix", "")][..],
+            &[("pattern", "{{fields.p}}"), ("prefix", "x-")][..],
+            &[("pattern", "{{counter}}.{{ext}}"), ("counterStart", "5")][..],
+            &[("prefix", "x-"), ("extension", "png")][..],
+        ] {
+            assert!(raw(pairs).is_empty(), "{pairs:?}: {:?}", raw(pairs));
+        }
     }
 
     #[test]
