@@ -1,4 +1,9 @@
 // Stem transformations — sanitize, find/replace, case, prefix, suffix.
+//
+// A stem can carry a relative folder path (`sub/a` from `file-collect` with
+// `flatten: false`). `find`/`replace` sees the whole path, so it can move a
+// file between folders; the rest change only the name after the last `/`
+// (ISS-34). `pattern` (naming.rs) also sees the whole path.
 
 use regex::Regex;
 
@@ -9,22 +14,36 @@ pub(super) fn apply_all_transformations(
     original_stem: &str,
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> String {
-    let mut stem = apply_sanitize(original_stem.to_string(), params);
-
+    let mut stem = on_name(original_stem, |name| {
+        apply_sanitize(name.to_string(), params)
+    });
     if let Some(find_str) = get_string_param(params, "find") {
         let replace_str = get_string_param(params, "replace").unwrap_or_default();
         stem = apply_find_replace(&stem, &find_str, &replace_str);
     }
+    on_name(&stem, |name| apply_name_edits(name, params))
+}
+
+/// `edit` applied to the part of `stem` after its last `/`, the folders before
+/// it kept as they are.
+fn on_name(stem: &str, edit: impl FnOnce(&str) -> String) -> String {
+    let at = stem.rfind('/').map_or(0, |i| i + 1);
+    format!("{}{}", &stem[..at], edit(&stem[at..]))
+}
+
+/// Case, then prefix, then suffix, on a name with no folders.
+fn apply_name_edits(name: &str, params: &serde_json::Map<String, serde_json::Value>) -> String {
+    let mut name = name.to_string();
     if let Some(case_str) = get_string_param(params, "case") {
-        stem = apply_case_transform(&stem, &case_str);
+        name = apply_case_transform(&name, &case_str);
     }
     if let Some(prefix) = get_string_param(params, "prefix") {
-        stem = format!("{prefix}{stem}");
+        name = format!("{prefix}{name}");
     }
     if let Some(suffix) = get_string_param(params, "suffix") {
-        stem = format!("{stem}{suffix}");
+        name = format!("{name}{suffix}");
     }
-    stem
+    name
 }
 
 /// Sanitize runs first — clean the raw filename before other transforms.
@@ -72,6 +91,79 @@ fn apply_case_transform(stem: &str, case: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn params(pairs: &[(&str, serde_json::Value)]) -> serde_json::Map<String, serde_json::Value> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.clone()))
+            .collect()
+    }
+
+    fn text(value: &str) -> serde_json::Value {
+        serde_json::Value::String(value.to_string())
+    }
+
+    // =========================================================================
+    // Which part of the path each param changes (ISS-34)
+    // =========================================================================
+
+    #[test]
+    fn prefix_and_case_change_the_name_not_its_folders() {
+        let p = params(&[("prefix", text("x-")), ("case", text("upper"))]);
+        assert_eq!(apply_all_transformations("sub/a", &p), "sub/x-A");
+    }
+
+    #[test]
+    fn suffix_goes_on_the_name() {
+        let p = params(&[("suffix", text("-min"))]);
+        assert_eq!(apply_all_transformations("a/b/photo", &p), "a/b/photo-min");
+    }
+
+    #[test]
+    fn title_case_capitalizes_the_name_not_the_first_folder() {
+        let p = params(&[("case", text("title"))]);
+        assert_eq!(apply_all_transformations("sub/a", &p), "sub/A");
+    }
+
+    #[test]
+    fn sanitize_keeps_the_folders_byte_for_byte() {
+        let p = params(&[("sanitize", text("slugify"))]);
+        let out = apply_all_transformations("My Dir/v1.2/My File", &p);
+        assert_eq!(out, "My Dir/v1.2/my-file");
+    }
+
+    #[test]
+    fn max_length_cuts_the_name_not_the_path() {
+        let p = params(&[("sanitize", text("slugify")), ("maxLength", 3.into())]);
+        assert_eq!(apply_all_transformations("photos/abcdef", &p), "photos/abc");
+    }
+
+    #[test]
+    fn find_replace_still_sees_the_whole_path() {
+        let p = params(&[("find", text("/")), ("replace", text("-"))]);
+        assert_eq!(apply_all_transformations("sub/a", &p), "sub-a");
+    }
+
+    #[test]
+    fn case_and_prefix_apply_to_the_name_find_replace_leaves() {
+        // `find` moves the file into `2024/`; the prefix goes on `photo`.
+        let p = params(&[
+            ("find", text("_")),
+            ("replace", text("/")),
+            ("prefix", text("x-")),
+        ]);
+        assert_eq!(apply_all_transformations("2024_photo", &p), "2024/x-photo");
+    }
+
+    #[test]
+    fn a_name_with_no_folder_changes_as_before() {
+        let p = params(&[
+            ("sanitize", text("slugify")),
+            ("prefix", text("x-")),
+            ("case", text("upper")),
+        ]);
+        assert_eq!(apply_all_transformations("My File", &p), "x-MY-FILE");
+    }
 
     // =========================================================================
     // Helper Function Tests

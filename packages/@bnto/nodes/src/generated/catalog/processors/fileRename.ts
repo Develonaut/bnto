@@ -18,21 +18,23 @@ export const fileRenameProcessor: ProcessorDef = {
     {
       name: "sanitize",
       label: "Sanitize",
-      description: "Clean the filename before other transforms",
+      description:
+        'Clean the file name (not its folders) before other transforms. To fold folders into the name, replace "/" with "-" using Find in an earlier rename step',
       type: "enum" as const,
       options: ["slugify", "strip", "normalize"] as const,
     },
     {
       name: "separator",
       label: "Separator",
-      description: "Character to replace spaces and special characters (used with Sanitize)",
+      description:
+        "Character to replace spaces and special characters in the file name (used with Sanitize)",
       type: "string" as const,
       default: "-",
     },
     {
       name: "maxLength",
       label: "Max Length",
-      description: "Maximum filename length after sanitize (0 = no limit)",
+      description: "Maximum file name length after sanitize, folders not counted (0 = no limit)",
       type: "number" as const,
       default: 0,
       constraints: { min: 0, required: false },
@@ -40,7 +42,8 @@ export const fileRenameProcessor: ProcessorDef = {
     {
       name: "find",
       label: "Find",
-      description: "Text or regex pattern to search for in the filename",
+      description:
+        "Text or regex pattern to search for in the whole relative path, folders included",
       type: "string" as const,
     },
     {
@@ -52,27 +55,27 @@ export const fileRenameProcessor: ProcessorDef = {
     {
       name: "case",
       label: "Case",
-      description: "Transform the filename to a specific case",
+      description: "Transform the file name (not its folders) to a specific case",
       type: "enum" as const,
       options: ["lower", "upper", "title"] as const,
     },
     {
       name: "prefix",
       label: "Prefix",
-      description: "Text to prepend to the filename",
+      description: "Text to prepend to the file name (not its folders)",
       type: "string" as const,
     },
     {
       name: "suffix",
       label: "Suffix",
-      description: "Text to append before the file extension",
+      description: "Text to append to the file name, before its extension",
       type: "string" as const,
     },
     {
       name: "pattern",
       label: "Pattern",
       description:
-        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})",
+        "Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). Replaces the other name transforms; without {{name}} it drops the folders",
       type: "string" as const,
       placeholder: "{{name}}-{{counter}}.{{ext}}",
     },

@@ -14,11 +14,11 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815). In progress: batch 4 (ISS-17 #816). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815). In progress: batch 4 (ISS-17 #816, ISS-34 #817). Batches keep their numbers.
 
 | #   | Batch               | Issues                                                                                     | Why                                                                                                                                                                                                                                                                                                           |
 | --- | ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 4   | Engine file nodes   | ISS-17, ISS-33, ISS-34, ISS-100                                                            | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100)                            |
+| 4   | Engine file nodes   | ISS-33, ISS-100, ISS-107                                                                   | One shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100); `pattern` silently dropping the other rename params (ISS-107, a behavior change: `/workflow-expert` first)                                                                       |
 | 5   | Engine templating   | ISS-35, ISS-58                                                                             | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                              |
 | 6   | Small code cleanups | ISS-103, ISS-104, ISS-105, ISS-106, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a removed node's generated doc left behind (ISS-105); `platforms` leaving out `cli` (ISS-106); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag |
 | 7   | Tooling and tests   | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18                                      | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                         |
@@ -43,7 +43,6 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-29  | Errors on bnto.io go unseen: exception capture is off                                                                   | core        | Open                                             |
 | ISS-31  | Another app's events land in bnto.io's PostHog project                                                                  | analytics   | Open                                             |
 | ISS-33  | Output names and extension reads split on a dot in a folder name                                                        | engine      | Open                                             |
-| ISS-34  | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                                  | engine      | Open                                             |
 | ISS-35  | Inside a loop, a data value is filled in as a template                                                                  | engine      | Open                                             |
 | ISS-37  | The homepage loads ~500 KB of JS that competes with its CSS                                                             | web perf    | Open                                             |
 | ISS-44  | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision)                   | web         | Open                                             |
@@ -69,6 +68,7 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-104 | The TUI's recipe form shows a file param (Watermark Images' overlay) as a text box, not a file picker                   | tui         | Open                                             |
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser" | engine      | Open                                             |
+| ISS-107 | `file-rename` ignores `sanitize`, `find`, `case`, `prefix` and `suffix` when `pattern` is set, without saying so        | engine      | Open                                             |
 
 ---
 
@@ -133,15 +133,6 @@ The same split, found by reading (not each reproduced):
 **Fix:** move the split to `bnto-core`, so every crate shares one, and call it everywhere above. The CLI's `bnto/src/output_names.rs:64-71` already splits correctly.
 
 - **Regression test:** one table-driven test of the shared split (`v1.2/README`, `dir/.env`, `a/b.tar.gz`), plus a test per node family that a suffixed output of `v1.2/data` stays in `v1.2/`. A grep check in `task check` that no crate but `bnto-core` calls `rfind('.')` on a name would stop new copies.
-
-### ISS-34: `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too
-
-**Found:** October 24, 2026 (fixing ISS-23).
-
-The params say they change "the filename", but they act on the whole relative stem, folders included. With `file-collect`'s `flatten: false`, `prefix: x-` plus `case: upper` turns `sub/a.jpg` into `x-SUB/A.jpg` (reproduced in a sandbox with `main` at #745): the file moves into a new folder. `find`/`replace` sees the whole path on purpose (its tests restructure folders); the others shouldn't.
-
-- **Fix:** apply `prefix`, `suffix`, `case`, `sanitize` and `maxLength` to the last `/` segment only; keep `find`/`replace` and `pattern` on the full path. Say so in each param's description. Check it with `/workflow-expert` against `node-vocabulary.md` first, since it changes a shipped node's behavior.
-- **Regression test:** `prefix`, `case` and `sanitize` on `sub/a.jpg` leave `sub/`; `find`/`replace` still restructures folders.
 
 ### ISS-35: Inside a loop, a data value is filled in as a template
 
@@ -386,3 +377,12 @@ Every processor runs in the CLI, which registers them all (`compress-images` run
 
 - **Fix:** decide what `platforms` means (everywhere a node runs, or only whether it runs in the browser, which is what `metadata.rs`'s browser filter reads), then make every processor's list say it, and the docs with it.
 - **Regression test:** a catalog test that every processor lists `cli` (or whatever the agreed values are), and no value outside the agreed set.
+
+### ISS-107: `file-rename` ignores its other name params when `pattern` is set
+
+**Found:** October 29, 2026 (`/workflow-expert` review of the ISS-34 fix).
+
+`build_final_filename` (`bnto-file/src/rename/naming.rs`) fills `{{name}}` from the original stem, not the transformed one, so with `pattern` set, `sanitize`, `find`/`replace`, `case`, `prefix` and `suffix` run and their result is thrown away. `pattern: "{{name}}.{{ext}}"` plus `prefix: "x-"` on `a.jpg` gives `a.jpg`. Nothing refuses the combination or warns; since ISS-34, `pattern`'s description says it replaces the other name transforms, but a recipe that sets both still runs as if they weren't there.
+
+- **Fix:** either fill `{{name}}` from the transformed stem (so the transforms feed the template), or refuse `pattern` together with any of them in `validate` (a `bnto check` finding). Either changes behavior, so `/workflow-expert` reviews it first.
+- **Regression test:** `pattern` plus `prefix` either applies the prefix inside `{{name}}`, or is refused naming both params.

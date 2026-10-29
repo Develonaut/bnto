@@ -12,15 +12,19 @@ pub(super) fn build_rename_parameters() -> Vec<ParameterDef> {
         rename_string_param(
             "find",
             "Find",
-            "Text or regex pattern to search for in the filename",
+            "Text or regex pattern to search for in the whole relative path, folders included",
         ),
         rename_string_param("replace", "Replace", "Replacement text (used with Find)"),
         rename_case_param(),
-        rename_string_param("prefix", "Prefix", "Text to prepend to the filename"),
+        rename_string_param(
+            "prefix",
+            "Prefix",
+            "Text to prepend to the file name (not its folders)",
+        ),
         rename_string_param(
             "suffix",
             "Suffix",
-            "Text to append before the file extension",
+            "Text to append to the file name, before its extension",
         ),
         rename_pattern_param(),
         rename_counter_start_param(),
@@ -83,7 +87,7 @@ fn rename_case_param() -> ParameterDef {
     rename_enum_param(
         "case",
         "Case",
-        "Transform the filename to a specific case",
+        "Transform the file name (not its folders) to a specific case",
         &[
             ("lower", "lowercase"),
             ("upper", "UPPERCASE"),
@@ -98,7 +102,7 @@ fn rename_pattern_param() -> ParameterDef {
         ..rename_string_param(
             "pattern",
             "Pattern",
-            "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})",
+            "Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). Replaces the other name transforms; without {{name}} it drops the folders",
         )
     }
 }
@@ -138,7 +142,7 @@ fn rename_sanitize_param() -> ParameterDef {
     rename_enum_param(
         "sanitize",
         "Sanitize",
-        "Clean the filename before other transforms",
+        "Clean the file name (not its folders) before other transforms. To fold folders into the name, replace \"/\" with \"-\" using Find in an earlier rename step",
         &[
             ("slugify", "Slugify (web-safe)"),
             ("strip", "Strip non-ASCII"),
@@ -153,7 +157,7 @@ fn rename_separator_param() -> ParameterDef {
         ..rename_string_param(
             "separator",
             "Separator",
-            "Character to replace spaces and special characters (used with Sanitize)",
+            "Character to replace spaces and special characters in the file name (used with Sanitize)",
         )
     }
 }
@@ -162,7 +166,7 @@ fn rename_max_length_param() -> ParameterDef {
     rename_number_param(
         "maxLength",
         "Max Length",
-        "Maximum filename length after sanitize (0 = no limit)",
+        "Maximum file name length after sanitize, folders not counted (0 = no limit)",
         0,
         None,
     )
