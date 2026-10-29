@@ -48,8 +48,9 @@ export async function navigateToRecipe(page: Page, slug: string, _h1?: string) {
 }
 
 /**
- * Upload files via the file input, wait for the run button to be visible.
- * Returns the run button locator.
+ * Upload files via the file input and wait until the run button no longer
+ * asks for files. It can stay disabled after that, naming a required param
+ * with no value (Watermark Images' overlay). Returns the run button locator.
  */
 export async function uploadFiles(page: Page, filePaths: string[]) {
   const fileInput = page.getByTestId("file-input");
@@ -57,7 +58,7 @@ export async function uploadFiles(page: Page, filePaths: string[]) {
 
   const runButton = page.getByTestId("run-button");
   await expect(runButton).toBeVisible();
-  await expect(runButton).toBeEnabled();
+  await expect(runButton).not.toHaveAttribute("aria-label", "Select files to run");
 
   return runButton;
 }

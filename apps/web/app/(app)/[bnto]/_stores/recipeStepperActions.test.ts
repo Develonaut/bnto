@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type * as BntoCore from "@bnto/core";
+import { getRecipeBySlug } from "@bnto/registry";
 import { createRecipeStepperActions } from "./recipeStepperActions";
 import { createRecipeStepperStore } from "./recipeStepperStore";
 
 const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
   downloadAllResults: vi.fn(),
+  definition: { nodes: [] } as unknown,
 }));
 
 // Keep the real store factory; stub the telemetry, download and registry
@@ -15,7 +17,7 @@ vi.mock("@bnto/core", async (importOriginal) => ({
   core: {
     telemetry: { capture: mocks.capture },
     executions: { downloadAllResults: mocks.downloadAllResults, downloadResult: vi.fn() },
-    registry: { getRecipeBySlug: () => ({ definition: { nodes: [] } }) },
+    registry: { getRecipeBySlug: () => ({ definition: mocks.definition }) },
   },
   definitionToPipeline: () => ({}),
 }));
@@ -37,7 +39,7 @@ function setup(
     reset: vi.fn(),
   } as unknown as BntoCore.ExecutionInstance;
   const refs = { getBrowserResults: () => browserResults };
-  return createRecipeStepperActions(store, instance, refs, SLUG);
+  return { actions: createRecipeStepperActions(store, instance, refs, SLUG), instance };
 }
 
 function downloadedEvents() {
@@ -45,11 +47,14 @@ function downloadedEvents() {
 }
 
 describe("recipeStepperActions: result_downloaded", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.definition = { nodes: [] };
+  });
 
   it("records the automatic download after a successful run", async () => {
     const results = [result("a.jpg"), result("b.jpg")];
-    setup(results).run();
+    setup(results).actions.run();
 
     await vi.waitFor(() => expect(mocks.downloadAllResults).toHaveBeenCalledWith(results, SLUG));
     expect(downloadedEvents()).toEqual([
@@ -59,11 +64,25 @@ describe("recipeStepperActions: result_downloaded", () => {
 
   it("records the downloadAll action as manual", () => {
     const results = [result("a.jpg")];
-    setup([], results).downloadAll();
+    setup([], results).actions.downloadAll();
 
     expect(mocks.downloadAllResults).toHaveBeenCalledWith(results, SLUG);
     expect(downloadedEvents()).toEqual([
       ["result_downloaded", { slug: SLUG, fileCount: 1, trigger: "manual" }],
     ]);
+  });
+});
+
+describe("recipeStepperActions: run with a required param empty", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("starts no run and records nothing (ISS-73)", async () => {
+    // Watermark Images ships with its overlay blank.
+    mocks.definition = getRecipeBySlug("watermark-images")!.definition;
+    const { actions, instance } = setup([]);
+    await actions.run();
+
+    expect(instance.run).not.toHaveBeenCalled();
+    expect(mocks.capture.mock.calls.map(([event]) => event)).not.toContain("recipe_run_started");
   });
 });

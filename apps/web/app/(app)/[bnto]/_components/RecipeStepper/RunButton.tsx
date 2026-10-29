@@ -2,7 +2,12 @@
 
 import type { ReactNode } from "react";
 import { cn, Button, LoaderIcon, PlayIcon, RotateCcwIcon } from "@bnto/ui";
-import { useRecipeStepperStore, useRecipeStepperActions } from "../../_stores/recipeStepperContext";
+import {
+  useRecipeStepperStore,
+  useRecipeStepperActions,
+  useRecipeStepperDefn,
+} from "../../_stores/recipeStepperContext";
+import { missingRequiredParams } from "../../_utils/missingRequiredParams";
 
 export type RunStep = "idle" | "running" | "completed" | "failed";
 
@@ -14,20 +19,25 @@ interface RunButtonProps {
 }
 
 // eslint-disable-next-line no-restricted-syntax -- co-located prop resolver for RunRecipeButton
-function resolveRunButtonProps(step: RunStep, hasFiles: boolean): RunButtonProps {
+function resolveRunButtonProps(
+  step: RunStep,
+  hasFiles: boolean,
+  missing: string | null,
+): RunButtonProps {
+  const blocked = missing ? `Set ${missing} to run` : null;
   switch (step) {
     case "completed":
       return {
         variant: "primary",
-        disabled: false,
-        label: "Rerun",
+        disabled: blocked !== null,
+        label: blocked ?? "Rerun",
         icon: <RotateCcwIcon className="size-4" />,
       };
     case "failed":
       return {
         variant: "outline",
-        disabled: false,
-        label: "Try again",
+        disabled: blocked !== null,
+        label: blocked ?? "Try again",
         icon: <RotateCcwIcon className="size-4" />,
       };
     case "running":
@@ -40,19 +50,27 @@ function resolveRunButtonProps(step: RunStep, hasFiles: boolean): RunButtonProps
     default:
       return {
         variant: "primary",
-        disabled: !hasFiles,
-        label: hasFiles ? "Run" : "Select files to run",
+        disabled: !hasFiles || blocked !== null,
+        label: hasFiles ? (blocked ?? "Run") : "Select files to run",
         icon: <PlayIcon className="size-4" />,
       };
   }
 }
 
-/** Primary run CTA — reads step and file count from the stepper store. */
+/**
+ * Primary run CTA — reads step, file count and the first required param
+ * with no value from the stepper store. Disabled, naming that param, until
+ * it has one (ISS-73).
+ */
 export function RunRecipeButton({ className }: { className?: string }) {
   const step = useRecipeStepperStore((s) => s.resolvedStep);
   const hasFiles = useRecipeStepperStore((s) => s.files.length > 0);
+  const { definition } = useRecipeStepperDefn();
+  const missing = useRecipeStepperStore((s) =>
+    definition ? (missingRequiredParams(definition, s.config)[0]?.label ?? null) : null,
+  );
   const actions = useRecipeStepperActions();
-  const props = resolveRunButtonProps(step, hasFiles);
+  const props = resolveRunButtonProps(step, hasFiles, missing);
 
   return (
     <Button

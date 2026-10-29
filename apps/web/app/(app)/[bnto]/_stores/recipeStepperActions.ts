@@ -10,6 +10,7 @@ import { core, definitionToPipeline, bucketFileSize, categorizeError } from "@bn
 import type { BrowserFileResult, ExecutionInstance } from "@bnto/core";
 import type { StoreApi } from "zustand";
 import type { RecipeStepperState } from "./recipeStepperStore";
+import { missingRequiredParams } from "../_utils/missingRequiredParams";
 
 // ---------------------------------------------------------------------------
 // Public interface
@@ -127,20 +128,14 @@ function backAction(ctx: ActionContext) {
 async function runAction(ctx: ActionContext) {
   const { files, config } = ctx.store.getState();
   if (files.length === 0) return;
-
-  const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
-  const props = {
-    slug: ctx.slug,
-    fileCount: files.length,
-    totalBytes,
-    sizeBucket: bucketFileSize(totalBytes),
-    fileTypes: countFileTypes(files),
-  };
-  const startTime = Date.now();
-  core.telemetry.capture("recipe_run_started", props);
-
   const recipe = core.registry.getRecipeBySlug(ctx.slug);
   if (!recipe) throw new Error(`No implementation for slug "${ctx.slug}"`);
+  // Run stays disabled until every required param has a value (ISS-73).
+  if (missingRequiredParams(recipe.definition, config).length > 0) return;
+
+  const props = runProps(ctx.slug, files);
+  const startTime = Date.now();
+  core.telemetry.capture("recipe_run_started", props);
 
   const pipeline = definitionToPipeline(recipe.definition, config);
   const result = await ctx.instance.run(pipeline, files);
@@ -157,6 +152,18 @@ async function runAction(ctx: ActionContext) {
 // ---------------------------------------------------------------------------
 // Telemetry helpers
 // ---------------------------------------------------------------------------
+
+/** What every run event says about the run's files. */
+function runProps(slug: string, files: File[]) {
+  const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+  return {
+    slug,
+    fileCount: files.length,
+    totalBytes,
+    sizeBucket: bucketFileSize(totalBytes),
+    fileTypes: countFileTypes(files),
+  };
+}
 
 function captureCompleted(
   props: Record<string, unknown>,
