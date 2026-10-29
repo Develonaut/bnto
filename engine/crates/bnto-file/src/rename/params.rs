@@ -113,7 +113,7 @@ fn rename_pattern_param() -> ParameterDef {
         ..rename_string_param(
             "pattern",
             "Pattern",
-            "Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). Replaces the other name transforms; without {{name}} it drops the folders",
+            "Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). {{name}} is the path after Sanitize, Find/Replace, Case, Prefix and Suffix, and {{ext}} is the Extension if set. Without {{name}} it drops the folders, and those params can't be set",
         )
     }
 }
@@ -122,7 +122,7 @@ fn rename_counter_start_param() -> ParameterDef {
     rename_number_param(
         "counterStart",
         "Counter Start",
-        "Starting number for the {{counter}} variable",
+        "Starting number for {{counter}} in Pattern",
         1,
         None,
     )
@@ -132,7 +132,7 @@ fn rename_counter_pad_param() -> ParameterDef {
     rename_number_param(
         "counterPad",
         "Counter Padding",
-        "Zero-pad width for the counter (e.g., 3 → 001, 002)",
+        "Zero-pad width for {{counter}} in Pattern (e.g., 3 → 001, 002)",
         0,
         Some(10.0),
     )
@@ -144,7 +144,7 @@ fn rename_extension_param() -> ParameterDef {
         ..rename_string_param(
             "extension",
             "Extension",
-            "Replace the file extension (without dot)",
+            "Replace the file extension (without dot). With Pattern, it fills {{ext}}",
         )
     }
 }
