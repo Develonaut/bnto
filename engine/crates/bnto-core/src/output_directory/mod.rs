@@ -1,7 +1,8 @@
 //! The output node's `directory`, filled in before a run starts. `bnto run`
 //! and the TUI make the folder before any step runs, so each placeholder in
 //! it needs a value then; one left as text would name a folder `{{env.KEY}}`
-//! (ISS-22). `bnto check` flags the ones no run can fill.
+//! (ISS-22). An unclosed `{{` is refused too, since a fill keeps it as text
+//! (ISS-79). `bnto check` flags the ones no run can fill.
 
 mod placeholder;
 
@@ -9,6 +10,7 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 
 use crate::check::CheckFinding;
+use crate::check::placeholder::unclosed_problems;
 use crate::context::ProcessContext;
 use crate::executor::field_scope::along;
 use crate::executor::interpolate::interpolate;
@@ -17,8 +19,9 @@ use crate::pipeline::{PipelineDefinition, PipelineFile, PipelineNode, output_nod
 use placeholder::{Recipe, Sources, never_filled};
 
 /// The recipe's output folder with every placeholder filled, or `None` when
-/// its output node names none. An `Err` names each placeholder nothing
-/// fills, one line each, so the run stops before any folder is made.
+/// its output node names none. An `Err` names each unclosed `{{` and each
+/// placeholder nothing fills, one line each, so the run stops before any
+/// folder is made.
 ///
 /// Fills the output node's fields in scope, `{{env.*}}` from the recipe's
 /// declared `secrets`, the `{{ctx.*}}` known before a run, and the input
@@ -43,15 +46,19 @@ pub fn fill_output_directory(
     })))
 }
 
-/// A finding for each placeholder in the output folder that no run can fill.
+/// A finding for each unclosed `{{` in the output folder, then each
+/// placeholder in it that no run can fill.
 pub(crate) fn output_directory_findings(def: &PipelineDefinition) -> Vec<CheckFinding> {
     let Some(out) = OutputDir::of(def) else {
         return Vec::new();
     };
     let recipe = Recipe::of(def);
-    placeholders(&out.dir)
-        .iter()
-        .filter_map(|inner| never_filled(inner, &recipe))
+    let unfilled = placeholders(&out.dir)
+        .into_iter()
+        .filter_map(|inner| never_filled(&inner, &recipe));
+    unclosed_problems(&out.dir)
+        .into_iter()
+        .chain(unfilled)
         .map(|why| finding(out.node, why))
         .collect()
 }
@@ -73,14 +80,15 @@ impl<'a> OutputDir<'a> {
     }
 }
 
-/// Each placeholder's value, or why each one that has none has none.
+/// Each placeholder's value, or each unclosed `{{` and why each placeholder
+/// that has no value has none.
 fn fill_each(
     out: &OutputDir,
     recipe: &Recipe,
     sources: &Sources,
 ) -> Result<BTreeMap<String, String>, Vec<String>> {
     let mut values = BTreeMap::new();
-    let mut problems = Vec::new();
+    let mut problems = unclosed_problems(&out.dir);
     for inner in placeholders(&out.dir) {
         match never_filled(&inner, recipe).map_or_else(|| sources.value(&inner), Err) {
             Ok(value) => {

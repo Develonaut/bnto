@@ -23,29 +23,58 @@ pub(super) fn value_problems(value: &Value) -> Vec<String> {
 
 /// Scan `s` left to right, one placeholder at a time.
 fn string_problems(s: &str) -> Vec<String> {
-    let mut problems = Vec::new();
-    let mut rest = s;
-    while let Some(start) = rest.find(OPEN) {
-        let (problem, remaining) = scan_placeholder(&rest[start + OPEN.len()..]);
-        problems.extend(problem);
-        rest = remaining;
-    }
-    problems
+    scan(s)
+        .into_iter()
+        .filter_map(|found| match found {
+            Placeholder::Closed(inner) => namespace_problem(inner),
+            Placeholder::Unclosed(text) => Some(unclosed(text)),
+        })
+        .collect()
 }
 
-/// Read one placeholder from just after its `{{`: its problem, if any, and
-/// the text left to scan.
-fn scan_placeholder(after: &str) -> (Option<String>, &str) {
+/// A problem for each `{{` in `s` that never closes. A fill keeps such a
+/// `{{` as text (`interpolate`), so the output folder refuses it (ISS-79).
+pub(crate) fn unclosed_problems(s: &str) -> Vec<String> {
+    scan(s)
+        .into_iter()
+        .filter_map(|found| match found {
+            Placeholder::Unclosed(text) => Some(unclosed(text)),
+            Placeholder::Closed(_) => None,
+        })
+        .collect()
+}
+
+/// One `{{` in a string: what's inside its braces, or the text after an
+/// unclosed one.
+enum Placeholder<'a> {
+    Closed(&'a str),
+    Unclosed(&'a str),
+}
+
+/// Every placeholder in `s`, in order.
+fn scan(s: &str) -> Vec<Placeholder<'_>> {
+    let mut found = Vec::new();
+    let mut rest = s;
+    while let Some(start) = rest.find(OPEN) {
+        let (placeholder, remaining) = scan_placeholder(&rest[start + OPEN.len()..]);
+        found.push(placeholder);
+        rest = remaining;
+    }
+    found
+}
+
+/// Read one placeholder from just after its `{{`, and the text left to scan.
+fn scan_placeholder(after: &str) -> (Placeholder<'_>, &str) {
     let next_open = after.find(OPEN);
     match after.find(CLOSE) {
         Some(end) if next_open.is_none_or(|open| open > end) => (
-            namespace_problem(&after[..end]),
+            Placeholder::Closed(&after[..end]),
             &after[end + CLOSE.len()..],
         ),
         // No close, or another placeholder opens first: this one never closes.
         _ => {
             let stop = next_open.unwrap_or(after.len());
-            (Some(unclosed(&after[..stop])), &after[stop..])
+            (Placeholder::Unclosed(&after[..stop]), &after[stop..])
         }
     }
 }

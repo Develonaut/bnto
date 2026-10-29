@@ -14,11 +14,11 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). In progress: batch 3 (ISS-75 #811, ISS-74 #812, ISS-96 #813). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). In progress: batch 3 (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814). Batches keep their numbers.
 
 | #   | Batch                      | Issues                                                                   | Why                                                                                                                                                                                                                                                                                |
 | --- | -------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3   | Checks before a run starts | ISS-79, ISS-73                                                           | An unclosed `{{` in a folder name (ISS-79); the web runner starting a run with a required param empty (ISS-73)                                                                                                                                                                     |
+| 3   | Checks before a run starts | ISS-73                                                                   | The web runner starting a run with a required param empty (ISS-73)                                                                                                                                                                                                                 |
 | 4   | Engine file nodes          | ISS-17, ISS-33, ISS-34, ISS-100                                          | ISS-34 changes a shipped node's behavior, so `/workflow-expert` reviews it first, and ISS-17 makes that skill's node inventory current before it does; one shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100) |
 | 5   | Engine templating          | ISS-35, ISS-58                                                           | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                   |
 | 6   | Small code cleanups        | ISS-103, ISS-104, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag                                                                     |
@@ -55,7 +55,6 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-67  | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 | ISS-70  | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
 | ISS-73  | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
-| ISS-79  | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
 | ISS-84  | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
 | ISS-85  | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
 | ISS-86  | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
@@ -245,15 +244,6 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 - **Why:** the runner checks only that files exist. Which params are required is already in TypeScript: the generated schemas (`overlay: z.string()`), and the form marks the field required (`packages/@bnto/form/src/SchemaField.tsx:34`). What's missing is a check for a blank value.
 - **Fix:** a pure function, from the recipe's processor schemas and the stepper's config, that lists required params with no value (absent, null or blank text, the engine's rule in `bnto_core::required_params`). Run stays disabled, and labelled with the first one, until it's empty.
 - **Regression test:** a unit test for the function, and the watermark E2E: Run is disabled until an overlay is uploaded, and no `recipe_run_failed` is sent.
-
-### ISS-79: An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it
-
-**Found:** October 25, 2026 (cold review of the ISS-22 fix).
-
-The ISS-22 fix refuses every `{{…}}` in the output node's `directory` that no run fills, but only closed ones. `fill_output_directory` reads placeholders with the executor's `interpolate`, which keeps an unclosed `{{` as text (`bnto-core/src/executor/interpolate.rs:15-17`), so `directory: "out-{{ctx.date"` names a folder `out-{{ctx.date`. `bnto check` passes it (`Check: PASS (1 recipe)`): its malformed-placeholder finding never sees I/O nodes, since `check_node` returns early for them (`bnto-core/src/check/mod.rs:137-141`).
-
-- **Fix:** refuse an unclosed `{{` in the folder in `fill_output_directory`, and have `bnto check` run its placeholder-form check on the output node's `directory`.
-- **Regression test:** `out-{{ctx.date` is refused by `bnto run` with no folder made, and `bnto check` flags it.
 
 ### ISS-84: E2E specs pass `navigateToRecipe` a page heading it ignores
 

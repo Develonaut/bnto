@@ -215,6 +215,23 @@ fn the_input_file_is_refused_when_there_is_none() {
     );
 }
 
+#[test]
+fn an_unclosed_placeholder_is_refused() {
+    let err = fill(&writing_to("out-{{ctx.date"), &Ctx::with(&[])).unwrap_err();
+    assert_eq!(
+        err,
+        "node \"out\" (output), param \"directory\": unclosed placeholder \"{{ctx.date\""
+    );
+}
+
+#[test]
+fn an_unclosed_placeholder_before_a_closed_one_gets_its_own_line() {
+    // A fill keeps the first `{{` as text and fills `{{ctx.date}}` after it.
+    let err = fill(&writing_to("a-{{b-{{ctx.date}}"), &Ctx::with(&[])).unwrap_err();
+    assert_eq!(err.lines().count(), 1, "{err}");
+    assert!(err.ends_with("unclosed placeholder \"{{b-\""), "{err}");
+}
+
 // --- bnto check ---
 
 #[test]
@@ -256,6 +273,14 @@ fn check_flags_the_input_file_when_the_recipe_takes_none() {
     ] }))
     .unwrap();
     assert_eq!(messages(&def).len(), 1, "{:?}", messages(&def));
+}
+
+#[test]
+fn check_flags_an_unclosed_placeholder() {
+    assert_eq!(
+        messages(&writing_to("out-{{ctx.date")),
+        ["node \"out\" (output), param \"directory\": unclosed placeholder \"{{ctx.date\""]
+    );
 }
 
 #[test]
