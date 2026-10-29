@@ -37,9 +37,7 @@ impl PadImages {
 
     /// "logo.png" -> "logo-padded.png"
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
-        let stem = input_filename
-            .rsplit_once('.')
-            .map_or(input_filename, |(stem, _)| stem);
+        let stem = bnto_core::file_stem(input_filename);
         format!("{stem}-padded.{}", format.extension())
     }
 }

@@ -33,12 +33,8 @@ impl ResizeImages {
 
     /// "photo.jpg" -> "photo-resized.jpg"
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
-        if let Some(dot_pos) = input_filename.rfind('.') {
-            let stem = &input_filename[..dot_pos];
-            format!("{stem}-resized.{}", format.extension())
-        } else {
-            format!("{input_filename}-resized.{}", format.extension())
-        }
+        let stem = bnto_core::file_stem(input_filename);
+        format!("{stem}-resized.{}", format.extension())
     }
 }
 
@@ -1023,5 +1019,12 @@ mod tests {
         let exif_jpeg = inject_exif_orientation(&create_test_jpeg(60, 40), 6);
         let params = with_enlarge(width_params(100), false);
         assert_eq!(resized_dimensions(&exif_jpeg, params), (40, 60));
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let name = ResizeImages::output_filename("v1.2/data", ImageFormat::Png);
+        assert_eq!(name, "v1.2/data-resized.png");
     }
 }

@@ -305,3 +305,10 @@ fn test_schema_defaults_match_the_reader() {
     assert_eq!(default("separator"), Some(json!("\n")));
     assert_eq!(default("escape"), Some(json!("none")));
 }
+
+#[test]
+fn test_mime_for_a_dotfile_is_plain_text() {
+    // ISS-33: `notes/.md` has no extension.
+    assert_eq!(mime_for("notes/.md"), "text/plain");
+    assert_eq!(mime_for("v1.2/notes.md"), "text/markdown");
+}

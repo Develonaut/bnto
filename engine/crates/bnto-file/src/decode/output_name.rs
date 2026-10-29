@@ -1,6 +1,6 @@
 // The decoded file's name, from the `filename` template and the input's name.
 
-use crate::split_extension::split_extension;
+use bnto_core::split_extension;
 
 /// `filename` with `{{name}}` and `{{ext}}` filled from `input`, or `input`
 /// itself when there's no template.

@@ -295,12 +295,7 @@ fn build_convert_metadata(
 
 /// Replace .csv extension with .json: "data.csv" -> "data.json"
 fn generate_output_filename(original: &str) -> String {
-    if let Some(dot_pos) = original.rfind('.') {
-        let stem = &original[..dot_pos];
-        format!("{stem}.json")
-    } else {
-        format!("{original}.json")
-    }
+    format!("{}.json", bnto_core::file_stem(original))
 }
 
 // =============================================================================
@@ -845,5 +840,11 @@ mod tests {
     fn test_resolve_delimiter_unknown_defaults_to_comma() {
         assert_eq!(resolve_delimiter("unknown"), b',');
         assert_eq!(resolve_delimiter(""), b',');
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        assert_eq!(generate_output_filename("v1.2/data"), "v1.2/data.json");
     }
 }

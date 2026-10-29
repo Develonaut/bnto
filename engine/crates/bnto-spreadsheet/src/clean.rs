@@ -334,12 +334,9 @@ fn build_clean_metadata(
 
 /// Add "-cleaned" before the file extension: "data.csv" -> "data-cleaned.csv"
 fn generate_output_filename(original: &str) -> String {
-    if let Some(dot_pos) = original.rfind('.') {
-        let stem = &original[..dot_pos];
-        let ext = &original[dot_pos..];
-        format!("{stem}-cleaned{ext}")
-    } else {
-        format!("{original}-cleaned")
+    match bnto_core::split_extension(original) {
+        (stem, "") => format!("{stem}-cleaned"),
+        (stem, ext) => format!("{stem}-cleaned.{ext}"),
     }
 }
 
@@ -908,5 +905,11 @@ mod tests {
         assert!(output.metadata.contains_key("cleanedRows"));
         assert!(output.metadata.contains_key("rowsRemoved"));
         assert!(output.metadata.contains_key("duplicatesRemoved"));
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        assert_eq!(generate_output_filename("v1.2/data"), "v1.2/data-cleaned");
     }
 }

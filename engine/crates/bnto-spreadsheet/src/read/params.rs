@@ -60,9 +60,7 @@ impl ReadConfig {
     /// The set format, or under `auto` JSON for a `.json` name or a JSON MIME
     /// type and CSV otherwise. Content isn't sniffed: a CSV may start with `[`.
     pub(super) fn format_for(&self, filename: &str, mime_type: Option<&str>) -> Format {
-        let json_name = filename
-            .rsplit_once('.')
-            .is_some_and(|(_, ext)| ext.eq_ignore_ascii_case("json"));
+        let json_name = bnto_core::file_extension(filename).eq_ignore_ascii_case("json");
         let json_mime = mime_type.is_some_and(|m| m.starts_with("application/json"));
         match self.format {
             Some(format) => format,

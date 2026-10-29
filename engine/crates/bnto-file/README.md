@@ -42,7 +42,6 @@ src/
 │   ├── encoding.rs         # Encoding enum, base64 decode, error reasons
 │   └── output_name.rs      # `filename` template ({{name}}, {{ext}})
 ├── glob.rs           # File-name glob, compiled once; shared by collect and filter
-├── split_extension.rs # Stem/extension split on the last `/` segment; shared by rename and decode
 ├── filter/           # FileFilter processor (file-filter)
 │   ├── mod.rs              # NodeProcessor impl (per-file), extension / pattern / size criteria
 │   ├── params.rs           # Parameter schema

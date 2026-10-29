@@ -15,7 +15,7 @@ use super::param_access::get_int_param;
 use super::params::build_rename_parameters;
 use super::result_metadata::build_rename_metadata;
 use super::transform::apply_all_transformations;
-use crate::split_extension::split_extension;
+use bnto_core::split_extension;
 
 /// The rename-files node processor. Stateless — config comes from `NodeInput.params`.
 /// File data passes through unchanged; only the filename is modified.

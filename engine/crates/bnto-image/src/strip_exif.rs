@@ -44,12 +44,8 @@ impl StripExif {
 
     /// Generate output filename: "photo.jpg" → "photo-stripped.jpg"
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
-        if let Some(dot_pos) = input_filename.rfind('.') {
-            let stem = &input_filename[..dot_pos];
-            format!("{stem}-stripped.{}", format.extension())
-        } else {
-            format!("{input_filename}-stripped.{}", format.extension())
-        }
+        let stem = bnto_core::file_stem(input_filename);
+        format!("{stem}-stripped.{}", format.extension())
     }
 }
 
@@ -421,5 +417,12 @@ mod tests {
         let input = make_input(b"not an image".to_vec(), "file.bmp");
         let result = processor.process(input, &noop_progress(), &NoopContext);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let name = StripExif::output_filename("v1.2/data", ImageFormat::Png);
+        assert_eq!(name, "v1.2/data-stripped.png");
     }
 }

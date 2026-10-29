@@ -82,10 +82,7 @@ pub(crate) fn make_output_filename(command: &str, input_filename: &str) -> Strin
     if input_filename.is_empty() {
         format!("{command}-output")
     } else {
-        let stem = input_filename
-            .rsplit_once('.')
-            .map(|(s, _)| s)
-            .unwrap_or(input_filename);
+        let stem = bnto_core::file_stem(input_filename);
         format!("{stem}-{command}-output")
     }
 }
@@ -130,5 +127,12 @@ mod tests {
             "{error}"
         );
         assert!(output.is_none(), "nothing ran, so nothing to hand over");
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let name = super::make_output_filename("ls", "v1.2/data");
+        assert_eq!(name, "v1.2/data-ls-output");
     }
 }

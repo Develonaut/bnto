@@ -700,3 +700,16 @@ fn test_matches_extension_whitespace_handling() {
     assert!(matches_extension("icon.svg", &p));
     assert!(!matches_extension("doc.pdf", &p));
 }
+
+#[test]
+fn test_extensions_match_only_a_real_extension() {
+    // ISS-33: `README` and `dir/.env` used to match `readme` and `env`.
+    let params = |exts: &str| {
+        let mut p = serde_json::Map::new();
+        p.insert("extensions".into(), serde_json::Value::String(exts.into()));
+        p
+    };
+    assert!(!matches_extension("README", &params("readme")));
+    assert!(!matches_extension("dir/.env", &params("env")));
+    assert!(matches_extension("v1.2/a.TXT", &params("txt")));
+}

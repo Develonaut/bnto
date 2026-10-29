@@ -1,0 +1,88 @@
+{
+  "id": "extension-splits",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Extension Splits",
+  "metadata": {
+    "description": "Fails the run naming every line of a Rust file under engine/crates, outside bnto-core, that splits a name on its last dot itself. A dot in a folder (v1.2/data) or a dotfile (dir/.env) then reads as an extension; use bnto_core::split_extension, file_stem or file_extension (ISS-33). Run it from the repo root."
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "crates",
+      "type": "file-list",
+      "parameters": {
+        "paths": ["engine/crates"]
+      }
+    },
+    {
+      "id": "walk",
+      "type": "file-collect",
+      "parameters": {
+        "flatten": false
+      }
+    },
+    {
+      "id": "rust",
+      "type": "file-filter",
+      "parameters": {
+        "namePattern": "[.]rs$",
+        "patternMode": "regex",
+        "keep": true
+      }
+    },
+    {
+      "id": "search",
+      "type": "shell-run",
+      "parameters": {
+        "shell": "sh",
+        "script": "# extension-splits: fail naming every line of an engine Rust file, outside\n# bnto-core, that splits a name on its last dot with rfind, rsplit_once or\n# rsplit. A dot in a folder (v1.2/data) or a dotfile (dir/.env) then reads as\n# an extension (ISS-33): use bnto_core::split_extension, file_stem or\n# file_extension. bnto/src/output_names.rs splits on its own on purpose: its\n# names can hold `\\` as well as `/`. Each argument is one file, relative to\n# engine/crates.\n# Gap: a content-search node will replace this step (dogfooding.md, PR 9).\ncd engine/crates || exit 2\nfiles=\"\"\nfor f in \"$@\"; do\n  case $f in\n    bnto-core/*|bnto/src/output_names.rs) ;;\n    *) files=\"$files $f\" ;;\n  esac\ndone\n# The dot between the quotes is matched by `.`: the pattern can't hold a `'`.\nfound=$(grep -HnE '[.]r(find|split_once|split)[(].[.].[)]' -- $files)\ncase $? in\n  0) ;;\n  1) echo \"No engine Rust file outside bnto-core splits a name on its last dot.\"; exit 0 ;;\n  *) exit 2 ;;\nesac\necho \"Names split on their last dot (use bnto_core::split_extension; see ISS-33):\" >&2\nprintf '%s\\n' \"$found\" | sed 's|^|  engine/crates/|' >&2\nexit 1\n",
+        "args": [
+          {
+            "each": ["{{file}}"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": {
+        "mode": "none"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "crates"
+    },
+    {
+      "id": "e2",
+      "source": "crates",
+      "target": "walk"
+    },
+    {
+      "id": "e3",
+      "source": "walk",
+      "target": "rust"
+    },
+    {
+      "id": "e4",
+      "source": "rust",
+      "target": "search"
+    },
+    {
+      "id": "e5",
+      "source": "search",
+      "target": "output"
+    }
+  ]
+}

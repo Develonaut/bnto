@@ -262,12 +262,9 @@ fn extract_column_mapping(
 
 /// Add "-renamed" before the file extension: "data.csv" -> "data-renamed.csv"
 fn build_output_filename(input_filename: &str) -> String {
-    match input_filename.rfind('.') {
-        Some(dot_pos) => {
-            let (name, ext) = input_filename.split_at(dot_pos);
-            format!("{name}-renamed{ext}")
-        }
-        None => format!("{input_filename}-renamed"),
+    match bnto_core::split_extension(input_filename) {
+        (name, "") => format!("{name}-renamed"),
+        (name, ext) => format!("{name}-renamed.{ext}"),
     }
 }
 
@@ -681,5 +678,11 @@ mod tests {
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "my_data-renamed.csv");
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        assert_eq!(build_output_filename("v1.2/data"), "v1.2/data-renamed");
     }
 }

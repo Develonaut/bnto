@@ -116,12 +116,8 @@ impl CompressImages {
 
     /// Generate output filename: "photo.jpg" -> "photo-compressed.jpg"
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
-        if let Some(dot_pos) = input_filename.rfind('.') {
-            let stem = &input_filename[..dot_pos];
-            format!("{stem}-compressed.{}", format.extension())
-        } else {
-            format!("{input_filename}-compressed.{}", format.extension())
-        }
+        let stem = bnto_core::file_stem(input_filename);
+        format!("{stem}-compressed.{}", format.extension())
     }
 }
 
@@ -1855,5 +1851,12 @@ mod tests {
         let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270 swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270 swaps to 60 tall");
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let name = CompressImages::output_filename("v1.2/data", ImageFormat::Png);
+        assert_eq!(name, "v1.2/data-compressed.png");
     }
 }

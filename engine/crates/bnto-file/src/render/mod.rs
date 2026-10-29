@@ -162,11 +162,11 @@ fn output(filename: &str, text: String, rows: usize) -> NodeOutput {
 
 /// `text/markdown` for a `.md` or `.markdown` name, else `text/plain`.
 fn mime_for(filename: &str) -> &'static str {
-    let ext = filename
-        .rsplit_once('.')
-        .map(|(_, ext)| ext.to_ascii_lowercase());
-    match ext.as_deref() {
-        Some("md" | "markdown") => "text/markdown",
+    match bnto_core::file_extension(filename)
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "md" | "markdown" => "text/markdown",
         _ => "text/plain",
     }
 }
