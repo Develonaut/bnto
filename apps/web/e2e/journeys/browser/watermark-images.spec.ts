@@ -12,6 +12,7 @@ import {
   openConfigDialog,
   closeConfigDialog,
 } from "../../helpers";
+import { enableTelemetryCapture, getTelemetryEvents } from "../../telemetryHelper";
 
 /** Browser execution journey — watermark-images */
 
@@ -322,14 +323,28 @@ test.describe("watermark-images — engine output @browser", () => {
     expect(Buffer.compare(buf1, buf2)).not.toBe(0);
   });
 
-  test("run without overlay is refused, naming the overlay", async ({ page }) => {
+  test("Run stays disabled until an overlay is chosen, and no run is recorded", async ({
+    page,
+  }) => {
+    await enableTelemetryCapture(page);
     await navigateToRecipe(page, "watermark-images");
     await uploadFiles(page, [path.join(OVERLAY_DIR, "square-1x1.jpg")]);
 
-    // The engine's pre-flight refuses a required param with no value before
-    // any step runs, and says which one (ISS-25: it used to fail at decode).
-    await runAndComplete(page, { expectStep: "failed" });
-    await expect(page.getByText(/param "overlay" \(Overlay Image\) is required/)).toBeVisible();
-    await expect(page.getByText(/Failed to decode overlay image/)).toHaveCount(0);
+    // A forgotten overlay used to start a run the engine refused, counted as
+    // a failed run (ISS-73).
+    const runButton = page.getByTestId("run-button", ":visible");
+    await expect(runButton).toBeDisabled();
+    await expect(runButton).toHaveAttribute("aria-label", "Set Overlay Image to run");
+
+    await openConfigDialog(page);
+    await uploadOverlay(page, path.join(OVERLAY_DIR, "overlay-logo.png"));
+    await expect(page.getByTestId("watermark-preview-overlay")).toBeVisible();
+    await closeConfigDialog(page);
+
+    await expect(runButton).toBeEnabled();
+    await expect(runButton).toHaveAttribute("aria-label", "Run");
+    const events = (await getTelemetryEvents(page)).map((e) => e.event);
+    expect(events).not.toContain("recipe_run_started");
+    expect(events).not.toContain("recipe_run_failed");
   });
 });

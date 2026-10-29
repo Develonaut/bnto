@@ -182,6 +182,7 @@ export {
   getNodeSchema,
   getNodeParamFields,
   getProcessorDefaults,
+  getParamConstraints,
 } from "@bnto/registry";
 
 // Recipe lookup

@@ -9,11 +9,6 @@
       "count": 1
     }
   },
-  "app/(app)/[bnto]/_stores/recipeStepperActions.ts": {
-    "max-lines-per-function": {
-      "count": 1
-    }
-  },
   "app/(app)/_components/recipeSnippets.ts": {
     "max-lines-per-function": {
       "count": 1
