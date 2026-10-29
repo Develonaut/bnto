@@ -3,6 +3,10 @@
  * pre-flight rule (`bnto_core::required_params`): a required param left out
  * has its default, if any; given as null or blank text, it has nothing. An
  * `undefined` value counts as left out: the JSON the engine gets drops it.
+ *
+ * Reads `getParamConstraints().required`, the engine's flag, not
+ * `getRequiredParams`, which leaves out a required param with a default
+ * (image-convert's `format`) that a blank value still fails.
  */
 
 import type { Definition } from "@bnto/core";

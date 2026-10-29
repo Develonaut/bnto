@@ -98,12 +98,13 @@ What happens when things go wrong.
 
 ## Cross-Domain Dependencies
 
-| Journey     | Also Touches           | Notes                                                          |
-| ----------- | ---------------------- | -------------------------------------------------------------- |
-| W2, W20-W26 | Auth                   | Tool pages are public — no auth required for browser execution |
-| W24-W25     | Engine (node schemas)  | Config controls map to engine node parameters                  |
-| W30-W33     | Auth (proxy, session)  | Route protection handled by `proxy.ts` + auth providers        |
-| W40         | API (execution errors) | Error messages originate from API/engine, displayed by web     |
+| Journey     | Also Touches             | Notes                                                                                            |
+| ----------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
+| W2, W20-W27 | Auth                     | Tool pages are public — no auth required for browser execution                                   |
+| W24-W25     | Engine (node schemas)    | Config controls map to engine node parameters                                                    |
+| W27         | Engine (required params) | Run waits on the engine's rule for a required param with no value (`bnto_core::required_params`) |
+| W30-W33     | Auth (proxy, session)    | Route protection handled by `proxy.ts` + auth providers                                          |
+| W40         | API (execution errors)   | Error messages originate from API/engine, displayed by web                                       |
 
 ---
 
