@@ -213,6 +213,10 @@ The engine honors a recipe's `edges` (see [engine-execution.md](../strategy/engi
 - **A step with no incoming edge starts empty.** No more drop-everything `file-filter` before a fresh `file-list`; leave it unwired from the step before. A step wired to nothing after it contributes no files to the output.
 - **Fan-out shares files on disk.** One output feeding two steps hands both the same `FileData::Path`. A `file-move` or `file-delete` of it, or a `file-copy` over it, is refused before the step acts (`ProcessContext::held_elsewhere`, ISS-59 and ISS-82). An overwriting output still takes it from the branches that run after it, and they fail naming the missing file. A new node that replaces files on disk should ask the same, and must be a batch node: only a batch node's context gets the run's answer (`executor/run_scope.rs`); any other node's always says `None`.
 
+## A Name's Extension Comes From Its Last Segment
+
+Names carry relative folders (`v1.2/data`), so the last `.` of the whole name can sit in a folder, and a dotfile (`dir/.env`) has no extension. Use `bnto_core::split_extension`, `file_stem` or `file_extension`, never `rfind('.')`, `rsplit_once('.')` or `rsplit('.')` on a name: `v1.2/data`'s `-cleaned` output once landed in a folder `v1-cleaned.2/` (ISS-33). `task check:extension-splits` (and CI's engine job) fails on a new copy outside `bnto-core`.
+
 ## Windows Portability (Engine)
 
 CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-windows` job, required by the CI Gate). Code and tests that assume Unix break there. Rules:
@@ -226,7 +230,6 @@ CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-w
   let name = bnto_core::slash_path(rel);
   ```
 
-- **A name's extension comes from its last segment, through `bnto_core`.** Names carry relative folders (`v1.2/data`), so the last `.` of the whole name can sit in a folder, and a dotfile (`dir/.env`) has no extension. Use `bnto_core::split_extension`, `file_stem` or `file_extension`, never `rfind('.')`, `rsplit_once('.')` or `rsplit('.')` on a name: `sub/v1.2/data`'s `-cleaned` output once landed in a folder `v1-cleaned.2/` (ISS-33). `task check:extension-splits` (and CI's engine job) fails on a new copy outside `bnto-core`.
 - **Names that differ only in case are one file.** On Windows and macOS `Logo.svg` and `logo.svg` share a path, so code that puts several files in one folder compares names case-folded on every OS, so a recipe acts the same everywhere. Moves and renames go through `bnto_file::relocate` (refuses the plan). The CLI's `--output` writes go through `bnto/src/output_names.rs` (later file becomes `logo_1.svg`, or the next number not already in the folder; a file with exactly that name already holding exactly the same bytes is taken and left as is, see [output-suffix-skips-existing.md](../decisions/output-suffix-skips-existing.md)). Don't key a "taken names" set on the raw name.
 - **No `/nonexistent`-style absolute paths in tests.** On Windows `/nonexistent` resolves to `C:\nonexistent` and may be creatable, so "can't be created" tests write outside the sandbox and pass or fail by accident. To get a path that can't be created, put it under a regular file in a temp dir:
 
