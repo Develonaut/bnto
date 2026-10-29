@@ -115,6 +115,8 @@ fn has_drive(name: &str) -> bool {
     bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':'
 }
 
+/// A refusal of this step's moves. "This step": in a loop, earlier
+/// iterations may have moved files already (ISS-100).
 pub(super) fn refused(why: &str) -> String {
-    format!("File move refused, nothing moved: {why}")
+    format!("File move refused, this step moved nothing: {why}")
 }
