@@ -4,6 +4,8 @@
 
 use serde_json::{Map, Value};
 
+use super::param_access::get_string_param;
+
 /// Params that feed `{{name}}`. `separator`, `maxLength` and `replace` only
 /// act through `sanitize` and `find`.
 const NAME_PARAMS: [&str; 5] = ["sanitize", "find", "case", "prefix", "suffix"];
@@ -13,10 +15,13 @@ pub(super) fn raw_problems(raw: &Map<String, Value>) -> Vec<String> {
     let Some(pattern) = set(raw, "pattern") else {
         return Vec::new();
     };
-    // A field fills the pattern at run time: it may hold the tokens.
+    // A field is a value the user gives per run, which may be a whole pattern
+    // holding the tokens. An `{{item.*}}` name from data is a whole new name
+    // (renaming from a table's rows), so a prefix beside it is still dropped.
     if pattern.contains("{{fields.") {
         return Vec::new();
     }
+    let pattern = pattern.as_str();
     let mut problems = Vec::new();
     let name_params: Vec<&str> = NAME_PARAMS
         .into_iter()
@@ -31,11 +36,10 @@ pub(super) fn raw_problems(raw: &Map<String, Value>) -> Vec<String> {
     problems
 }
 
-/// The param's value when it is non-empty text.
-fn set<'a>(raw: &'a Map<String, Value>, key: &str) -> Option<&'a str> {
-    raw.get(key)
-        .and_then(Value::as_str)
-        .filter(|value| !value.is_empty())
+/// The param's value when it is set and not empty, read as the rename reads
+/// it (text or a number).
+fn set(raw: &Map<String, Value>, key: &str) -> Option<String> {
+    get_string_param(raw, key).filter(|value| !value.is_empty())
 }
 
 fn left_out(pattern: &str, token: &str, params: &[&str]) -> String {

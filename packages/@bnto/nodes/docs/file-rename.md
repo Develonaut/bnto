@@ -19,7 +19,7 @@
 | pattern | string | - | - | Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). {{name}} is the path after Sanitize, Find/Replace, Case, Prefix and Suffix, and {{ext}} is the Extension if set. Without {{name}} it drops the folders, and those params can't be set |
 | counterStart | number | 1 | ≥ 0 | Starting number for {{counter}} in Pattern |
 | counterPad | number | 0 | 0-10 | Zero-pad width for {{counter}} in Pattern (e.g., 3 → 001, 002) |
-| extension | string | - | - | Replace the file extension (without dot). With Pattern, it fills {{ext}} |
+| extension | string | - | - | Replace the file extension (without dot). With Pattern, it fills {{ext}}, and a pattern without {{ext}} can't set it |
 
 ## Configuration Example
 

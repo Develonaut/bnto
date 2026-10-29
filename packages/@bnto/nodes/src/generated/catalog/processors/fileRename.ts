@@ -98,7 +98,8 @@ export const fileRenameProcessor: ProcessorDef = {
     {
       name: "extension",
       label: "Extension",
-      description: "Replace the file extension (without dot). With Pattern, it fills {{ext}}",
+      description:
+        "Replace the file extension (without dot). With Pattern, it fills {{ext}}, and a pattern without {{ext}} can't set it",
       type: "string" as const,
       placeholder: "png",
     },

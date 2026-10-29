@@ -513,6 +513,17 @@ mod tests {
     }
 
     #[test]
+    fn test_a_number_param_with_no_token_is_refused() {
+        // The rename reads a number as text, so a numeric suffix would be
+        // dropped too.
+        let mut params = string_param("pattern", "final");
+        params.insert("suffix".to_string(), serde_json::json!(2));
+        let problems = RenameFiles::new().validate_raw(&params);
+        assert_eq!(problems.len(), 1, "{problems:?}");
+        assert!(problems[0].contains("'suffix'"), "{problems:?}");
+    }
+
+    #[test]
     fn test_params_the_pattern_uses_are_not_refused() {
         for pairs in [
             &[("pattern", "{{name}}.{{ext}}"), ("prefix", "x-")][..],

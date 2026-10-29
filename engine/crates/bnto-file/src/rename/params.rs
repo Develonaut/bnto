@@ -144,7 +144,7 @@ fn rename_extension_param() -> ParameterDef {
         ..rename_string_param(
             "extension",
             "Extension",
-            "Replace the file extension (without dot). With Pattern, it fills {{ext}}",
+            "Replace the file extension (without dot). With Pattern, it fills {{ext}}, and a pattern without {{ext}} can't set it",
         )
     }
 }

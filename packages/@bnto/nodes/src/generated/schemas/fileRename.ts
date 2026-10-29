@@ -83,7 +83,8 @@ export const fileRenameNodeSchema: NodeSchema = {
     },
     extension: {
       label: "Extension",
-      description: "Replace the file extension (without dot). With Pattern, it fills {{ext}}",
+      description:
+        "Replace the file extension (without dot). With Pattern, it fills {{ext}}, and a pattern without {{ext}} can't set it",
       placeholder: "png",
     },
   },
