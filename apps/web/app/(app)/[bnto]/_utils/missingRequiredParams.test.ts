@@ -60,8 +60,11 @@ describe("missingRequiredParams", () => {
     delete config.overlay!.overlay;
     expect(missingRequiredParams(watermark, config)).toEqual([OVERLAY]);
 
-    // image-convert's required `format` defaults to jpeg.
+    // image-convert's required `format` defaults to jpeg. An undefined value
+    // is left out too: the JSON the engine gets drops it.
     expect(missingRequiredParams(convertRecipe({}), { convert: {} })).toEqual([]);
+    const cleared = { convert: { format: undefined } };
+    expect(missingRequiredParams(convertRecipe({}), cleared)).toEqual([]);
   });
 
   it("counts a blanked param as no value even when it has a default", () => {
