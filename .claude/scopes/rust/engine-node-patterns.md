@@ -68,6 +68,7 @@ The engine is the single source of truth. TypeScript types are generated, not ha
   - `packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts` — label map for Convex
   - `packages/@bnto/i18n/src/generated/nodes.json` — i18n strings
 - [ ] **Or run the full pipeline** — `task wasm:codegen` (build → copy → snapshot → generate)
+- [ ] **Add a row to `/workflow-expert`'s inventory** — the node table in [workflow-expert/SKILL.md](../../skills/workflow-expert/SKILL.md#1-current-node-inventory). `scripts/docs/workflowExpertInventory.test.ts` (in `task check:scripts` and CI) fails until the table matches the catalog
 
 #### Verify: Node Appears in Generated Output
 
@@ -500,6 +501,7 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 | New param name for an idea another node already has                     | Reuse the [Shared Params](node-vocabulary.md#shared-params) name and values                            |
 | Renamed or removed a shipped type or param with no migration            | Add a `bnto migrate` step in `engine/crates/bnto/src/migrate/` and a row in `bnto-core/src/renamed.rs` |
 | Crate README missing processors                                         | Update the Processors table when adding/removing processors                                            |
+| `/workflow-expert` inventory missing the node                           | Add its row to the skill's node table (`workflowExpertInventory.test.ts` fails until you do)           |
 | Crate name doesn't match category                                       | Rename crate to match (e.g., `bnto-csv` → `bnto-spreadsheet`)                                          |
 | Processor file name doesn't match operation                             | Rename file to match (e.g., `csv_to_json.rs` → `convert.rs`)                                           |
 | Pass-through processor uses `FileData::Bytes` instead of `Path`         | Use `FileData::Path` for zero-copy — see [FileData Selection](#filedata-selection)                     |

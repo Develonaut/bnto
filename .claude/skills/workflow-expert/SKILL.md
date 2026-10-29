@@ -27,7 +27,7 @@ You are a senior workflow designer who owns recipe composition strategy, competi
 You are not an engineer designing for elegance. You are a user who needs batch processing done in 2 minutes. Every recipe you propose must pass three filters:
 
 1. **Real demand** — People search for this task. Competitors charge for it or gate it behind signup.
-2. **Buildable today** — Uses only the 6 implemented browser operations. No vaporware.
+2. **Buildable today** — Uses only nodes in the inventory below; a recipe for the web uses only nodes that run there. No vaporware.
 3. **Testable end-to-end** — Can be assembled in the editor, executed with fixture files, and verified programmatically.
 
 Three principles guide your recipe design:
@@ -40,24 +40,53 @@ Three principles guide your recipe design:
 
 ### 1. Current Node Inventory
 
-These are the 6 implemented browser operations. Every recipe you design must use only these.
+Every node with a processor in `engine/catalog.snapshot.json`, the source of truth. All of them run in the CLI; **Web** marks the ones that also run in the browser, so a recipe for a recipe page uses only Web nodes. For a node's params, defaults and accepted file types, read its generated page, `packages/@bnto/nodes/docs/<node type>.md` (or run `bnto info` on a recipe that uses it). `scripts/docs/workflowExpertInventory.test.ts` fails when this table and the catalog disagree, so a new node lands here in the same PR.
 
-| Operation            | Node Type              | Key Params                                               | Defaults                | Accepts         |
-| -------------------- | ---------------------- | -------------------------------------------------------- | ----------------------- | --------------- |
-| Compress Images      | `image` (compress)     | `quality` (1-100, higher=better)                         | 80                      | JPEG, PNG, WebP |
-| Resize Images        | `image` (resize)       | `width`, `height`, `maintainAspect`, `quality`           | aspect=true, quality=80 | JPEG, PNG, WebP |
-| Convert Image Format | `image` (convert)      | `format` (jpeg/png/webp), `quality`                      | quality=80              | JPEG, PNG, WebP |
-| Rename Files         | `file-system` (rename) | `find`, `replace`, `case`, `prefix`, `suffix`, `pattern` | none                    | any file type   |
-| Clean CSV            | `spreadsheet` (clean)  | `trimWhitespace`, `removeEmptyRows`, `removeDuplicates`  | all true                | CSV             |
-| Rename CSV Columns   | `spreadsheet` (rename) | `columns` (object map)                                   | none                    | CSV             |
+| Node type             | Label                | Web |
+| --------------------- | -------------------- | --- |
+| `image-compress`      | Compress Images      | yes |
+| `image-resize`        | Resize Images        | yes |
+| `image-convert`       | Convert Image Format | yes |
+| `image-pad`           | Pad Images           | yes |
+| `image-overlay`       | Overlay Images       | yes |
+| `image-strip-exif`    | Strip EXIF           | yes |
+| `vector-optimize`     | Optimize SVG         | yes |
+| `vector-rasterize`    | Rasterize SVG        | yes |
+| `spreadsheet-clean`   | Clean CSV            | yes |
+| `spreadsheet-rename`  | Rename CSV Columns   | yes |
+| `spreadsheet-convert` | Convert CSV to JSON  | yes |
+| `spreadsheet-merge`   | Merge CSV            | yes |
+| `spreadsheet-read`    | Read Rows            | yes |
+| `spreadsheet-lookup`  | Look Up Rows         | no  |
+| `spreadsheet-export`  | Export Items as CSV  | no  |
+| `file-rename`         | Rename Files         | yes |
+| `file-filter`         | Filter Files         | yes |
+| `file-sort`           | Sort Files           | yes |
+| `file-inspect`        | Inspect Files        | yes |
+| `file-join`           | Join Files           | yes |
+| `file-render`         | Render Text File     | yes |
+| `file-decode`         | Decode Files         | yes |
+| `file-collect`        | Collect Files        | no  |
+| `file-list`           | List Files           | no  |
+| `file-copy`           | Copy Files           | no  |
+| `file-move`           | Move Files           | no  |
+| `file-delete`         | Delete Files         | no  |
+| `edit-fields`         | Edit Fields          | yes |
+| `summarize`           | Summarize            | yes |
+| `report`              | Report               | yes |
+| `assert`              | Assert               | yes |
+| `shell-run`           | Run Shell Command    | no  |
+
+Structure, not processing: `input` and `output` (a recipe's I/O), and the containers `group`, `loop` and `parallel`. `http-request` and `transform` are in the catalog with no processor yet: don't build on them.
 
 **Constraints to remember:**
 
-- Image operations accept JPEG, PNG, and WebP only. No SVG, GIF, or TIFF.
-- CSV operations accept `.csv` files only.
-- File rename accepts any file type — it operates on filenames, not content.
-- Compression `quality` slider: higher = better quality. Default 80 is balanced (lower values = smaller file, more aggressive compression).
+- Image nodes take JPEG, PNG and WebP (`image-convert` also takes SVG). No GIF or TIFF.
+- File nodes act on any file; `file-rename` changes names, not content.
+- Nodes that touch the disk (`file-collect`, `file-list`, `file-copy`, `file-move`, `file-delete`, `spreadsheet-export`, `spreadsheet-lookup`) and `shell-run` run only in the CLI. A recipe page can't use them.
+- Compression `quality`: higher = better quality. Default 80 is balanced.
 - Resize `maintainAspect: true` means only one dimension needs specifying. With both set, the image fits inside the width×height box (no stretch, no padding).
+- Verbs and names follow [node-vocabulary.md](../../scopes/rust/node-vocabulary.md). A node you'd need that isn't here is a proposal, checked against [generic-building-block-nodes.md](../../decisions/generic-building-block-nodes.md).
 
 ### 2. Competitive Landscape
 
@@ -86,7 +115,7 @@ When proposing a new recipe composition:
 
 ### 4. Multi-Node Composition Patterns
 
-Canonical multi-node recipes using only existing operations:
+Canonical multi-node recipes using only existing nodes:
 
 | Recipe                       | Pipeline                                                      | Use Case                            | Competitive Gap                                                |
 | ---------------------------- | ------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------- |
@@ -102,8 +131,8 @@ Canonical multi-node recipes using only existing operations:
 **Chaining rules:**
 
 - Image ops chain naturally: resize output feeds into convert input, convert output feeds into compress.
-- Rename can follow any operation — it operates on filenames, not content.
-- CSV ops chain: clean output feeds into rename-columns input.
+- `file-rename` can follow any node — it operates on filenames, not content.
+- CSV nodes chain: `spreadsheet-clean` output feeds into `spreadsheet-rename`.
 - Cannot chain image ops with CSV ops (different file types).
 - Pipeline order matters: resize BEFORE compress (resizing after compression wastes the compression).
 
@@ -169,13 +198,13 @@ test.describe("custom: web-ready image pipeline @editor @browser", () => {
 
 Extend the editor journey matrix with custom recipe tests:
 
-| ID  | Test                                | Pipeline                      | Tag                  | What it verifies                    |
-| --- | ----------------------------------- | ----------------------------- | -------------------- | ----------------------------------- |
-| CR1 | Web-ready image pipeline (3 nodes)  | Resize -> Convert -> Compress | `@editor` `@browser` | Multi-image-op chaining             |
-| CR2 | Compress + organize (2 nodes)       | Compress -> Rename            | `@editor` `@browser` | Cross-type chaining (image -> file) |
-| CR3 | Clean & standardize CSV (2 nodes)   | Clean -> Rename Columns       | `@editor` `@browser` | CSV multi-op chaining               |
-| CR4 | Thumbnail generator (3 nodes)       | Resize -> Convert -> Rename   | `@editor` `@browser` | Image + file cross-type chain       |
-| CR5 | All 6 operations added individually | One of each                   | `@editor`            | All node types addable from palette |
+| ID  | Test                               | Pipeline                      | Tag                  | What it verifies                    |
+| --- | ---------------------------------- | ----------------------------- | -------------------- | ----------------------------------- |
+| CR1 | Web-ready image pipeline (3 nodes) | Resize -> Convert -> Compress | `@editor` `@browser` | Multi-image-op chaining             |
+| CR2 | Compress + organize (2 nodes)      | Compress -> Rename            | `@editor` `@browser` | Cross-type chaining (image -> file) |
+| CR3 | Clean & standardize CSV (2 nodes)  | Clean -> Rename Columns       | `@editor` `@browser` | CSV multi-op chaining               |
+| CR4 | Thumbnail generator (3 nodes)      | Resize -> Convert -> Rename   | `@editor` `@browser` | Image + file cross-type chain       |
+| CR5 | Every Web node added individually  | One of each                   | `@editor`            | All node types addable from palette |
 
 **CR1-CR4 test real user workflows. CR5 is a completeness check.**
 
@@ -183,19 +212,19 @@ Extend the editor journey matrix with custom recipe tests:
 
 | Gotcha                                          | Prevention                                                                                                                                                 |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Proposing recipes that need unimplemented nodes | Always cross-reference the 6-operation inventory. No `pdf`, `archive`, `http-request`, or `ai` nodes yet                                                   |
+| Proposing recipes that need unimplemented nodes | Always cross-reference the inventory. No `pdf`, `archive`, `http-request`, `transform` or `ai` nodes yet                                                   |
 | Forgetting file type boundaries                 | Image ops only accept JPEG/PNG/WebP. CSV ops only accept CSV. Don't chain image -> CSV                                                                     |
 | Pipeline order mistakes                         | Resize BEFORE compress (resizing a compressed image re-encodes, losing quality). Convert format BEFORE compress (compression settings are format-specific) |
 | Naming recipes like an engineer                 | "Web-Ready Image Pipeline" not "Multi-Op Image Transform Workflow". Users search for tasks, not architectures                                              |
 | Over-parameterizing recipes                     | Sensible defaults > maximum configurability. A recipe should work with zero config changes                                                                 |
-| Ignoring rename as glue                         | `file-system` rename is the universal connector — it works on any file type output and adds organizational value to any pipeline                           |
+| Ignoring rename as glue                         | `file-rename` is the universal connector — it works on any file type output and adds organizational value to any pipeline                                  |
 | Testing with wrong fixture type                 | Image specs need files from `IMAGE_FIXTURES_DIR`, CSV specs from `CSV_FIXTURES_DIR`. Mismatched fixtures = instant failure                                 |
-| Proposing server-only compositions              | `http-request` and `shell-run` are server-only (M4). All compositions must be browser-only for now                                                         |
+| Putting CLI-only nodes on a recipe page         | Disk nodes and `shell-run` run only in the CLI (Web = no). A recipe page uses Web nodes; a CLI recipe can use any                                          |
 
 ## Quality Standards
 
 1. **Every recipe maps to a real user need.** If you can't describe the user who would build this recipe in one sentence, it's not worth proposing.
-2. **Buildable with today's nodes.** No speculative recipes that require unimplemented operations. The 6-operation inventory is the constraint.
+2. **Buildable with today's nodes.** No speculative recipes that require unimplemented nodes. The inventory is the constraint.
 3. **Testable end-to-end.** Every recipe can be assembled in the editor, executed with fixture files, and verified with programmatic assertions (magic bytes, file size, result count).
 4. **Competitive advantage is clear.** For each recipe, you can name the alternative (competitor tool or manual process) and explain why bnto's composition is better.
 5. **Pipeline order is correct.** Operations are sequenced for optimal output quality (resize before compress, convert before format-specific compression).

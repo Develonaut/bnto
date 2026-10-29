@@ -550,6 +550,8 @@ The bundled `optimize-svg` recipe and `tests/fixtures/explicit/optimize-svg.bnto
 
 **Count changes:** none.
 
+**Shipped (#816), changed from the plan:** the skill keeps a short table (node type, label, whether it runs in the browser) and points to the generated docs for params, defaults and accepted types. A pointer alone left the persona without the one fact it needs while designing, what runs on a recipe page. The table can't go stale either: `scripts/docs/workflowExpertInventory.test.ts`, in `task check:scripts` and CI, checks every row against `engine/catalog.snapshot.json`.
+
 ---
 
 ### PR 15: The Windows grandchild test waits for a slow runner (ISS-18)
