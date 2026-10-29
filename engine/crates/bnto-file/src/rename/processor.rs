@@ -423,6 +423,20 @@ mod tests {
     }
 
     #[test]
+    fn test_prefix_and_case_rename_the_file_not_its_folders() {
+        // ISS-34: these used to rename the folders too, moving the file.
+        let processor = RenameFiles::new();
+        let params = string_params(&[("prefix", "x-"), ("case", "upper")]);
+        let input = make_input(b"data", "v1.2/My File.jpg", params);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "v1.2/x-MY FILE.jpg");
+    }
+
+    #[test]
     fn test_suffix_keeps_file_in_dotted_folder() {
         // ISS-23: the dot in `v1.2` used to split the name, so the suffix
         // landed in the folder name and moved the file to `v1-x.2/`.

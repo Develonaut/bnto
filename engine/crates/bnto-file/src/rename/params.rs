@@ -3,34 +3,45 @@
 use bnto_core::metadata::{Constraints, OptionEntry, ParameterDef, ParameterType};
 
 /// All rename parameters, in the order the editor displays them.
-#[expect(clippy::too_many_lines)]
 pub(super) fn build_rename_parameters() -> Vec<ParameterDef> {
     vec![
         rename_sanitize_param(),
         rename_separator_param(),
         rename_max_length_param(),
-        rename_string_param(
-            "find",
-            "Find",
-            "Text or regex pattern to search for in the whole relative path, folders included",
-        ),
+        rename_find_param(),
         rename_string_param("replace", "Replace", "Replacement text (used with Find)"),
         rename_case_param(),
-        rename_string_param(
-            "prefix",
-            "Prefix",
-            "Text to prepend to the file name (not its folders)",
-        ),
-        rename_string_param(
-            "suffix",
-            "Suffix",
-            "Text to append to the file name, before its extension",
-        ),
+        rename_prefix_param(),
+        rename_suffix_param(),
         rename_pattern_param(),
         rename_counter_start_param(),
         rename_counter_pad_param(),
         rename_extension_param(),
     ]
+}
+
+fn rename_find_param() -> ParameterDef {
+    rename_string_param(
+        "find",
+        "Find",
+        "Text or regex pattern to search for in the whole relative path, folders included",
+    )
+}
+
+fn rename_prefix_param() -> ParameterDef {
+    rename_string_param(
+        "prefix",
+        "Prefix",
+        "Text to prepend to the file name (not its folders)",
+    )
+}
+
+fn rename_suffix_param() -> ParameterDef {
+    rename_string_param(
+        "suffix",
+        "Suffix",
+        "Text to append to the file name, before its extension",
+    )
 }
 
 /// A simple string parameter for the rename node.
