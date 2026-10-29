@@ -1,10 +1,13 @@
 // Stem/extension split for item names, which may carry a relative folder path.
+// Every crate splits a name through here, so a dot in a folder (`v1.2/data`)
+// or a dotfile (`dir/.env`) never moves a file or reads as an extension
+// (ISS-33). `recipes/extension-splits.bnto.json` fails on a new copy.
 
 /// Split a name on the last dot of its last path segment: `sub/a.csv.b64`
 /// gives (`sub/a.csv`, `b64`), and `v1.2/README` has no extension. A leading
 /// dot (`.env`, `dir/.env`) is no extension. Names travel with `/` separators
 /// on every OS (`bnto_core::slash_path`), so `/` is the only separator.
-pub(crate) fn split_extension(name: &str) -> (&str, &str) {
+pub fn split_extension(name: &str) -> (&str, &str) {
     let segment_start = name.rfind('/').map_or(0, |i| i + 1);
     match name[segment_start..].rfind('.') {
         Some(dot) if dot > 0 => {
@@ -13,6 +16,16 @@ pub(crate) fn split_extension(name: &str) -> (&str, &str) {
         }
         _ => (name, ""),
     }
+}
+
+/// The name without its extension: `v1.2/data.csv` gives `v1.2/data`.
+pub fn file_stem(name: &str) -> &str {
+    split_extension(name).0
+}
+
+/// The extension without its dot, or `""` when the name has none.
+pub fn file_extension(name: &str) -> &str {
+    split_extension(name).1
 }
 
 #[cfg(test)]
@@ -71,5 +84,18 @@ mod tests {
             split_extension("a.x/b.y/c.csv.b64"),
             ("a.x/b.y/c.csv", "b64")
         );
+    }
+
+    #[test]
+    fn splits_each_name_on_its_last_segment() {
+        for (name, stem, ext) in [
+            ("v1.2/README", "v1.2/README", ""),
+            ("dir/.env", "dir/.env", ""),
+            ("a/b.tar.gz", "a/b.tar", "gz"),
+            ("v1.2/data.csv", "v1.2/data", "csv"),
+        ] {
+            assert_eq!(file_stem(name), stem, "{name}");
+            assert_eq!(file_extension(name), ext, "{name}");
+        }
     }
 }

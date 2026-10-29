@@ -189,12 +189,8 @@ fn unpremultiply_alpha(data: &mut [u8]) {
 
 /// Replace extension: "icon.svg" + PNG -> "icon.png"
 fn output_filename(input_filename: &str, target_format: ImageFormat) -> String {
-    if let Some(dot_pos) = input_filename.rfind('.') {
-        let stem = &input_filename[..dot_pos];
-        format!("{stem}.{}", target_format.extension())
-    } else {
-        format!("{input_filename}.{}", target_format.extension())
-    }
+    let stem = bnto_core::file_stem(input_filename);
+    format!("{stem}.{}", target_format.extension())
 }
 
 fn build_metadata(
@@ -495,5 +491,12 @@ mod tests {
                 "Format {format} should produce MIME {expected_mime}"
             );
         }
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let name = output_filename("v1.2/icon", ImageFormat::Png);
+        assert_eq!(name, "v1.2/icon.png");
     }
 }

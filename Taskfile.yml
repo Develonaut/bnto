@@ -67,6 +67,7 @@ tasks:
       - task: check:assets
       - task: check:rust-size
       - task: check:nonexistent-paths
+      - task: check:extension-splits
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
@@ -193,6 +194,12 @@ tasks:
     deps: [cli:build]
     # --yes: the search is a shell step, and Task can't answer consent.
     cmds: ["{{.BNTO}} run recipes/nonexistent-paths.bnto.json --yes"]
+
+  check:extension-splits:
+    desc: Fail naming every engine Rust line outside bnto-core that splits a name on its last dot itself (ISS-33)
+    deps: [cli:build]
+    # --yes: the search is a shell step, and Task can't answer consent.
+    cmds: ["{{.BNTO}} run recipes/extension-splits.bnto.json --yes"]
 
   check:grab-bags:
     desc: "Fail naming every utils/helpers/hooks.ts(x) file: the ones given (task check:grab-bags -- <files>), else the staged ones"

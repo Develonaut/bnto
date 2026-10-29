@@ -35,12 +35,8 @@ impl OverlayImage {
     }
 
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
-        let ext = format.extension();
-        if let Some(stem) = input_filename.rsplit_once('.') {
-            format!("{}-overlay.{}", stem.0, ext)
-        } else {
-            format!("{}-overlay.{}", input_filename, ext)
-        }
+        let stem = bnto_core::file_stem(input_filename);
+        format!("{stem}-overlay.{}", format.extension())
     }
 }
 
@@ -660,5 +656,12 @@ mod tests {
         let errors = processor.validate(&params);
         assert!(!errors.is_empty());
         assert!(errors[0].contains("position"));
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let name = OverlayImage::output_filename("v1.2/data", ImageFormat::Png);
+        assert_eq!(name, "v1.2/data-overlay.png");
     }
 }

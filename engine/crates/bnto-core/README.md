@@ -92,6 +92,7 @@ src/
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS
+├── split_extension.rs    # split_extension(), file_stem(), file_extension(): a name's extension from its last `/` segment, for every crate
 ├── file_stamp.rs         # stamp(): a file's size and mtime, to find one file under two paths
 ├── required_params.rs    # missing_required(): required params left out (no default) or blank; pre-flight refuses them
 ├── time.rs               # rfc3339_utc() / parse_rfc3339_utc(): epoch ms <-> RFC 3339 UTC

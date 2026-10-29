@@ -138,7 +138,7 @@ fn walk_root(input: &NodeInput) -> PathBuf {
 
 /// Guess MIME type from file extension.
 fn guess_mime_type(filename: &str) -> String {
-    let ext = filename.rsplit('.').next().unwrap_or("").to_lowercase();
+    let ext = bnto_core::file_extension(filename).to_lowercase();
 
     match ext.as_str() {
         "jpg" | "jpeg" => "image/jpeg".to_string(),

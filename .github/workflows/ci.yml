@@ -145,6 +145,12 @@ jobs:
         working-directory: .
         run: ./engine/target/debug/bnto run recipes/nonexistent-paths.bnto.json --yes
 
+      # gotchas.md: names split through bnto_core::split_extension, so a dot
+      # in a folder or a dotfile never reads as an extension (ISS-33).
+      - name: Extension splits (recipes/extension-splits.bnto.json)
+        working-directory: .
+        run: ./engine/target/debug/bnto run recipes/extension-splits.bnto.json --yes
+
       - name: WASM integration tests (bnto-wasm)
         run: wasm-pack test --node crates/bnto-wasm
 

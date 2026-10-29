@@ -6,10 +6,6 @@
 /// A compiled file-name glob, shared by file-collect and file-filter.
 mod glob;
 
-/// Stem/extension split of an item name, within its last path segment.
-/// Shared by file-decode and file-rename.
-mod split_extension;
-
 /// File-filter node — drop files that don't match extension, pattern,
 /// or size criteria. Non-matching files produce empty output.
 pub mod filter;

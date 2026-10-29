@@ -68,12 +68,8 @@ impl ConvertImageFormat {
 
     /// Replace extension: "photo.jpg" + PNG -> "photo.png"
     fn output_filename(input_filename: &str, target_format: ImageFormat) -> String {
-        if let Some(dot_pos) = input_filename.rfind('.') {
-            let stem = &input_filename[..dot_pos];
-            format!("{stem}.{}", target_format.extension())
-        } else {
-            format!("{input_filename}.{}", target_format.extension())
-        }
+        let stem = bnto_core::file_stem(input_filename);
+        format!("{stem}.{}", target_format.extension())
     }
 }
 
@@ -1161,5 +1157,12 @@ mod tests {
                 .and_then(|v| v.as_str()),
             Some("Svg")
         );
+    }
+
+    #[test]
+    fn test_output_filename_keeps_a_dotted_folder() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let name = ConvertImageFormat::output_filename("v1.2/data", ImageFormat::Png);
+        assert_eq!(name, "v1.2/data.png");
     }
 }

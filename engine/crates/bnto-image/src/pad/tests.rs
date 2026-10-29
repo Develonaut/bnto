@@ -342,3 +342,10 @@ fn test_corrupt_input_fails() {
 fn test_empty_input_fails() {
     assert!(run(Vec::new(), "a.png", serde_json::json!({"width": 2})).is_err());
 }
+
+#[test]
+fn test_output_filename_keeps_a_dotted_folder() {
+    // ISS-33: the dot in the folder `v1.2` used to split the name.
+    let out = run(png(1, 1, RED), "v1.2/data", serde_json::json!({"width": 2})).unwrap();
+    assert_eq!(out.files[0].filename, "v1.2/data-padded.png");
+}

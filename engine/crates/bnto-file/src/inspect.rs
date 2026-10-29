@@ -181,12 +181,7 @@ fn folder_of(filename: &str) -> String {
 
 /// Extract the file extension (lowercase, without dot).
 fn extract_extension(filename: &str) -> String {
-    filename
-        .rsplit('.')
-        .next()
-        .filter(|_| filename.contains('.') && !filename.starts_with('.'))
-        .unwrap_or("")
-        .to_lowercase()
+    bnto_core::file_extension(filename).to_lowercase()
 }
 
 /// Guess MIME type from file extension; `application/octet-stream` when unknown.
@@ -838,5 +833,13 @@ mod tests {
             sha256_hex(b"abc"),
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         );
+    }
+
+    #[test]
+    fn test_extract_extension_reads_only_the_last_segment() {
+        // ISS-33: these read `2/readme` and `env`.
+        assert_eq!(extract_extension("v1.2/README"), "");
+        assert_eq!(extract_extension("dir/.env"), "");
+        assert_eq!(extract_extension("v1.2/A.TXT"), "txt");
     }
 }

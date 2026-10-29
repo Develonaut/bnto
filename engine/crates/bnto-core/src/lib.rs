@@ -136,6 +136,9 @@ pub mod renamed;
 /// Relative paths as output-file names, `/`-separated on every OS.
 pub mod slash_path;
 
+/// A name's stem and extension, read from its last path segment only.
+pub mod split_extension;
+
 /// Params a recipe gives a node that the node doesn't declare.
 pub mod undeclared_params;
 
@@ -195,6 +198,7 @@ pub use registry::NodeRegistry;
 pub use run_summary::{NodeSummary, NodeTally, RunStatus, RunSummary};
 pub use secrets::SecretDef;
 pub use slash_path::slash_path;
+pub use split_extension::{file_extension, file_stem, split_extension};
 pub use version::{VersionCheckResult, VersionConstraint, check_version};
 
 // =============================================================================

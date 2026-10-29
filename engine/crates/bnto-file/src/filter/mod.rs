@@ -142,7 +142,7 @@ fn matches_extension(filename: &str, params: &serde_json::Map<String, serde_json
     }
 
     // Extract the file extension (without the dot).
-    let file_ext = filename.rsplit('.').next().unwrap_or("").to_lowercase();
+    let file_ext = bnto_core::file_extension(filename).to_lowercase();
 
     // Parse the comma-separated extension list.
     extensions_str

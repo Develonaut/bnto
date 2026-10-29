@@ -553,3 +553,12 @@ fn test_collect_follows_windows_junctions() {
     let names = collect_names(dir.path(), &[("flatten", serde_json::json!(false))]);
     assert_eq!(names, ["junction/inner.txt"]);
 }
+
+#[test]
+fn test_guess_mime_type_reads_only_a_real_extension() {
+    // ISS-33: a name with no dot used to be its own extension (`png`).
+    assert_eq!(guess_mime_type("png"), guess_mime_type("README"));
+    assert_eq!(guess_mime_type("v1.2/README"), guess_mime_type("README"));
+    assert_eq!(guess_mime_type("dir/.png"), guess_mime_type("README"));
+    assert_eq!(guess_mime_type("v1.2/a.png"), "image/png");
+}

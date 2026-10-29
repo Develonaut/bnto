@@ -78,8 +78,8 @@ impl NodeProcessor for ReadSpreadsheet {
 
         progress.report(50, &format!("Building {} row files...", table.rows.len()));
         let metadata = read_metadata(&table);
-        let stem = file_stem(&input.filename);
-        let files = row_files(&stem, format.extension(), format.mime_type(), table.rows);
+        let stem = bnto_core::file_stem(&input.filename);
+        let files = row_files(stem, format.extension(), format.mime_type(), table.rows);
         progress.report(100, "Done!");
         Ok(NodeOutput { files, metadata })
     }
@@ -103,14 +103,6 @@ fn check_row_cap(table: &Table, max_rows: u64, source: &str) -> Result<(), BntoE
          Increase the maxRows parameter to process larger files.",
         table.rows.len(),
     )))
-}
-
-fn file_stem(filename: &str) -> String {
-    if let Some(dot_pos) = filename.rfind('.') {
-        filename[..dot_pos].to_string()
-    } else {
-        filename.to_string()
-    }
 }
 
 // =============================================================================
@@ -464,5 +456,21 @@ mod tests {
         // Verify first and last rows
         assert_eq!(output.files[0].metadata.get("id").unwrap(), "0");
         assert_eq!(output.files[999].metadata.get("id").unwrap(), "999");
+    }
+
+    #[test]
+    fn test_rows_of_a_file_in_a_dotted_folder_stay_in_it() {
+        // ISS-33: the dot in the folder `v1.2` used to split the name.
+        let mut input = make_input("a\n1\n");
+        input.filename = "v1.2/data".to_string();
+        assert_eq!(process_ok(input).files[0].filename, "v1.2/data_row0.csv");
+    }
+
+    #[test]
+    fn test_a_dotfile_named_json_is_read_as_csv() {
+        // ISS-33: `dir/.json` has no extension, so `auto` reads it as CSV.
+        let mut input = make_input("a\n1\n");
+        input.filename = "dir/.json".to_string();
+        assert_eq!(process_ok(input).files.len(), 1);
     }
 }

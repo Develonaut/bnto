@@ -92,10 +92,7 @@ fn check_file_size(path: &Path, filename: &str, max_output_mb: u64) -> Result<()
 
 /// Derive MIME type from file extension for common media formats.
 pub(crate) fn mime_from_extension(filename: &str) -> String {
-    let ext = filename
-        .rsplit_once('.')
-        .map(|(_, e)| e.to_lowercase())
-        .unwrap_or_default();
+    let ext = bnto_core::file_extension(filename).to_lowercase();
 
     match ext.as_str() {
         "mp4" => "video/mp4",
@@ -111,4 +108,19 @@ pub(crate) fn mime_from_extension(filename: &str) -> String {
         _ => "application/octet-stream",
     }
     .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_a_dotfile_has_no_extension_to_guess_from() {
+        // ISS-33: `clips/.mp4` used to read as an MP4.
+        assert_eq!(
+            mime_from_extension("clips/.mp4"),
+            mime_from_extension("clips/data")
+        );
+        assert_eq!(mime_from_extension("v1.2/clip.mp4"), "video/mp4");
+    }
 }

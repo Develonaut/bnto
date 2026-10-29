@@ -14,11 +14,11 @@
 
 Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815). In progress: batch 4 (ISS-17 #816, ISS-34 #817). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815). In progress: batch 4 (ISS-17 #816, ISS-34 #817, ISS-33 #818). Batches keep their numbers.
 
 | #   | Batch               | Issues                                                                                     | Why                                                                                                                                                                                                                                                                                                           |
 | --- | ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 4   | Engine file nodes   | ISS-33, ISS-100, ISS-107                                                                   | One shared extension split for a dotted folder (ISS-33); `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100); `pattern` silently dropping the other rename params (ISS-107, a behavior change: `/workflow-expert` first)                                                                       |
+| 4   | Engine file nodes   | ISS-100, ISS-107                                                                           | `file-move`'s refusals claiming "nothing moved" mid-loop (ISS-100); `pattern` silently dropping the other rename params (ISS-107, a behavior change: `/workflow-expert` first)                                                                                                                                |
 | 5   | Engine templating   | ISS-35, ISS-58                                                                             | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                              |
 | 6   | Small code cleanups | ISS-103, ISS-104, ISS-105, ISS-106, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a removed node's generated doc left behind (ISS-105); `platforms` leaving out `cli` (ISS-106); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag |
 | 7   | Tooling and tests   | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18                                      | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                         |
@@ -42,7 +42,6 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-18  | A Windows process test times out waiting 20 s for PowerShell                                                            | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-29  | Errors on bnto.io go unseen: exception capture is off                                                                   | core        | Open                                             |
 | ISS-31  | Another app's events land in bnto.io's PostHog project                                                                  | analytics   | Open                                             |
-| ISS-33  | Output names and extension reads split on a dot in a folder name                                                        | engine      | Open                                             |
 | ISS-35  | Inside a loop, a data value is filled in as a template                                                                  | engine      | Open                                             |
 | ISS-37  | The homepage loads ~500 KB of JS that competes with its CSS                                                             | web perf    | Open                                             |
 | ISS-44  | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision)                   | web         | Open                                             |
@@ -114,25 +113,6 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 - **What PostHog shows:** 190 events (`$pageview`, `$web_vitals` and a custom event) from three hosts outside bnto.io, June 14 to October 7, 2026, arriving through a different `/ingest` proxy. The project's test-account filters exclude only localhost, an internal cohort and one IP, so these count in web analytics.
 - **Fix:** this is a PostHog config fix, not a repo change. Either give that app its own project key, or add a `$host` filter (`^(www\.)?bnto\.io$`) to the test-account filters.
 - **No repo test:** it's project config. After the fix, rerun the review's `$host` breakdown to confirm only bnto.io remains.
-
-### ISS-33: Output names and extension reads split on a dot in a folder name
-
-**Found:** October 24, 2026 (fixing ISS-23, which fixes `file-rename` alone). The fix for ISS-23 adds a shared split, `bnto-file/src/split_extension.rs`, that only looks for the dot in the last `/` segment and treats a leading dot as no extension.
-
-Many other places take the last `.` in the whole relative name, so a file with no extension in a dotted folder (`v1.2/data`), or a dotfile (`dir/.env`), gets a wrong stem and extension. Reproduced in a sandbox with `main` at #745:
-
-- `spreadsheet-clean` names `v1.2/data`'s output `v1-cleaned.2/data`: the file moves to another folder.
-- `file-inspect` reports `extension` `2/readme` for `v1.2/README`, `2/data` for `v1.2/data` and `env` for `dir/.env` (`bnto-file/src/inspect.rs:183-190`).
-- `file-filter` with `extensions: env` keeps `dir/.env` (`bnto-file/src/filter/mod.rs:145`).
-
-The same split, found by reading (not each reproduced):
-
-- **Output names that can move a file:** `bnto-image` `compress.rs:119`, `convert.rs:71`, `strip_exif.rs:47`, `resize/processor.rs:36`, `pad/processor.rs:41`, `overlay/processor.rs:39`; `bnto-vector/src/processor.rs:192`; `bnto-spreadsheet` `clean.rs:337`, `convert.rs:298`, `rename.rs:265`, `read/processor.rs:109`; `bnto-shell/src/stdout_mode.rs:86`.
-- **Format guesses that fall back to a default:** `bnto-file` `collect/mod.rs:141`, `render/mod.rs:166`; `bnto-shell/src/output_files.rs:96`; `bnto-spreadsheet/src/read/params.rs:64`.
-
-**Fix:** move the split to `bnto-core`, so every crate shares one, and call it everywhere above. The CLI's `bnto/src/output_names.rs:64-71` already splits correctly.
-
-- **Regression test:** one table-driven test of the shared split (`v1.2/README`, `dir/.env`, `a/b.tar.gz`), plus a test per node family that a suffixed output of `v1.2/data` stays in `v1.2/`. A grep check in `task check` that no crate but `bnto-core` calls `rfind('.')` on a name would stop new copies.
 
 ### ISS-35: Inside a loop, a data value is filled in as a template
 
