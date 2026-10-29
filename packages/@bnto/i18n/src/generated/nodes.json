@@ -313,19 +313,19 @@
     "fileRename": {
       "sanitize": {
         "label": "Sanitize",
-        "description": "Clean the filename before other transforms"
+        "description": "Clean the file name (not its folders) before other transforms. To fold folders into the name, replace \"/\" with \"-\" using Find in an earlier rename step"
       },
       "separator": {
         "label": "Separator",
-        "description": "Character to replace spaces and special characters (used with Sanitize)"
+        "description": "Character to replace spaces and special characters in the file name (used with Sanitize)"
       },
       "maxLength": {
         "label": "Max Length",
-        "description": "Maximum filename length after sanitize (0 = no limit)"
+        "description": "Maximum file name length after sanitize, folders not counted (0 = no limit)"
       },
       "find": {
         "label": "Find",
-        "description": "Text or regex pattern to search for in the filename"
+        "description": "Text or regex pattern to search for in the whole relative path, folders included"
       },
       "replace": {
         "label": "Replace",
@@ -333,19 +333,19 @@
       },
       "case": {
         "label": "Case",
-        "description": "Transform the filename to a specific case"
+        "description": "Transform the file name (not its folders) to a specific case"
       },
       "prefix": {
         "label": "Prefix",
-        "description": "Text to prepend to the filename"
+        "description": "Text to prepend to the file name (not its folders)"
       },
       "suffix": {
         "label": "Suffix",
-        "description": "Text to append before the file extension"
+        "description": "Text to append to the file name, before its extension"
       },
       "pattern": {
         "label": "Pattern",
-        "description": "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})",
+        "description": "Template for the whole relative path, folders included (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}}). Replaces the other name transforms; without {{name}} it drops the folders",
         "placeholder": "{{name}}-{{counter}}.{{ext}}"
       },
       "counterStart": {
