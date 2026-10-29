@@ -86,8 +86,9 @@ bnto dry-run backup.bnto.json --vars machine.json
 # Check recipe files without running them: unknown node types, parameters a
 # node refuses (e.g. a file-filter regex that doesn't compile), malformed
 # {{…}} placeholders, placeholders in the output folder no run can fill (an
-# {{item.*}}, an undeclared {{env.*}}), and every edge problem at every level
-# (cycles, edges to unknown or other-level nodes, unwired nodes). A required
+# {{item.*}}, an undeclared {{env.*}}, an unclosed {{), and every edge problem
+# at every level (cycles, edges to unknown or other-level nodes, unwired
+# nodes). A required
 # param left out (or given as "") for `bnto run -p node:param=value` to give
 # is a note, not a finding (`=<path>` for a file param), and `bnto run`
 # refuses it before any step runs;

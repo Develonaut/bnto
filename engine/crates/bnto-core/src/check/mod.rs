@@ -9,7 +9,7 @@
 
 mod edges;
 mod os_scope;
-mod placeholder;
+pub(crate) mod placeholder;
 mod run_time;
 mod when;
 

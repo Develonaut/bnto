@@ -1,6 +1,7 @@
 // The output node's `directory` fills every placeholder a run has before the
 // run starts, and refuses one left over before consent and before any folder
-// is made; `bnto check` flags the ones no run can fill (ISS-22).
+// is made; `bnto check` flags the ones no run can fill (ISS-22), and an
+// unclosed `{{` (ISS-79).
 
 mod helpers;
 
@@ -157,6 +158,24 @@ fn run_refuses_placeholders_nothing_fills_instead_of_dropping_them() {
 }
 
 #[test]
+fn run_refuses_an_unclosed_placeholder_and_makes_no_folder() {
+    let sandbox = Sandbox::new();
+    let recipe = save(&sandbox, &rename_recipe("out-{{ctx.date"));
+    let output = sandbox
+        .command()
+        .arg("run")
+        .arg(&recipe)
+        .arg("note.txt")
+        .env(KEY, "x")
+        .output()
+        .unwrap();
+    let err = stderr(&output);
+    assert_eq!(output.status.code(), Some(1), "{err}");
+    assert!(err.contains("unclosed placeholder \"{{ctx.date\""), "{err}");
+    assert!(made_in(sandbox.work_dir()).is_empty(), "made a folder");
+}
+
+#[test]
 fn a_dry_run_refuses_a_folder_nothing_fills_too() {
     // `--dry-run` writes nothing, but would name the folder it writes to.
     let sandbox = Sandbox::new();
@@ -256,4 +275,23 @@ fn check_passes_output_placeholders_a_run_fills() {
         .unwrap();
     let out = String::from_utf8_lossy(&output.stdout).into_owned();
     assert!(output.status.success(), "{out}");
+}
+
+#[test]
+fn check_flags_an_unclosed_output_placeholder() {
+    let sandbox = Sandbox::new();
+    let recipe = save(&sandbox, &rename_recipe("out-{{ctx.date"));
+    let output = sandbox
+        .command()
+        .arg("check")
+        .arg(&recipe)
+        .output()
+        .unwrap();
+    let out = String::from_utf8_lossy(&output.stdout).into_owned();
+    assert_eq!(output.status.code(), Some(1), "{out}");
+    assert!(
+        out.lines().any(|l| l.contains("param \"directory\"")
+            && l.contains("unclosed placeholder \"{{ctx.date\"")),
+        "{out}"
+    );
 }
