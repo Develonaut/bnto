@@ -2,10 +2,11 @@
 // the fields that item arrived with (the loop's item on top) and every
 // `{{file}}` with its name.
 //
-// The executor hands `{{item.*}}` to this node as written (`resolves_items`),
+// The executor hands this node its params unfilled (`resolves_loop_items`),
 // in a loop too, so it fills them here, once per file, in one pass over the
-// recipe's text as assert and report fill them (`placeholder::fill_value`):
-// a value that reads like a token is set as written. A key the item lacks is
+// recipe's text, the run's namespaces included, as assert and report fill
+// them (`placeholder::fill_value`): a value that reads like a token is set
+// as written. A key the item lacks is
 // a recipe mistake: it fails the run instead of becoming "".
 
 use serde_json::{Map, Value};
@@ -13,17 +14,18 @@ use serde_json::{Map, Value};
 use crate::control::placeholder::{self, Scope};
 
 /// `values` filled for the file `name`: `{{file}}` with `name`, every
-/// `{{item.KEY}}` from `item`, or why one can't be: the field being set, the
-/// key, and the fields `item` does have.
+/// `{{item.KEY}}` from `item`, the run's namespaces from `once`, or why one
+/// can't be: the field being set, the key, and the fields `item` does have.
 pub(super) fn fill_values(
     values: &Map<String, Value>,
     name: &str,
     item: &Map<String, Value>,
+    once: Scope<'_>,
 ) -> Result<Map<String, Value>, String> {
     let scope = Scope {
         file: Some(name),
         item: Some(item),
-        ..Scope::default()
+        ..once
     };
     values
         .iter()

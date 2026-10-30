@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::control::placeholder::{self, FILE, Scope, text};
+use crate::control::placeholder::{self, FILE, text};
 use crate::metadata::{Constraints, ParameterDef, ParameterType};
 
 /// The per-entry namespace: `{{entry.KEY}}` reads a field of `each`'s entry.
@@ -43,25 +43,6 @@ impl ReportParams {
             Some(other) => Err(not_a_list(other)),
         }
     }
-}
-
-/// `params` with `each` filled from the loop's item, which keeps a sole
-/// `{{item.KEY}}`'s list a list. Outside a loop it stays as written.
-pub(super) fn with_each_filled(
-    params: &serde_json::Map<String, Value>,
-    loop_item: Option<&serde_json::Map<String, Value>>,
-) -> Result<serde_json::Map<String, Value>, String> {
-    let mut filled = params.clone();
-    if let Some(each) = params.get("each") {
-        let scope = Scope {
-            item: loop_item,
-            ..Scope::default()
-        };
-        let each = placeholder::fill_value(each, scope)
-            .map_err(|m| format!("'each': {}", placeholder::no_value(&m.key, None, loop_item)))?;
-        filled.insert("each".to_string(), each);
-    }
-    Ok(filled)
 }
 
 /// `each` is a list, or text holding a placeholder that may resolve to one.

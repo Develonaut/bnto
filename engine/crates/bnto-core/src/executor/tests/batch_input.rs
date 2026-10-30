@@ -147,10 +147,17 @@ impl crate::processor::NodeProcessor for LabelProbe {
         &self,
         input: crate::processor::BatchInput,
         _progress: &ProgressReporter,
-        _ctx: &dyn ProcessContext,
+        ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let mut metadata = serde_json::Map::new();
-        metadata.insert("label".to_string(), input.params["label"].clone());
+        let label = input.params["label"].as_str().unwrap_or_default();
+        let scope = crate::control::placeholder::Scope {
+            run: Some(ctx),
+            ..Default::default()
+        };
+        let filled = crate::control::placeholder::fill_text(label, scope).unwrap();
+        metadata.insert("given".to_string(), input.params["label"].clone());
+        metadata.insert("label".to_string(), filled.into());
         Ok(NodeOutput {
             files: vec![],
             metadata,
@@ -185,11 +192,14 @@ fn run_label_probe(resolves_items: bool) -> Result<PipelineResult, BntoError> {
 }
 
 #[test]
-fn test_a_batch_node_that_resolves_items_gets_them_as_written() {
+fn test_a_batch_node_that_resolves_items_gets_its_params_unfilled() {
+    // It fills every token in one pass (ISS-35); its context answers the
+    // run's namespaces.
     let result = run_label_probe(true).unwrap();
+    let given = result.node_metadata["probe"]["given"].as_str().unwrap();
+    assert_eq!(given, "{{item.size}} on {{ctx.platform}}");
     let label = result.node_metadata["probe"]["label"].as_str().unwrap();
     assert!(label.starts_with("{{item.size}} on "), "{label}");
-    // Every other namespace still resolves.
     assert!(!label.contains("{{ctx."), "{label}");
 }
 

@@ -13,6 +13,7 @@
 mod fill;
 mod params;
 
+use crate::control::placeholder::{self, Scope};
 use crate::metadata::{InputCardinality, NodeCategory, NodeMetadata};
 use crate::processor::{BatchFile, BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use crate::progress::ProgressReporter;
@@ -95,12 +96,17 @@ impl NodeProcessor for EditFields {
         _progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let params = EditFieldsParams::read(&input.params).map_err(BntoError::InvalidInput)?;
         let loop_item = ctx.loop_item();
+        let once = Scope {
+            item: loop_item.as_ref(),
+            run: Some(ctx),
+            ..Scope::default()
+        };
+        let params = read_filled(&input.params, once).map_err(BntoError::InvalidInput)?;
         let files = input
             .files
             .into_iter()
-            .map(|f| edit_file(&params, f, loop_item.as_ref()))
+            .map(|f| edit_file(&params, f, once))
             .collect::<Result<_, _>>()?;
         Ok(NodeOutput {
             files,
@@ -109,16 +115,31 @@ impl NodeProcessor for EditFields {
     }
 }
 
+/// The params, all but `values` filled once from `once` (`values` is filled
+/// per file).
+fn read_filled(
+    params: &serde_json::Map<String, serde_json::Value>,
+    once: Scope<'_>,
+) -> Result<EditFieldsParams, String> {
+    let filled = placeholder::fill_params(params, once, &["values"]).map_err(|(param, m)| {
+        format!(
+            "'{param}': {}",
+            placeholder::no_value(&m.key, None, once.item)
+        )
+    })?;
+    EditFieldsParams::read(&filled)
+}
+
 /// One file with its fields set, its data and name as they arrived. The
 /// values read its metadata with the loop's item on top; the file keeps
 /// only its own metadata and what was set.
 fn edit_file(
     params: &EditFieldsParams,
     f: BatchFile,
-    loop_item: Option<&serde_json::Map<String, serde_json::Value>>,
+    once: Scope<'_>,
 ) -> Result<OutputFile, BntoError> {
-    let item = crate::control::placeholder::file_item(&f.metadata, loop_item);
-    let set = fill::fill_values(&params.values, &f.filename, &item)
+    let item = placeholder::file_item(&f.metadata, once.item);
+    let set = fill::fill_values(&params.values, &f.filename, &item, once)
         .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", f.filename)))?;
     let mut metadata = if params.keep_only_set {
         serde_json::Map::new()

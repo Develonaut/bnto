@@ -120,6 +120,16 @@ pub trait ProcessContext: Send + Sync {
     fn loop_item(&self) -> Option<serde_json::Map<String, serde_json::Value>> {
         None
     }
+
+    /// What the run fills `{{inner}}` with from its own namespaces (`fields`,
+    /// `env`, `ctx`, `node`), for a node the executor hands its params
+    /// unfilled (`NodeProcessor::resolves_loop_items`), so the node fills
+    /// every token in one pass. `whole` when the placeholder is the whole
+    /// value, which keeps its JSON type. `None` keeps it as written.
+    fn run_placeholder(&self, inner: &str, whole: bool) -> Option<serde_json::Value> {
+        let _ = (inner, whole);
+        None
+    }
 }
 
 /// No-op context for browser (WASM) execution.

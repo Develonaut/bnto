@@ -17,9 +17,9 @@ use crate::{BntoError, ProcessContext};
 
 use super::pass_through::pass_through;
 use super::placeholder::{self, Scope};
+use params::{AssertParams, build_assert_parameters};
 
 type Item = serde_json::Map<String, serde_json::Value>;
-use params::{AssertParams, build_assert_parameters};
 
 /// Assert processor — a comparison that fails the run when it doesn't hold.
 pub struct Assert;
@@ -96,15 +96,20 @@ impl NodeProcessor for Assert {
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let params = AssertParams::read(&input.params).map_err(BntoError::InvalidInput)?;
         let loop_item = ctx.loop_item();
+        let once = Scope {
+            item: loop_item.as_ref(),
+            run: Some(ctx),
+            ..Scope::default()
+        };
+        let params = read_filled(&input.params, once).map_err(BntoError::InvalidInput)?;
         if ctx.dry_run() {
-            for check in checks(&params, &input.files, loop_item.as_ref())? {
+            for check in checks(&params, &input.files, once)? {
                 progress.report_output(&format!("Would check: {}", check.describe()));
             }
             return Ok(pass_through(input.files));
         }
-        let reasons = failures(&params, &input.files, loop_item.as_ref());
+        let reasons = failures(&params, &input.files, once);
         if !reasons.is_empty() {
             let lead = params.message.as_deref().unwrap_or("Assertion failed");
             return Err(BntoError::ProcessingFailed(format!(
@@ -116,18 +121,30 @@ impl NodeProcessor for Assert {
     }
 }
 
+/// The params, all but `value` and `expected` filled once from `once`
+/// (those two are filled per check, below).
+fn read_filled(params: &Item, once: Scope<'_>) -> Result<AssertParams, String> {
+    let filled =
+        placeholder::fill_params(params, once, &["value", "expected"]).map_err(|(param, m)| {
+            format!(
+                "'{param}': {}",
+                placeholder::no_value(&m.key, None, once.item)
+            )
+        })?;
+    AssertParams::read(&filled)
+}
+
 /// Every reason the check fails: once, or once per file when it reads
 /// `{{file}}` or `{{item.*}}` (no files, nothing to check).
-fn failures(params: &AssertParams, files: &[BatchFile], loop_item: Option<&Item>) -> Vec<String> {
+fn failures(params: &AssertParams, files: &[BatchFile], once: Scope<'_>) -> Vec<String> {
     if !reads_file(params) {
-        return compare::compare(&params.value, params.op, &params.expected)
-            .err()
-            .into_iter()
-            .collect();
+        let checked = filled(params, once)
+            .and_then(|check| compare::compare(&check.value, check.op, &check.expected));
+        return checked.err().into_iter().collect();
     }
     files
         .iter()
-        .filter_map(|f| file_failure(params, f, loop_item))
+        .filter_map(|f| file_failure(params, f, once))
         .collect()
 }
 
@@ -136,12 +153,8 @@ fn reads_file(params: &AssertParams) -> bool {
 }
 
 /// Why the check fails for one file, named by it; `None` when it holds.
-fn file_failure(
-    params: &AssertParams,
-    file: &BatchFile,
-    loop_item: Option<&Item>,
-) -> Option<String> {
-    let checked = filled(params, file, loop_item)
+fn file_failure(params: &AssertParams, file: &BatchFile, once: Scope<'_>) -> Option<String> {
+    let checked = for_file(params, file, once)
         .and_then(|check| compare::compare(&check.value, check.op, &check.expected));
     checked.err().map(|why| format!("{}: {why}", file.filename))
 }
@@ -150,34 +163,44 @@ fn file_failure(
 fn checks(
     params: &AssertParams,
     files: &[BatchFile],
-    loop_item: Option<&Item>,
+    once: Scope<'_>,
 ) -> Result<Vec<AssertParams>, BntoError> {
     if !reads_file(params) {
-        return Ok(vec![params.clone()]);
+        return Ok(vec![filled(params, once).map_err(BntoError::InvalidInput)?]);
     }
     let fill = |file: &BatchFile| {
-        filled(params, file, loop_item)
+        for_file(params, file, once)
             .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", file.filename)))
     };
     files.iter().map(fill).collect()
 }
 
-/// The check for one file: `{{file}}` and `{{item.*}}` filled in one pass,
-/// from its metadata with the loop's item on top.
-fn filled(
+/// The check for one file: its name and its metadata with the loop's item
+/// on top.
+fn for_file(
     params: &AssertParams,
     file: &BatchFile,
-    loop_item: Option<&Item>,
+    once: Scope<'_>,
 ) -> Result<AssertParams, String> {
-    let item = placeholder::file_item(&file.metadata, loop_item);
+    let item = placeholder::file_item(&file.metadata, once.item);
     let scope = Scope {
         file: Some(&file.filename),
         item: Some(&item),
-        ..Scope::default()
+        ..once
     };
+    filled(params, scope)
+}
+
+/// `value` and `expected` filled from `scope` in one pass each.
+fn filled(params: &AssertParams, scope: Scope<'_>) -> Result<AssertParams, String> {
     let fill = |text: &str| {
         placeholder::fill_text(text, scope).map_err(|m| {
-            let keys: Vec<&str> = item.keys().map(String::as_str).collect();
+            let keys: Vec<&str> = scope
+                .item
+                .into_iter()
+                .flat_map(|i| i.keys())
+                .map(String::as_str)
+                .collect();
             format!("has no item \"{}\" (it has: {})", m.key, keys.join(", "))
         })
     };

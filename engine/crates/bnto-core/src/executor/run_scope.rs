@@ -3,8 +3,9 @@
 // `record_write`/`recorded_writes` keep the run's write log, so a refusal in
 // a later loop iteration can name what earlier ones copied (ISS-59).
 // `check_time_limit` answers from the run's limit, so a batch node can stop
-// between files (ISS-60). `loop_item` is the enclosing loop's item, which a
-// node that fills `{{item.*}}` itself reads (ISS-58). Every other `ProcessContext` method forwards to the
+// between files (ISS-60). `loop_item` is the enclosing loop's item, and
+// `run_placeholder` fills the run's own namespaces for the node, which a node
+// that fills its params itself reads (ISS-58, ISS-35). Every other `ProcessContext` method forwards to the
 // consumer's context unchanged.
 
 use std::path::{Path, PathBuf};
@@ -16,7 +17,10 @@ use crate::context::ProcessContext;
 use crate::errors::BntoError;
 
 use super::PipelineContext;
+use super::field_scope::FieldValues;
 use super::held::HeldFiles;
+use super::node_outputs::NodeOutputSource;
+use super::template::{TemplateContext, run_placeholder};
 use super::time_limit::{TimeLimit, check_limit};
 
 /// The files this run has written, in order, shared by every node of the run.
@@ -30,11 +34,28 @@ pub(super) struct RunScope<'a> {
     time_limit: Option<TimeLimit>,
     now_ms: &'a (dyn Fn() -> u64 + Send + Sync),
     loop_item: Option<&'a serde_json::Map<String, serde_json::Value>>,
+    /// What `run_placeholder` fills from: the node's fields in scope, the
+    /// records of the nodes run so far, and the run's start.
+    run: RunValues<'a>,
+}
+
+pub(super) struct RunValues<'a> {
+    fields: FieldValues,
+    node_outputs: &'a (dyn NodeOutputSource + Sync),
+    started_ms: u64,
 }
 
 impl<'a> RunScope<'a> {
-    /// The context a batch node running in `ctx` gets.
-    pub(super) fn of<F: Fn() -> u64 + Copy>(ctx: &'a PipelineContext<'_, F>) -> Self {
+    /// The context the batch node `node` running in `ctx` gets.
+    pub(super) fn of<F: Fn() -> u64 + Copy>(
+        ctx: &'a PipelineContext<'_, F>,
+        node: &crate::pipeline::PipelineNode,
+    ) -> Self {
+        let run = RunValues {
+            fields: ctx.fields_for(node),
+            node_outputs: &ctx.node_outputs,
+            started_ms: ctx.started_ms,
+        };
         Self {
             inner: ctx.process_ctx,
             held: ctx.held.as_deref(),
@@ -42,6 +63,7 @@ impl<'a> RunScope<'a> {
             time_limit: ctx.time_limit,
             now_ms: &*ctx.live_clock,
             loop_item: ctx.loop_item.as_ref(),
+            run,
         }
     }
 }
@@ -71,6 +93,17 @@ impl ProcessContext for RunScope<'_> {
 
     fn loop_item(&self) -> Option<serde_json::Map<String, serde_json::Value>> {
         self.loop_item.cloned()
+    }
+
+    fn run_placeholder(&self, inner: &str, whole: bool) -> Option<serde_json::Value> {
+        let tpl = TemplateContext {
+            field_values: &self.run.fields,
+            process_ctx: self.inner,
+            node_outputs: self.run.node_outputs,
+            loop_item: &None,
+            run_started_ms: Some(self.run.started_ms),
+        };
+        run_placeholder(inner, whole, &tpl)
     }
 
     // --- Forwarded to the consumer's context ---
@@ -228,6 +261,14 @@ mod tests {
         assert!(scope.dry_run());
     }
 
+    struct NoRecords;
+
+    impl NodeOutputSource for NoRecords {
+        fn node_output(&self, _: &str) -> Option<&serde_json::Value> {
+            None
+        }
+    }
+
     impl<'a> RunScope<'a> {
         /// A scope over `inner` with nothing held and no time limit.
         fn unlimited(inner: &'a dyn ProcessContext, writes: &'a Mutex<Vec<PathBuf>>) -> Self {
@@ -238,6 +279,11 @@ mod tests {
                 time_limit: None,
                 now_ms: &|| 0,
                 loop_item: None,
+                run: RunValues {
+                    fields: FieldValues::new(),
+                    node_outputs: &NoRecords,
+                    started_ms: 0,
+                },
             }
         }
     }
@@ -266,6 +312,26 @@ mod tests {
             ..RunScope::unlimited(&marked, &writes)
         };
         assert_eq!(in_loop.loop_item(), Some(item.clone()));
+    }
+
+    #[test]
+    fn test_the_run_fills_its_namespaces_for_the_node() {
+        let marked = Marked {
+            dir: PathBuf::from("work"),
+        };
+        let writes = Mutex::default();
+        let mut scope = RunScope::unlimited(&marked, &writes);
+        scope.run.fields.insert("n".to_string(), 2.into());
+        assert_eq!(scope.run_placeholder("fields.n", true), Some(2.into()));
+        assert_eq!(scope.run_placeholder("fields.n", false), Some("2".into()));
+        assert_eq!(scope.run_placeholder("fields.gone", true), None);
+        let env = scope.run_placeholder("env.HOME", false);
+        assert_eq!(env, Some("env HOME".into()), "from the consumer's env");
+        assert_eq!(
+            scope.run_placeholder("item.k", false),
+            None,
+            "items are the node's"
+        );
     }
 
     fn at_3s() -> u64 {

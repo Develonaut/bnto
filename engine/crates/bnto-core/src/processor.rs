@@ -199,13 +199,18 @@ pub trait NodeProcessor {
         false
     }
 
-    /// True when such a node fills `{{item.*}}` inside a loop too, from each
-    /// file's metadata with the loop's item on top (`ProcessContext::loop_item`),
-    /// so the executor hands them over as written there as well (ISS-58).
-    /// False keeps the executor filling them from the loop's item first, for
-    /// a node that fills items only in part of its params (shell-run's `each`).
+    /// True when such a node fills all its params itself, in one pass, so a
+    /// filled value is never scanned again (ISS-35): the executor hands them
+    /// over unfilled, in a loop too. The node fills `{{item.*}}` from each
+    /// file's metadata with the loop's item on top (`ProcessContext::loop_item`,
+    /// ISS-58) and the run's namespaces through `ProcessContext::run_placeholder`
+    /// (`control::placeholder::Scope` does both). False keeps the executor
+    /// filling them first, for a node that fills items only in part of its
+    /// params (shell-run's `each`).
     ///
-    /// Default: the same as `resolves_items`.
+    /// Default: the same as `resolves_items`, so a new node that fills items
+    /// itself must fill every param through `Scope`, or it sees templates
+    /// where it expects values.
     fn resolves_loop_items(&self) -> bool {
         self.resolves_items()
     }

@@ -1,15 +1,20 @@
 // `{{<namespace>.KEY}}` placeholders a batch node (assert, report, edit-fields,
 // file-copy, file-render) fills itself, and the per-file `{{file}}`.
 //
-// The executor leaves a batch node's `{{item.*}}`, `{{file}}` and report's
-// `{{entry.*}}` as written, in a loop too (`resolves_items`). The node fills
-// them in one pass over the recipe's template (`fill_text`, `fill_value`),
-// once per file or entry, so a filled value that reads like a token is kept
-// as written (ISS-35). A file's item is its metadata with the enclosing
-// loop's item on top (`file_item`), as the executor builds it for a per-file
-// node, so a key a step inside the iteration adds is there (ISS-58).
+// The executor hands these nodes their params unfilled, in a loop too
+// (`resolves_loop_items`). The node fills every token in one pass over the
+// recipe's template (`fill_text`, `fill_value`, `fill_params`): its own
+// (`{{file}}`, `{{item.*}}`, report's `{{entry.*}}`) and the run's
+// (`{{fields.*}}`, `{{env.*}}`, `{{ctx.*}}`, `{{node.*}}`, answered by
+// `ProcessContext::run_placeholder`). A filled value is never scanned again,
+// so one that reads like a token is kept as written (ISS-35). A file's item
+// is its metadata with the enclosing loop's item on top (`file_item`), as
+// the executor builds it for a per-file node, so a key a step inside the
+// iteration adds is there (ISS-58).
 
 use serde_json::{Map, Value};
+
+use crate::context::ProcessContext;
 
 /// The per-file namespace: `{{item.KEY}}` reads the incoming file's metadata.
 pub const ITEM: &str = "item";
@@ -26,14 +31,6 @@ fn open(namespace: &str) -> String {
 /// Whether `text` reads any `{{<namespace>.KEY}}`.
 pub fn reads(text: &str, namespace: &str) -> bool {
     text.contains(&open(namespace))
-}
-
-/// The key when `text` is exactly one `{{<namespace>.KEY}}` (surrounding
-/// whitespace allowed), as the executor decides whether a filled value keeps
-/// its JSON type.
-pub fn sole_key<'a>(text: &'a str, namespace: &str) -> Option<&'a str> {
-    let (prefix, key) = crate::executor::template::extract_sole_placeholder(text)?;
-    (prefix == namespace).then_some(key)
 }
 
 /// Why `{{item.KEY}}` can't be filled: no value for `file`, and the keys
@@ -56,13 +53,15 @@ pub(crate) fn reads_file(text: &str) -> bool {
 }
 
 /// What one fill reads: the file's name for `{{file}}`, an item for
-/// `{{item.KEY}}`, report's entry for `{{entry}}` and `{{entry.KEY}}`. A
-/// token whose source isn't set is kept as written, as is any other `{{…}}`.
-#[derive(Debug, Default, Clone, Copy)]
+/// `{{item.KEY}}`, report's entry for `{{entry}}` and `{{entry.KEY}}`, and
+/// the run (`run_placeholder`) for any other namespace. A token whose source
+/// isn't set is kept as written.
+#[derive(Default, Clone, Copy)]
 pub struct Scope<'a> {
     pub file: Option<&'a str>,
     pub item: Option<&'a Map<String, Value>>,
     pub entry: Option<&'a Value>,
+    pub run: Option<&'a dyn ProcessContext>,
 }
 
 /// A key the scope's item or entry doesn't have.
@@ -74,9 +73,19 @@ pub struct Missing {
 }
 
 impl Scope<'_> {
-    /// The value `{{inner}}` reads, `None` to keep it as written, or the key
-    /// the item or entry lacks.
+    /// The value `{{inner}}` reads as a whole value (a run value keeps its
+    /// JSON type), `None` to keep it as written, or the key the item or entry
+    /// lacks.
     pub fn value(&self, inner: &str) -> Result<Option<Value>, Missing> {
+        self.lookup(inner, true)
+    }
+
+    /// The text `{{inner}}` fills in among other text.
+    pub fn text(&self, inner: &str) -> Result<Option<String>, Missing> {
+        Ok(self.lookup(inner, false)?.map(|v| text(&v)))
+    }
+
+    fn lookup(&self, inner: &str, whole: bool) -> Result<Option<Value>, Missing> {
         if inner == "file" {
             return Ok(self.file.map(|name| Value::String(name.to_string())));
         }
@@ -92,12 +101,7 @@ impl Scope<'_> {
             let fields = self.entry.map(|e| e.as_object().unwrap_or(&no_fields));
             return lookup(fields, ENTRY, key);
         }
-        Ok(None)
-    }
-
-    /// `value`, as text.
-    pub fn text(&self, inner: &str) -> Result<Option<String>, Missing> {
-        Ok(self.value(inner)?.map(|v| text(&v)))
+        Ok(self.run.and_then(|run| run.run_placeholder(inner, whole)))
     }
 }
 
@@ -132,6 +136,12 @@ pub fn fill_with<E>(
     crate::executor::interpolate::try_interpolate(text, fill)
 }
 
+/// `text` with a node's own tokens filled in one pass by `fill` (`None`
+/// keeps a token as written), such as file-rename's `{{name}}` and `{{ext}}`.
+pub fn fill_tokens(text: &str, fill: impl Fn(&str) -> Option<String>) -> String {
+    crate::executor::interpolate::interpolate(text, fill)
+}
+
 /// `value` filled from `scope`, recursing into lists and maps. Text that is
 /// one whole token is the value itself, type and all, as the executor fills
 /// a sole placeholder; other text stays text.
@@ -155,6 +165,23 @@ fn fill_string(text: &str, scope: Scope<'_>) -> Result<Value, Missing> {
         return Ok(value);
     }
     fill_text(text, scope).map(Value::String)
+}
+
+/// `params` filled from `scope`, all but those named in `per_file`, which
+/// the node fills itself, once per file; or the param and key that can't be.
+pub fn fill_params(
+    params: &Map<String, Value>,
+    scope: Scope<'_>,
+    per_file: &[&str],
+) -> Result<Map<String, Value>, (String, Missing)> {
+    let fill = |(name, value): (&String, &Value)| {
+        if per_file.contains(&name.as_str()) {
+            return Ok((name.clone(), value.clone()));
+        }
+        let filled = fill_value(value, scope).map_err(|m| (name.clone(), m))?;
+        Ok((name.clone(), filled))
+    };
+    params.iter().map(fill).collect()
 }
 
 /// The inside of `text` (trimmed) when it is exactly one `{{…}}`.
@@ -211,7 +238,7 @@ mod tests {
         Scope {
             file: Some(name),
             item: Some(item),
-            entry: None,
+            ..Scope::default()
         }
     }
 
@@ -289,6 +316,55 @@ mod tests {
         let loop_item = values(json!({ "k": "row" }));
         let item = file_item(&metadata, Some(&loop_item));
         assert_eq!(Value::Object(item), json!({ "k": "row", "added": 1 }));
+    }
+
+    /// A run whose `fields.x` holds a token and whose `fields.n` is a number.
+    struct Run;
+
+    impl ProcessContext for Run {
+        fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, crate::BntoError> {
+            crate::context::NoopContext.run_command(cmd, args)
+        }
+        fn temp_file(&self, suffix: &str) -> Result<std::path::PathBuf, crate::BntoError> {
+            crate::context::NoopContext.temp_file(suffix)
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&std::path::Path, crate::BntoError> {
+            crate::context::NoopContext.work_dir()
+        }
+        fn run_placeholder(&self, inner: &str, whole: bool) -> Option<Value> {
+            match inner {
+                "fields.x" => Some(json!("{{file}}")),
+                "fields.n" if whole => Some(json!(2)),
+                "fields.n" => Some(json!("2")),
+                _ => None,
+            }
+        }
+    }
+
+    #[test]
+    fn test_the_runs_namespaces_fill_in_the_same_pass() {
+        let v = values(json!({}));
+        let scope = Scope {
+            run: Some(&Run),
+            ..file_scope("a.ts", &v)
+        };
+        let out = fill_text("{{fields.x}} {{file}} n={{fields.n}} {{fields.y}}", scope);
+        assert_eq!(out.unwrap(), "{{file}} a.ts n=2 {{fields.y}}");
+        assert_eq!(fill_value(&json!("{{fields.n}}"), scope).unwrap(), json!(2));
+    }
+
+    #[test]
+    fn test_fill_params_leaves_the_per_file_ones_as_written() {
+        let params = values(json!({ "a": "{{fields.n}}", "b": "{{fields.n}}" }));
+        let scope = Scope {
+            run: Some(&Run),
+            ..Scope::default()
+        };
+        let out = fill_params(&params, scope, &["b"]).unwrap();
+        assert_eq!(Value::Object(out), json!({ "a": 2, "b": "{{fields.n}}" }));
     }
 
     #[test]

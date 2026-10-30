@@ -9,6 +9,7 @@ mod escape;
 mod fill;
 mod params;
 
+use bnto_core::control::placeholder::{self, Scope};
 use bnto_core::metadata::{InputCardinality, NodeCategory, NodeMetadata};
 use bnto_core::processor::{
     BatchFile, BatchInput, FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile,
@@ -70,9 +71,11 @@ impl NodeProcessor for FileRender {
         true
     }
 
-    /// Without a loop to read, header, footer and filename may not read an item.
+    /// Header, footer and filename may never read `{{file}}`. They may read
+    /// `{{item.*}}` inside a loop, which validate can't see, so the run
+    /// refuses that outside one.
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-        let read = RenderParams::read(params).and_then(|p| p.refuse_per_item_tokens(false));
+        let read = RenderParams::read(params).and_then(|p| p.refuse_per_item_tokens(true));
         read.err().into_iter().collect()
     }
 
@@ -103,33 +106,42 @@ impl NodeProcessor for FileRender {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let loop_item = ctx.loop_item();
-        let params = read_once_filled(&input.params, loop_item.as_ref(), input.files.len())
+        let once = Scope {
+            item: loop_item.as_ref(),
+            run: Some(ctx),
+            ..Scope::default()
+        };
+        let params = read_once_filled(&input.params, once, input.files.len())
             .map_err(BntoError::InvalidInput)?;
-        let text = render(&params, &input.files, loop_item.as_ref())?;
+        let text = render(&params, &input.files, once)?;
         let rows = input.files.len();
         progress.report_output(&format!("Rendered {}: {rows} rows", params.filename));
         Ok(output(&params.filename, text, rows))
     }
 }
 
-/// The params with header, footer and filename filled once, from the loop's
-/// item (and `{{count}}` in header and footer), or why they can't be.
+/// The params filled once from the loop's item and the run: the header,
+/// footer and filename (and `{{count}}` in header and footer) by
+/// `fill_once`, the rest as values; or why they can't be.
 fn read_once_filled(
     params: &Params,
-    loop_item: Option<&Params>,
+    once: Scope<'_>,
     count: usize,
 ) -> Result<RenderParams, String> {
-    let mut read = RenderParams::read(params)?;
-    read.refuse_per_item_tokens(loop_item.is_some())?;
-    let once = |name: &str, text: &str, count| {
-        fill::fill_once(text, loop_item, count).map_err(|key| {
-            let why = bnto_core::control::placeholder::no_value(&key, None, loop_item);
-            format!("'{name}': {why}")
-        })
+    let per_call = ["row", "header", "footer", "filename"];
+    let no_value = |name: &str, key: &str| {
+        format!("'{name}': {}", placeholder::no_value(key, None, once.item))
     };
-    read.header = once("header", &read.header, Some(count))?;
-    read.footer = once("footer", &read.footer, Some(count))?;
-    read.filename = once("filename", &read.filename, None)?;
+    let filled = placeholder::fill_params(params, once, &per_call)
+        .map_err(|(name, m)| no_value(&name, &m.key))?;
+    let mut read = RenderParams::read(&filled)?;
+    read.refuse_per_item_tokens(once.item.is_some())?;
+    let fill = |name: &str, text: &str, count| {
+        fill::fill_once(text, once, count).map_err(|key| no_value(name, &key))
+    };
+    read.header = fill("header", &read.header, Some(count))?;
+    read.footer = fill("footer", &read.footer, Some(count))?;
+    read.filename = fill("filename", &read.filename, None)?;
     Ok(read)
 }
 
@@ -141,12 +153,12 @@ type Params = serde_json::Map<String, serde_json::Value>;
 fn render(
     params: &RenderParams,
     items: &[BatchFile],
-    loop_item: Option<&Params>,
+    once: Scope<'_>,
 ) -> Result<String, BntoError> {
     let count = items.len();
     let row = |item: &BatchFile| {
-        let values = bnto_core::control::placeholder::file_item(&item.metadata, loop_item);
-        fill::fill_row(&params.row, item, &values, count, params.escape)
+        let values = placeholder::file_item(&item.metadata, once.item);
+        fill::fill_row(&params.row, item, &values, count, params.escape, once)
             .map_err(|key| missing(&key, item, &values))
     };
     let rows = items.iter().map(row).collect::<Result<Vec<_>, _>>()?;

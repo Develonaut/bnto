@@ -206,17 +206,23 @@ fn test_a_missing_item_key_fails_naming_the_key_and_the_item() {
 
 #[test]
 fn test_header_and_footer_may_not_read_an_item() {
-    for (param, value) in [
-        ("header", "{{item.name}}"),
-        ("footer", "{{file}}"),
-        ("filename", "{{item.name}}.md"),
+    // `{{item.*}}` is the loop's item inside a loop, which validate can't
+    // see, so only the run refuses it (outside one); `{{file}}` never fills.
+    for (param, value, validate_refuses) in [
+        ("header", "{{item.name}}", false),
+        ("footer", "{{file}}", true),
+        ("filename", "{{item.name}}.md", false),
     ] {
         let mut params = table("none");
         params[param] = json!(value);
         let errors = FileRender::new().validate(params.as_object().unwrap());
-        assert_eq!(errors.len(), 1, "{param}: {errors:?}");
-        assert!(errors[0].contains(param), "{errors:?}");
-        assert!(render(params, three_items()).is_err());
+        assert_eq!(
+            errors.len(),
+            usize::from(validate_refuses),
+            "{param}: {errors:?}"
+        );
+        let err = render(params, three_items()).err().unwrap().to_string();
+        assert!(err.contains(param), "{err}");
     }
 }
 

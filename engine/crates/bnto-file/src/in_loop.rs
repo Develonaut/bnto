@@ -1,5 +1,6 @@
 // A test context inside a loop, for nodes that fill `{{item.*}}` themselves:
 // `loop_item` answers its item, everything else is the no-op context.
+// Test-only, so each crate keeps its own copy (twin: `bnto-core/src/control/in_loop.rs`).
 
 use std::path::{Path, PathBuf};
 

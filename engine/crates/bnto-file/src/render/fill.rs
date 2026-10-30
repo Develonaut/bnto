@@ -1,8 +1,8 @@
 // Fills file-render's own tokens in one pass over the recipe's template:
 // `{{item.KEY}}` and `{{file}}` per item, `{{count}}` anywhere.
 //
-// The node opts in with `resolves_items()`, so the executor hands `{{item.*}}`
-// over as written, in a loop too. A row reads each item's metadata with the
+// The node opts in with `resolves_items()`, so the executor hands its params
+// over unfilled, in a loop too, and the run's namespaces fill here as well. A row reads each item's metadata with the
 // loop's item on top, its values escaped; the header, footer and filename are
 // written once, so they read only the loop's item (`fill_once`). Filling is
 // `bnto_core::control::placeholder`'s, so a value that reads like a token is
@@ -38,11 +38,12 @@ pub(super) fn fill_row(
     values: &Map<String, Value>,
     count: usize,
     escape: Escape,
+    once: Scope<'_>,
 ) -> Result<String, String> {
     let scope = Scope {
         file: Some(&item.filename),
         item: Some(values),
-        ..Scope::default()
+        ..once
     };
     placeholder::fill_with(row, |inner| {
         if inner == COUNT {
@@ -53,20 +54,17 @@ pub(super) fn fill_row(
     })
 }
 
-/// A template written once (header, footer, filename) filled from the loop's
-/// item, and `{{count}}` when `count` is given, or the key the loop's item
-/// lacks. Values go in as they are, as the executor filled them before.
+/// A template written once (header, footer, filename) filled from `once`
+/// (the loop's item and the run), and `{{count}}` when `count` is given, or
+/// the key the loop's item lacks. Values go in as they are, as the executor
+/// filled them before.
 pub(super) fn fill_once(
     text: &str,
-    loop_item: Option<&Map<String, Value>>,
+    once: Scope<'_>,
     count: Option<usize>,
 ) -> Result<String, String> {
-    let scope = Scope {
-        item: loop_item,
-        ..Scope::default()
-    };
     placeholder::fill_with(text, |inner| match count {
         Some(count) if inner == COUNT => Ok(Some(count.to_string())),
-        _ => scope.text(inner).map_err(|missing| missing.key),
+        _ => once.text(inner).map_err(|missing| missing.key),
     })
 }

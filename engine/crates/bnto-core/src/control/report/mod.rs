@@ -21,6 +21,7 @@ use crate::progress::ProgressReporter;
 use crate::{BntoError, ProcessContext};
 
 use super::pass_through::pass_through;
+use super::placeholder::{self, Scope};
 use params::{ReportParams, build_report_parameters};
 
 /// Report processor — prints a templated line without failing the run.
@@ -98,8 +99,12 @@ impl NodeProcessor for Report {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let loop_item = ctx.loop_item();
-        let lines = report_lines(&input, loop_item.as_ref(), ctx.dry_run())
-            .map_err(BntoError::InvalidInput)?;
+        let once = Scope {
+            item: loop_item.as_ref(),
+            run: Some(ctx),
+            ..Scope::default()
+        };
+        let lines = report_lines(&input, once, ctx.dry_run()).map_err(BntoError::InvalidInput)?;
         // Every line is filled before any prints, so a refusal prints nothing.
         let lead = if ctx.dry_run() { "Would report: " } else { "" };
         for line in &lines {
@@ -109,20 +114,23 @@ impl NodeProcessor for Report {
     }
 }
 
-/// The lines to print, `each` filled from the loop's item first. In a dry
-/// run the step `each` reads may not have run, so an `each` that isn't a
-/// list yet prints the message as written.
-fn report_lines(
-    input: &BatchInput,
-    loop_item: Option<&serde_json::Map<String, serde_json::Value>>,
-    dry_run: bool,
-) -> Result<Vec<String>, String> {
-    let raw = params::with_each_filled(&input.params, loop_item)?;
-    let params = ReportParams::read(&raw)?;
+/// The lines to print: every param but `message` filled once from `once`
+/// (`each` keeps a whole placeholder's list a list), then each line. In a
+/// dry run the step `each` reads may not have run, so an `each` that isn't
+/// a list yet prints the message as written.
+fn report_lines(input: &BatchInput, once: Scope<'_>, dry_run: bool) -> Result<Vec<String>, String> {
+    let filled =
+        placeholder::fill_params(&input.params, once, &["message"]).map_err(|(param, m)| {
+            format!(
+                "'{param}': {}",
+                placeholder::no_value(&m.key, None, once.item)
+            )
+        })?;
+    let params = ReportParams::read(&filled)?;
     if dry_run && params.entries().is_err() {
         return Ok(vec![params.message]);
     }
-    lines::lines(&params, &input.files, loop_item)
+    lines::lines(&params, &input.files, once)
 }
 
 #[cfg(test)]
