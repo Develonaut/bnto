@@ -104,9 +104,7 @@ impl NodeProcessor for Assert {
         };
         let params = read_filled(&input.params, once).map_err(BntoError::InvalidInput)?;
         if ctx.dry_run() {
-            for check in checks(&params, &input.files, once)? {
-                progress.report_output(&format!("Would check: {}", check.describe()));
-            }
+            report_checks(&params, &input.files, once, progress)?;
             return Ok(pass_through(input.files));
         }
         let reasons = failures(&params, &input.files, once);
@@ -119,6 +117,19 @@ impl NodeProcessor for Assert {
         }
         Ok(pass_through(input.files))
     }
+}
+
+/// A dry run's lines: each check it would make, filled.
+fn report_checks(
+    params: &AssertParams,
+    files: &[BatchFile],
+    once: Scope<'_>,
+    progress: &ProgressReporter,
+) -> Result<(), BntoError> {
+    for check in checks(params, files, once)? {
+        progress.report_output(&format!("Would check: {}", check.describe()));
+    }
+    Ok(())
 }
 
 /// The params, all but `value` and `expected` filled once from `once`

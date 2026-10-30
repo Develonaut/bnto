@@ -5,8 +5,8 @@
 // `check_time_limit` answers from the run's limit, so a batch node can stop
 // between files (ISS-60). `loop_item` is the enclosing loop's item, and
 // `run_placeholder` fills the run's own namespaces for the node, which a node
-// that fills its params itself reads (ISS-58, ISS-35). Every other `ProcessContext` method forwards to the
-// consumer's context unchanged.
+// that fills its params itself reads (ISS-58, ISS-35). Every other
+// `ProcessContext` method forwards to the consumer's context unchanged.
 
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
