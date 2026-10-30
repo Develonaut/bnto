@@ -4,11 +4,10 @@
 // fields `values` names, each value a static one or a template over the
 // fields the file arrived with (`{{item.first}} {{item.last}}`). Files pass
 // through with their data untouched; only their metadata changes. It runs as
-// a batch and fills `{{item.*}}` and `{{file}}` (the file's name) itself, so
-// a field an item lacks fails the run naming the field and the item. (Inside
-// a loop the executor fills `{{item.*}}` from the loop's item first, and
-// refuses a key that item lacks; it never fills `{{file}}`.) A dry run sets
-// fields too: nothing is written.
+// a batch and fills `{{item.*}}` and `{{file}}` (the file's name) itself, in
+// a loop too (the loop's item on top of the file's), so a field an item lacks
+// fails the run naming the field and the item. A dry run sets fields too:
+// nothing is written.
 
 mod fill;
 mod params;

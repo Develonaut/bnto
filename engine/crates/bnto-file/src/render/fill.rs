@@ -2,9 +2,10 @@
 // `{{item.KEY}}` and `{{file}}` per item, `{{count}}` anywhere.
 //
 // The node opts in with `resolves_items()`, so the executor hands its params
-// over unfilled, in a loop too, and the run's namespaces fill here as well. A row reads each item's metadata with the
-// loop's item on top, its values escaped; the header, footer and filename are
-// written once, so they read only the loop's item (`fill_once`). Filling is
+// over unfilled, in a loop too, and the run's namespaces fill here as well.
+// A row reads each item's metadata with the loop's item on top, its values
+// escaped (run values too); the header, footer and filename are written
+// once, so they read only the loop's item (`fill_once`). Filling is
 // `bnto_core::control::placeholder`'s, so a value that reads like a token is
 // written as it is.
 
@@ -45,6 +46,9 @@ pub(super) fn fill_row(
         item: Some(values),
         ..once
     };
+    if scope.keeps_as_written(row) {
+        return Ok(row.to_string());
+    }
     placeholder::fill_with(row, |inner| {
         if inner == COUNT {
             return Ok(Some(count.to_string()));
@@ -63,6 +67,9 @@ pub(super) fn fill_once(
     once: Scope<'_>,
     count: Option<usize>,
 ) -> Result<String, String> {
+    if once.keeps_as_written(text) {
+        return Ok(text.to_string());
+    }
     placeholder::fill_with(text, |inner| match count {
         Some(count) if inner == COUNT => Ok(Some(count.to_string())),
         _ => once.text(inner).map_err(|missing| missing.key),

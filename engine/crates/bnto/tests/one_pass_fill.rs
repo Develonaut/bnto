@@ -120,3 +120,78 @@ fn in_a_loop_a_node_value_holding_an_item_token_is_not_filled_again() {
     assert!(output.status.success(), "{text}");
     assert!(text.contains("path={{item.first}}"), "{text}");
 }
+
+// --- A whole token the run can't fill stays as written, as the executor keeps it ---
+
+#[test]
+fn report_keeps_a_whole_token_with_no_value_as_written() {
+    let dir = temp_output_dir();
+    let say = json!({ "id": "say", "type": "report",
+        "parameters": { "message": "{{ctx.nope}}" } });
+    let recipe = write_recipe(dir.path(), json!([input(), say, output_none()]), None);
+    let output = run(dir.path(), &recipe, &[], &[]);
+    let text = text(&output);
+    assert!(output.status.success(), "{text}");
+    assert!(text.contains("{{ctx.nope}}"), "{text}");
+}
+
+fn report_each_of_a_missing_node(dir: &Path) -> PathBuf {
+    let say = json!({ "id": "say", "type": "report",
+        "parameters": { "each": "{{node.nope.entries}}", "message": "listing" } });
+    write_recipe(dir, json!([input(), say, output_none()]), None)
+}
+
+#[test]
+fn a_dry_run_prints_the_message_when_each_has_no_list_yet() {
+    let dir = temp_output_dir();
+    let recipe = report_each_of_a_missing_node(dir.path());
+    let output = run(dir.path(), &recipe, &["--dry-run"], &[]);
+    let text = text(&output);
+    assert!(output.status.success(), "{text}");
+    assert!(text.contains("Would report: listing"), "{text}");
+}
+
+#[test]
+fn a_run_names_the_each_that_has_no_list() {
+    let dir = temp_output_dir();
+    let recipe = report_each_of_a_missing_node(dir.path());
+    let output = run(dir.path(), &recipe, &[], &[]);
+    let text = text(&output);
+    assert!(!output.status.success(), "{text}");
+    assert!(text.contains(r#"got "{{node.nope.entries}}""#), "{text}");
+}
+
+fn output_write() -> Value {
+    json!({ "id": "output", "type": "output", "parameters": { "mode": "write" } })
+}
+
+/// Runs a `file-render` with `params` and `args`, returning `index.md`.
+fn render(params: Value, args: &[&str]) -> String {
+    let dir = temp_output_dir();
+    let render = json!({ "id": "render", "type": "file-render",
+        "fields": { "t": { "type": "string", "label": "T" } },
+        "parameters": params });
+    let recipe = write_recipe(dir.path(), json!([input(), render, output_write()]), None);
+    let out = dir.path().join("out");
+    let mut all = vec!["-o", out.to_str().unwrap()];
+    all.extend_from_slice(args);
+    let output = run(dir.path(), &recipe, &all, &[]);
+    assert!(output.status.success(), "{}", text(&output));
+    std::fs::read_to_string(out.join("index.md")).unwrap()
+}
+
+#[test]
+fn file_render_keeps_a_whole_header_token_with_no_value_as_written() {
+    let params = json!({ "header": "{{ctx.nope}}", "row": "- {{file}}", "filename": "index.md" });
+    assert!(render(params, &[]).starts_with("{{ctx.nope}}\n"));
+}
+
+#[test]
+fn file_render_escapes_a_field_value_in_a_row() {
+    // The row is filled per file, run values included, so they're escaped
+    // too; before, the executor filled the field in first, unescaped.
+    let params = json!({ "row": "{{fields.t}} {{file}}", "filename": "index.md",
+        "escape": "markdown" });
+    let out = render(params, &["-p", "t=a|b"]);
+    assert!(out.contains(r"a\|b a.txt"), "{out}");
+}

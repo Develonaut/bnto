@@ -5,7 +5,8 @@
 // it checks even when no files arrive. When `value` or `expected` reads
 // `{{file}}` or `{{item.*}}`, the comparison runs once per incoming file and
 // every failing file is named in the one error; with no files it checks
-// nothing. A dry run checks nothing.
+// nothing. A dry run fills each check and prints it without comparing, so a
+// missing key still fails it.
 
 mod params;
 

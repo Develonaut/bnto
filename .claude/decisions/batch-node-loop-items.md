@@ -11,7 +11,7 @@ Five batch nodes fill `{{item.*}}` (and `{{file}}`) themselves, once per file: `
 
 ## Decision
 
-- **The node fills every token.** For these nodes (`NodeProcessor::resolves_loop_items`) the executor hands the params over unfilled, in a loop or not. The node reads the loop's item from `ProcessContext::loop_item()`, and the run's namespaces (`{{fields.*}}`, `{{env.*}}`, `{{ctx.*}}`, `{{node.*}}`) from `ProcessContext::run_placeholder()`, which fills them by the executor's own rules (`executor/template.rs`: a whole-value placeholder keeps its JSON type, an unknown field is kept as written). The run's batch context (`executor/run_scope.rs`) answers both, like `held_elsewhere`.
+- **The node fills every token.** For these nodes (`NodeProcessor::resolves_loop_items`) the executor hands the params over unfilled, in a loop or not. The node reads the loop's item from `ProcessContext::loop_item()`, and the run's namespaces (`{{fields.*}}`, `{{env.*}}`, `{{ctx.*}}`, `{{node.*}}`) from `ProcessContext::run_placeholder()`, which fills them by the executor's own rules (`executor/template.rs`: a whole-value placeholder keeps its JSON type, and one the run can't fill, such as a missing node's output, is kept as written, where among other text it fills as empty). `Scope::keeps_as_written` applies the last rule for text the node fills itself. The run's batch context (`executor/run_scope.rs`) answers both, like `held_elsewhere`.
 - **One fill, shared.** `bnto_core::control::placeholder` fills `{{file}}`, `{{item.KEY}}`, `{{entry}}`, `{{entry.KEY}}` and the run's namespaces in one pass over the recipe's template (`Scope`, `fill_text`, `fill_value`, `fill_params`, built on the executor's `try_interpolate`). A filled value is never scanned again, so a value that reads like a token comes out as written. All five nodes use it; `file-render` adds its `{{count}}` and escaping through `fill_with`. `file-rename`'s pattern and `file-decode`'s `filename` fill their own tokens in one pass too (`fill_tokens`).
 - **Two scopes.**
   - **Per file:** anything a node fills once per file. It reads the file's metadata with the loop's item on top (`placeholder::file_item`). That's the same merge and the same precedence as a per-file node: the loop's item wins a shared key.
@@ -23,7 +23,7 @@ Five batch nodes fill `{{item.*}}` (and `{{file}}`) themselves, once per file: `
 
 - A key neither the file nor the loop's item has fails during the node, naming the file and every key it has, instead of before the node starts.
 - A `report` message or `assert` value that reads only loop keys now runs once per file of the iteration, not once per iteration. This matches what `{{item.*}}` means outside a loop. An iteration that ends with no files prints nothing and checks nothing.
-- `file-render` escapes a row value filled from the loop's item (the executor filled it unescaped before). Header and footer values still go in unescaped.
+- `file-render` escapes a row value filled from the loop's item, `{{fields.*}}`, `{{env.*}}` or `{{node.*}}` (the executor filled those unescaped before). Header and footer values still go in unescaped.
 - `bnto check` no longer refuses an entry line, or a `file-render` header, footer or filename, that reads `{{item.*}}`: `validate` can't tell whether the node sits in a loop. The run refuses it outside one.
 - A `{{fields.*}}`, `{{env.*}}` or `{{node.*}}` value that reads like a token now comes out as written in these nodes, at the top level too.
 

@@ -6,8 +6,8 @@
 // in a loop too, so it fills them here, once per file, in one pass over the
 // recipe's text, the run's namespaces included, as assert and report fill
 // them (`placeholder::fill_value`): a value that reads like a token is set
-// as written. A key the item lacks is
-// a recipe mistake: it fails the run instead of becoming "".
+// as written. A key the item lacks is a recipe mistake: it fails the run
+// instead of becoming "".
 
 use serde_json::{Map, Value};
 

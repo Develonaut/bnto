@@ -300,6 +300,9 @@ fn test_validate_refuses_entry_and_file_together() {
 // --- Dry run and metadata ---
 
 /// A dry-run context: everything else is the no-op context.
+/// A dry run whose upstream nodes didn't run: a `{{node.*}}` the run can't
+/// fill answers as the executor does, kept as written when it is the whole
+/// value and empty among other text.
 struct DryRun;
 
 impl ProcessContext for DryRun {
@@ -317,6 +320,9 @@ impl ProcessContext for DryRun {
     }
     fn dry_run(&self) -> bool {
         true
+    }
+    fn run_placeholder(&self, _inner: &str, whole: bool) -> Option<Value> {
+        (!whole).then(|| json!(""))
     }
 }
 

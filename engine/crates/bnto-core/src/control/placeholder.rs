@@ -85,6 +85,23 @@ impl Scope<'_> {
         Ok(self.lookup(inner, false)?.map(|v| text(&v)))
     }
 
+    /// Whether `text` is one whole run token (`{{fields.*}}`, `{{env.*}}`,
+    /// `{{ctx.*}}`, `{{node.*}}`) the run can't fill. The executor keeps such
+    /// a sole placeholder as written, where among other text an unset one
+    /// fills as empty.
+    pub fn keeps_as_written(&self, text: &str) -> bool {
+        let Some(inner) = sole_token(text) else {
+            return false;
+        };
+        let own = inner == "file"
+            || inner == ENTRY
+            || inner.starts_with("item.")
+            || inner.starts_with("entry.");
+        !own && self
+            .run
+            .is_some_and(|run| run.run_placeholder(inner, true).is_none())
+    }
+
     fn lookup(&self, inner: &str, whole: bool) -> Result<Option<Value>, Missing> {
         if inner == "file" {
             return Ok(self.file.map(|name| Value::String(name.to_string())));
@@ -123,7 +140,11 @@ fn lookup(
 }
 
 /// `text` filled from `scope` in one pass: a filled value is never scanned.
+/// A whole run token the run can't fill is kept as written.
 pub fn fill_text(text: &str, scope: Scope<'_>) -> Result<String, Missing> {
+    if scope.keeps_as_written(text) {
+        return Ok(text.to_string());
+    }
     fill_with(text, |inner| scope.text(inner))
 }
 
@@ -319,6 +340,8 @@ mod tests {
     }
 
     /// A run whose `fields.x` holds a token and whose `fields.n` is a number.
+    /// `node.gone.list` answers as the executor does for a missing node: kept
+    /// as written when it is the whole value, empty among other text.
     struct Run;
 
     impl ProcessContext for Run {
@@ -339,6 +362,7 @@ mod tests {
                 "fields.x" => Some(json!("{{file}}")),
                 "fields.n" if whole => Some(json!(2)),
                 "fields.n" => Some(json!("2")),
+                "node.gone.list" if !whole => Some(json!("")),
                 _ => None,
             }
         }
@@ -354,6 +378,18 @@ mod tests {
         let out = fill_text("{{fields.x}} {{file}} n={{fields.n}} {{fields.y}}", scope);
         assert_eq!(out.unwrap(), "{{file}} a.ts n=2 {{fields.y}}");
         assert_eq!(fill_value(&json!("{{fields.n}}"), scope).unwrap(), json!(2));
+    }
+
+    #[test]
+    fn test_a_sole_token_the_run_cant_fill_is_kept_as_written() {
+        let scope = Scope {
+            run: Some(&Run),
+            ..Scope::default()
+        };
+        let sole = "{{node.gone.list}}";
+        assert_eq!(fill_text(sole, scope).unwrap(), sole);
+        assert_eq!(fill_value(&json!(sole), scope).unwrap(), json!(sole));
+        assert_eq!(fill_text("a {{node.gone.list}}", scope).unwrap(), "a ");
     }
 
     #[test]
