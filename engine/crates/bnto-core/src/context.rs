@@ -112,6 +112,14 @@ pub trait ProcessContext: Send + Sync {
     fn check_time_limit(&self) -> Result<(), BntoError> {
         Ok(())
     }
+
+    /// The enclosing loop's item: the metadata its iteration's file carried
+    /// when the iteration started. A node that fills `{{item.*}}` itself puts
+    /// it on top of each file's metadata (`placeholder::file_item`) and fills
+    /// its once-per-call templates from it. `None` outside a loop.
+    fn loop_item(&self) -> Option<serde_json::Map<String, serde_json::Value>> {
+        None
+    }
 }
 
 /// No-op context for browser (WASM) execution.

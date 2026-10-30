@@ -93,13 +93,14 @@ impl NodeProcessor for EditFields {
         &self,
         input: BatchInput,
         _progress: &ProgressReporter,
-        _ctx: &dyn ProcessContext,
+        ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let params = EditFieldsParams::read(&input.params).map_err(BntoError::InvalidInput)?;
+        let loop_item = ctx.loop_item();
         let files = input
             .files
             .into_iter()
-            .map(|f| edit_file(&params, f))
+            .map(|f| edit_file(&params, f, loop_item.as_ref()))
             .collect::<Result<_, _>>()?;
         Ok(NodeOutput {
             files,
@@ -108,9 +109,16 @@ impl NodeProcessor for EditFields {
     }
 }
 
-/// One file with its fields set, its data and name as they arrived.
-fn edit_file(params: &EditFieldsParams, f: BatchFile) -> Result<OutputFile, BntoError> {
-    let set = fill::fill_values(&params.values, &f.filename, &f.metadata)
+/// One file with its fields set, its data and name as they arrived. The
+/// values read its metadata with the loop's item on top; the file keeps
+/// only its own metadata and what was set.
+fn edit_file(
+    params: &EditFieldsParams,
+    f: BatchFile,
+    loop_item: Option<&serde_json::Map<String, serde_json::Value>>,
+) -> Result<OutputFile, BntoError> {
+    let item = crate::control::placeholder::file_item(&f.metadata, loop_item);
+    let set = fill::fill_values(&params.values, &f.filename, &item)
         .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", f.filename)))?;
     let mut metadata = if params.keep_only_set {
         serde_json::Map::new()

@@ -1,6 +1,7 @@
 use super::*;
 use crate::FileData;
 use crate::context::NoopContext;
+use crate::control::in_loop::in_loop;
 use serde_json::{Value, json};
 use std::path::PathBuf;
 
@@ -295,4 +296,28 @@ fn test_values_is_a_required_key_value_map_and_keep_only_set_a_switch() {
     let keep = &meta.parameters[1];
     assert_eq!(keep.default, Some(json!(false)));
     assert_eq!(keep.control.as_deref(), Some("switch"));
+}
+
+// --- Inside a loop ---
+
+#[test]
+fn test_in_a_loop_values_read_the_loop_item_on_top_of_the_files_fields() {
+    // RED (ISS-58): the loop's `row` and the file's own `size` both fill, and
+    // the file keeps only its own fields and what was set.
+    let ctx = in_loop(json!({ "row": "r1", "note": "{{file}}" }));
+    let input = BatchInput {
+        files: vec![file("a.csv", json!({ "size": 3 }))],
+        params:
+            json!({ "values": { "label": "{{item.row}}-{{item.size}}", "copy": "{{item.note}}" } })
+                .as_object()
+                .cloned()
+                .unwrap(),
+    };
+    let out = EditFields::new()
+        .process_batch(input, &ProgressReporter::new_noop(), &ctx)
+        .unwrap();
+    let metadata = &out.files[0].metadata;
+    assert_eq!(metadata["label"], json!("r1-3"));
+    assert_eq!(metadata["copy"], json!("{{file}}"));
+    assert!(!metadata.contains_key("row"), "{metadata:?}");
 }

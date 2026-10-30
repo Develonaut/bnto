@@ -1,6 +1,7 @@
 use super::*;
 use crate::FileData;
 use crate::context::NoopContext;
+use crate::control::in_loop::in_loop;
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 
@@ -280,6 +281,36 @@ fn test_a_dry_run_checks_nothing_and_passes_files_through() {
     let files = vec![file("a.txt", json!({}))];
     let out = run_with(check(json!("2"), "equals", json!("0")), files, &DryRun).unwrap();
     assert_eq!(out.files.len(), 1);
+}
+
+#[test]
+fn test_a_dry_run_refuses_a_key_no_file_has() {
+    let files = vec![file("a.txt", json!({}))];
+    let params = check(json!("{{item.gone}}"), "equals", json!("0"));
+    let err = run_with(params, files, &DryRun).err().unwrap().to_string();
+    assert!(err.contains("a.txt") && err.contains("gone"), "{err}");
+}
+
+// --- Inside a loop ---
+
+#[test]
+fn test_in_a_loop_a_check_reads_the_loop_item_on_top_of_the_files() {
+    // RED (ISS-58): `size` came from a step inside the iteration; the loop's
+    // item wins the shared `k`.
+    let ctx = in_loop(json!({ "k": "loop" }));
+    let files = vec![file("a.txt", json!({ "size": 3, "k": "file" }))];
+    let params = check(json!("{{item.size}}-{{item.k}}"), "equals", json!("3-loop"));
+    assert!(run_with(params, files, &ctx).is_ok());
+}
+
+#[test]
+fn test_in_a_loop_a_value_that_reads_like_a_token_is_compared_as_written() {
+    // RED (ISS-35): the executor filled the loop's `{{item.note}}` first,
+    // and the node then filled the `{{file}}` it carried.
+    let ctx = in_loop(json!({ "note": "{{file}}" }));
+    let files = vec![file("a.txt", json!({}))];
+    let params = check(json!("{{item.note}}"), "not-equals", json!("a.txt"));
+    assert!(run_with(params, files, &ctx).is_ok());
 }
 
 #[test]

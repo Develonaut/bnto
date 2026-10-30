@@ -199,6 +199,17 @@ pub trait NodeProcessor {
         false
     }
 
+    /// True when such a node fills `{{item.*}}` inside a loop too, from each
+    /// file's metadata with the loop's item on top (`ProcessContext::loop_item`),
+    /// so the executor hands them over as written there as well (ISS-58).
+    /// False keeps the executor filling them from the loop's item first, for
+    /// a node that fills items only in part of its params (shell-run's `each`).
+    ///
+    /// Default: the same as `resolves_items`.
+    fn resolves_loop_items(&self) -> bool {
+        self.resolves_items()
+    }
+
     /// Process a batch of files together, producing combined output.
     ///
     /// Override this for processors with `InputCardinality::Batch` (merge, zip,

@@ -71,7 +71,7 @@ impl NodeProcessor for FileCopy {
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let files = per_file(input)?;
+        let files = per_file(input, ctx.loop_item().as_ref())?;
         refuse_replacing_read_files(&files, ctx)?;
         copy_each(files, ctx, |input| self.process(input, progress, ctx))
     }

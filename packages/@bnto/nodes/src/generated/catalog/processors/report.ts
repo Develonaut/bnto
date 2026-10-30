@@ -20,7 +20,7 @@ export const reportProcessor: ProcessorDef = {
       name: "message",
       label: "Message",
       description:
-        "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
+        "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file (inside a loop, the loop's item wins a key both have), {{entry.<key>}} (or {{entry}}) once per entry of each, where {{item.<key>}} is the loop's item.",
       type: "string" as const,
       constraints: { required: true },
     },
@@ -28,7 +28,7 @@ export const reportProcessor: ProcessorDef = {
       name: "each",
       label: "For Each",
       description:
-        "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template.",
+        "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template, or inside a loop the loop's {{item.<key>}}.",
       type: "object" as const,
       placeholder: "{{node.<id>.<key>}}",
     },

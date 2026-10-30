@@ -32,12 +32,12 @@ export const fileRenderNodeSchema: NodeSchema = {
     header: {
       label: "Header",
       description:
-        "Written once before the rows. Reads {{count}} (the number of items) and run templates such as {{vars.X}} or {{node.<id>.<key>}}.",
+        "Written once before the rows. Reads {{count}} (the number of items), run templates such as {{vars.X}} or {{node.<id>.<key>}}, and inside a loop the loop's {{item.KEY}}.",
     },
     row: {
       label: "Row",
       description:
-        "Written once per item. {{item.KEY}} is that item's metadata value KEY (a key it lacks fails the run, naming the item); {{file}} is its file name.",
+        "Written once per item. {{item.KEY}} is that item's metadata value KEY (inside a loop, the loop's item wins a key both have; a key neither has fails the run, naming the item); {{file}} is its file name.",
     },
     footer: {
       label: "Footer",
@@ -51,7 +51,7 @@ export const fileRenderNodeSchema: NodeSchema = {
     filename: {
       label: "File Name",
       description:
-        "Name of the file written, e.g. report.md (.md is text/markdown, anything else text/plain). Reads run templates, not {{item.*}}.",
+        "Name of the file written, e.g. report.md (.md is text/markdown, anything else text/plain). Reads run templates, and inside a loop the loop's {{item.*}}.",
       placeholder: "report.md",
     },
     escape: {

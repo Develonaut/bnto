@@ -35,19 +35,20 @@ impl RenderParams {
             row,
             filename,
         };
-        read.refuse_per_item_tokens()?;
         Ok(read)
     }
 
-    /// Header, footer and filename are written once, so they can't read an item.
-    fn refuse_per_item_tokens(&self) -> Result<(), String> {
+    /// Header, footer and filename are written once, so they can't read a
+    /// file: not `{{file}}`, and `{{item.*}}` only inside a loop, where it is
+    /// the loop's item (`in_loop`).
+    pub(super) fn refuse_per_item_tokens(&self, in_loop: bool) -> Result<(), String> {
         let once = [
             ("header", &self.header),
             ("footer", &self.footer),
             ("filename", &self.filename),
         ];
         for (name, value) in once {
-            if let Some(token) = per_item_token(value) {
+            if let Some(token) = per_item_token(value, in_loop) {
                 return Err(format!(
                     "'{name}' is written once, so it can't read {token}; use it in 'row'"
                 ));
@@ -96,10 +97,12 @@ pub(super) fn build_render_parameters() -> Vec<ParameterDef> {
 }
 
 const HEADER_DESCRIPTION: &str = "Written once before the rows. Reads {{count}} (the number \
-     of items) and run templates such as {{vars.X}} or {{node.<id>.<key>}}.";
+     of items), run templates such as {{vars.X}} or {{node.<id>.<key>}}, and inside a loop \
+     the loop's {{item.KEY}}.";
 
 const ROW_DESCRIPTION: &str = "Written once per item. {{item.KEY}} is that item's metadata \
-     value KEY (a key it lacks fails the run, naming the item); {{file}} is its file name.";
+     value KEY (inside a loop, the loop's item wins a key both have; a key neither has fails \
+     the run, naming the item); {{file}} is its file name.";
 
 const FOOTER_DESCRIPTION: &str = "Written once after the rows. Reads what the header reads.";
 
@@ -135,7 +138,7 @@ fn filename_param() -> ParameterDef {
         name: "filename".to_string(),
         label: "File Name".to_string(),
         description: "Name of the file written, e.g. report.md (.md is text/markdown, \
-                      anything else text/plain). Reads run templates, not {{item.*}}."
+                      anything else text/plain). Reads run templates, and inside a loop the loop's {{item.*}}."
             .to_string(),
         placeholder: Some("report.md".to_string()),
         constraints: Some(Constraints {

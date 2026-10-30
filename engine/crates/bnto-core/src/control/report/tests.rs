@@ -1,6 +1,7 @@
 use super::*;
 use crate::FileData;
 use crate::context::NoopContext;
+use crate::control::in_loop::in_loop;
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -244,11 +245,48 @@ fn test_validate_refuses_entry_placeholders_without_each() {
 }
 
 #[test]
-fn test_validate_refuses_entry_and_item_together() {
+fn test_entry_and_item_together_are_refused_outside_a_loop() {
+    // Inside a loop `{{item.*}}` is the loop's item, so validate can't refuse it.
     let params = json!({ "each": [1], "message": "{{entry}} {{item.size}}" });
-    let errors = validate(params);
-    assert_eq!(errors.len(), 1, "{errors:?}");
-    assert!(errors[0].contains("item"), "{errors:?}");
+    assert!(validate(params.clone()).is_empty());
+    let msg = refused(params, vec![]);
+    assert!(
+        msg.contains("{{item.*}}") && msg.contains("outside a loop"),
+        "{msg}"
+    );
+}
+
+// --- Inside a loop ---
+
+#[test]
+fn test_in_a_loop_a_file_line_reads_the_loop_item_on_top_of_the_files() {
+    // RED (ISS-58): a key the file gained in the iteration (`size`) and the
+    // loop's own (`row`) both fill; the loop's item wins a shared key.
+    let ctx = in_loop(json!({ "row": "r1", "k": "loop" }));
+    let files = vec![file("a.txt", json!({ "size": 3, "k": "file" }))];
+    let params = json!({ "message": "{{item.row}} {{item.size}} {{item.k}}" });
+    let (result, lines) = run_with(params, files, &ctx);
+    result.unwrap();
+    assert_eq!(lines, ["r1 3 loop"]);
+}
+
+#[test]
+fn test_in_a_loop_each_reads_a_list_from_the_loop_item() {
+    let ctx = in_loop(json!({ "tags": ["a", "b"], "who": "{{entry}}" }));
+    let params = json!({ "each": "{{item.tags}}", "message": "{{item.who}}={{entry}}" });
+    let (result, lines) = run_with(params, vec![], &ctx);
+    result.unwrap();
+    assert_eq!(lines, ["{{entry}}=a", "{{entry}}=b"]);
+}
+
+#[test]
+fn test_in_a_loop_a_key_neither_has_is_refused_listing_both() {
+    let ctx = in_loop(json!({ "row": "r1" }));
+    let files = vec![file("a.txt", json!({ "size": 3 }))];
+    let (result, _) = run_with(json!({ "message": "{{item.gone}}" }), files, &ctx);
+    let msg = result.err().unwrap().to_string();
+    assert!(msg.contains("gone") && msg.contains("a.txt"), "{msg}");
+    assert!(msg.contains("row") && msg.contains("size"), "{msg}");
 }
 
 #[test]
@@ -280,6 +318,17 @@ impl ProcessContext for DryRun {
     fn dry_run(&self) -> bool {
         true
     }
+}
+
+#[test]
+fn test_a_dry_run_prints_each_line_it_would_report() {
+    let files = vec![file("a.txt", json!({})), file("b.txt", json!({}))];
+    let (result, lines) = run_with(json!({ "message": "saw {{file}}" }), files, &DryRun);
+    result.unwrap();
+    assert_eq!(
+        lines,
+        ["Would report: saw a.txt", "Would report: saw b.txt"]
+    );
 }
 
 #[test]

@@ -70,8 +70,10 @@ impl NodeProcessor for FileRender {
         true
     }
 
+    /// Without a loop to read, header, footer and filename may not read an item.
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-        RenderParams::read(params).err().into_iter().collect()
+        let read = RenderParams::read(params).and_then(|p| p.refuse_per_item_tokens(false));
+        read.err().into_iter().collect()
     }
 
     /// Required by the trait; the executor always runs this node as a batch.
@@ -98,29 +100,60 @@ impl NodeProcessor for FileRender {
         &self,
         input: BatchInput,
         progress: &ProgressReporter,
-        _ctx: &dyn ProcessContext,
+        ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let params = RenderParams::read(&input.params).map_err(BntoError::InvalidInput)?;
-        let text = render(&params, &input.files)?;
+        let loop_item = ctx.loop_item();
+        let params = read_once_filled(&input.params, loop_item.as_ref(), input.files.len())
+            .map_err(BntoError::InvalidInput)?;
+        let text = render(&params, &input.files, loop_item.as_ref())?;
         let rows = input.files.len();
         progress.report_output(&format!("Rendered {}: {rows} rows", params.filename));
         Ok(output(&params.filename, text, rows))
     }
 }
 
+/// The params with header, footer and filename filled once, from the loop's
+/// item (and `{{count}}` in header and footer), or why they can't be.
+fn read_once_filled(
+    params: &Params,
+    loop_item: Option<&Params>,
+    count: usize,
+) -> Result<RenderParams, String> {
+    let mut read = RenderParams::read(params)?;
+    read.refuse_per_item_tokens(loop_item.is_some())?;
+    let once = |name: &str, text: &str, count| {
+        fill::fill_once(text, loop_item, count).map_err(|key| {
+            let why = bnto_core::control::placeholder::no_value(&key, None, loop_item);
+            format!("'{name}': {why}")
+        })
+    };
+    read.header = once("header", &read.header, Some(count))?;
+    read.footer = once("footer", &read.footer, Some(count))?;
+    read.filename = once("filename", &read.filename, None)?;
+    Ok(read)
+}
+
+type Params = serde_json::Map<String, serde_json::Value>;
+
 /// The file's text: header, rows joined by the separator, footer, each part
-/// present on its own line and ending with a newline.
-fn render(params: &RenderParams, items: &[BatchFile]) -> Result<String, BntoError> {
+/// present on its own line and ending with a newline. A row reads each item's
+/// metadata with the loop's item on top.
+fn render(
+    params: &RenderParams,
+    items: &[BatchFile],
+    loop_item: Option<&Params>,
+) -> Result<String, BntoError> {
     let count = items.len();
-    let row = fill::fill_count(&params.row, count);
-    let rows = items
-        .iter()
-        .map(|item| fill::fill_row(&row, item, params.escape).map_err(|key| missing(&key, item)))
-        .collect::<Result<Vec<_>, _>>()?;
+    let row = |item: &BatchFile| {
+        let values = bnto_core::control::placeholder::file_item(&item.metadata, loop_item);
+        fill::fill_row(&params.row, item, &values, count, params.escape)
+            .map_err(|key| missing(&key, item, &values))
+    };
+    let rows = items.iter().map(row).collect::<Result<Vec<_>, _>>()?;
     let parts = [
-        fill::fill_count(&params.header, count),
+        params.header.clone(),
         rows.join(&params.separator),
-        fill::fill_count(&params.footer, count),
+        params.footer.clone(),
     ];
     Ok(parts
         .iter()
@@ -131,11 +164,11 @@ fn render(params: &RenderParams, items: &[BatchFile]) -> Result<String, BntoErro
 
 /// A row reads `{{item.KEY}}` the item lacks: name the key, the item and
 /// the keys it has.
-fn missing(key: &str, item: &BatchFile) -> BntoError {
-    let has = if item.metadata.is_empty() {
+fn missing(key: &str, item: &BatchFile, values: &Params) -> BntoError {
+    let has = if values.is_empty() {
         "it has no metadata".to_string()
     } else {
-        let keys: Vec<&str> = item.metadata.keys().map(String::as_str).collect();
+        let keys: Vec<&str> = values.keys().map(String::as_str).collect();
         format!("it has: {}", keys.join(", "))
     };
     BntoError::InvalidInput(format!(

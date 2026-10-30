@@ -1,10 +1,13 @@
 // `{{<namespace>.KEY}}` placeholders a batch node (assert, report, edit-fields,
-// file-copy) fills itself, and the per-file `{{file}}`.
+// file-copy, file-render) fills itself, and the per-file `{{file}}`.
 //
-// The executor resolves a batch node's params once, with no item, so the
-// placeholders it can't fill there (`{{item.*}}`, `{{file}}`, report's
-// `{{entry.*}}`) reach the node as written. The node resolves them once per
-// file or entry, against that file's name and metadata or that entry's fields.
+// The executor leaves a batch node's `{{item.*}}`, `{{file}}` and report's
+// `{{entry.*}}` as written, in a loop too (`resolves_items`). The node fills
+// them in one pass over the recipe's template (`fill_text`, `fill_value`),
+// once per file or entry, so a filled value that reads like a token is kept
+// as written (ISS-35). A file's item is its metadata with the enclosing
+// loop's item on top (`file_item`), as the executor builds it for a per-file
+// node, so a key a step inside the iteration adds is there (ISS-58).
 
 use serde_json::{Map, Value};
 
@@ -15,8 +18,6 @@ pub const ITEM: &str = "item";
 /// file-render and shell-run's `each` read it.
 pub(crate) const FILE: &str = "{{file}}";
 
-const CLOSE: &str = "}}";
-
 /// `{{<namespace>.`, the start of every placeholder in that namespace.
 fn open(namespace: &str) -> String {
     format!("{{{{{namespace}.")
@@ -25,29 +26,6 @@ fn open(namespace: &str) -> String {
 /// Whether `text` reads any `{{<namespace>.KEY}}`.
 pub fn reads(text: &str, namespace: &str) -> bool {
     text.contains(&open(namespace))
-}
-
-/// `text` with every `{{<namespace>.KEY}}` replaced from `values`, or the
-/// first key `values` doesn't have.
-pub fn resolve(
-    text_in: &str,
-    namespace: &str,
-    values: &Map<String, Value>,
-) -> Result<String, String> {
-    let open = open(namespace);
-    let mut out = String::with_capacity(text_in.len());
-    let mut rest = text_in;
-    while let Some(start) = rest.find(&open) {
-        let after = &rest[start + open.len()..];
-        let Some(end) = after.find(CLOSE) else { break };
-        let key = &after[..end];
-        let value = values.get(key).ok_or_else(|| key.to_string())?;
-        out.push_str(&rest[..start]);
-        out.push_str(&text(value));
-        rest = &after[end + CLOSE.len()..];
-    }
-    out.push_str(rest);
-    Ok(out)
 }
 
 /// The key when `text` is exactly one `{{<namespace>.KEY}}` (surrounding
@@ -77,19 +55,126 @@ pub(crate) fn reads_file(text: &str) -> bool {
     text.contains(FILE) || reads(text, ITEM)
 }
 
-/// `text` filled for one file: `{{file}}` with `name`, `{{item.KEY}}` from
-/// `metadata`, or the first key `metadata` doesn't have. Only the template is
-/// scanned, so a filled value that reads like a token is kept as written.
-pub(crate) fn resolve_file(
-    text_in: &str,
-    name: &str,
+/// What one fill reads: the file's name for `{{file}}`, an item for
+/// `{{item.KEY}}`, report's entry for `{{entry}}` and `{{entry.KEY}}`. A
+/// token whose source isn't set is kept as written, as is any other `{{…}}`.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Scope<'a> {
+    pub file: Option<&'a str>,
+    pub item: Option<&'a Map<String, Value>>,
+    pub entry: Option<&'a Value>,
+}
+
+/// A key the scope's item or entry doesn't have.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Missing {
+    /// `item` or `entry`.
+    pub namespace: &'static str,
+    pub key: String,
+}
+
+impl Scope<'_> {
+    /// The value `{{inner}}` reads, `None` to keep it as written, or the key
+    /// the item or entry lacks.
+    pub fn value(&self, inner: &str) -> Result<Option<Value>, Missing> {
+        if inner == "file" {
+            return Ok(self.file.map(|name| Value::String(name.to_string())));
+        }
+        if inner == ENTRY {
+            return Ok(self.entry.cloned());
+        }
+        if let Some(key) = inner.strip_prefix("item.") {
+            return lookup(self.item, ITEM, key);
+        }
+        if let Some(key) = inner.strip_prefix("entry.") {
+            // An entry that isn't a map (text, a number) has no fields.
+            let no_fields = Map::new();
+            let fields = self.entry.map(|e| e.as_object().unwrap_or(&no_fields));
+            return lookup(fields, ENTRY, key);
+        }
+        Ok(None)
+    }
+
+    /// `value`, as text.
+    pub fn text(&self, inner: &str) -> Result<Option<String>, Missing> {
+        Ok(self.value(inner)?.map(|v| text(&v)))
+    }
+}
+
+const ENTRY: &str = "entry";
+
+fn lookup(
+    values: Option<&Map<String, Value>>,
+    namespace: &'static str,
+    key: &str,
+) -> Result<Option<Value>, Missing> {
+    let Some(values) = values else {
+        return Ok(None);
+    };
+    let missing = || Missing {
+        namespace,
+        key: key.to_string(),
+    };
+    values.get(key).cloned().map(Some).ok_or_else(missing)
+}
+
+/// `text` filled from `scope` in one pass: a filled value is never scanned.
+pub fn fill_text(text: &str, scope: Scope<'_>) -> Result<String, Missing> {
+    fill_with(text, |inner| scope.text(inner))
+}
+
+/// `text` filled in one pass by `fill` (`None` keeps a token as written),
+/// for a node with tokens of its own (file-render's `{{count}}`).
+pub fn fill_with<E>(
+    text: &str,
+    fill: impl FnMut(&str) -> Result<Option<String>, E>,
+) -> Result<String, E> {
+    crate::executor::interpolate::try_interpolate(text, fill)
+}
+
+/// `value` filled from `scope`, recursing into lists and maps. Text that is
+/// one whole token is the value itself, type and all, as the executor fills
+/// a sole placeholder; other text stays text.
+pub fn fill_value(value: &Value, scope: Scope<'_>) -> Result<Value, Missing> {
+    match value {
+        Value::String(text) => fill_string(text, scope),
+        Value::Array(values) => values.iter().map(|v| fill_value(v, scope)).collect(),
+        Value::Object(map) => map
+            .iter()
+            .map(|(k, v)| Ok((k.clone(), fill_value(v, scope)?)))
+            .collect::<Result<Map<_, _>, _>>()
+            .map(Value::Object),
+        other => Ok(other.clone()),
+    }
+}
+
+fn fill_string(text: &str, scope: Scope<'_>) -> Result<Value, Missing> {
+    if let Some(inner) = sole_token(text)
+        && let Some(value) = scope.value(inner)?
+    {
+        return Ok(value);
+    }
+    fill_text(text, scope).map(Value::String)
+}
+
+/// The inside of `text` (trimmed) when it is exactly one `{{…}}`.
+fn sole_token(text: &str) -> Option<&str> {
+    let inner = text.trim().strip_prefix("{{")?.strip_suffix("}}")?;
+    (!inner.contains('{') && !inner.contains('}')).then_some(inner)
+}
+
+/// A file's `{{item.*}}` source: its metadata, with the enclosing loop's
+/// item on top. The loop item wins a shared key, so a loop over CSV rows
+/// keeps reading its row's columns.
+pub fn file_item(
     metadata: &Map<String, Value>,
-) -> Result<String, String> {
-    let pieces = text_in
-        .split(FILE)
-        .map(|piece| resolve(piece, ITEM, metadata))
-        .collect::<Result<Vec<_>, _>>()?;
-    Ok(pieces.join(name))
+    loop_item: Option<&Map<String, Value>>,
+) -> Map<String, Value> {
+    let mut item = metadata.clone();
+    if let Some(loop_item) = loop_item {
+        item.extend(loop_item.clone());
+    }
+    item
 }
 
 /// A value as text: strings as written, other JSON (numbers, lists) as JSON.
@@ -111,19 +196,6 @@ mod tests {
     }
 
     #[test]
-    fn test_resolves_only_the_named_namespace() {
-        let v = values(json!({ "k": "x", "n": 2 }));
-        let out = resolve("{{entry.k}}-{{entry.n}} {{item.k}}", "entry", &v).unwrap();
-        assert_eq!(out, "x-2 {{item.k}}");
-    }
-
-    #[test]
-    fn test_a_missing_key_is_returned() {
-        let v = values(json!({}));
-        assert_eq!(resolve("a {{item.gone}}", "item", &v), Err("gone".into()));
-    }
-
-    #[test]
     fn test_reads_needs_the_namespace_and_a_dot() {
         assert!(reads("x {{item.k}}", "item"));
         assert!(!reads("x {{items.k}} {{item}}", "item"));
@@ -135,34 +207,96 @@ mod tests {
         assert!(!reads_file("{{files}} {{node.a.file}}"));
     }
 
-    #[test]
-    fn test_resolve_file_fills_the_name_and_item_keys() {
-        let v = values(json!({ "k": "x" }));
-        let out = resolve_file("{{file}}={{item.k}} {{file}}", "a.ts", &v).unwrap();
-        assert_eq!(out, "a.ts=x a.ts");
+    fn file_scope<'a>(name: &'a str, item: &'a Map<String, Value>) -> Scope<'a> {
+        Scope {
+            file: Some(name),
+            item: Some(item),
+            entry: None,
+        }
     }
 
     #[test]
-    fn test_resolve_file_keeps_filled_values_that_read_like_tokens() {
+    fn test_fill_text_fills_the_name_and_item_keys() {
+        let v = values(json!({ "k": "x", "n": 2 }));
+        let out = fill_text(
+            "{{file}}={{item.k}}{{item.n}} {{file}}",
+            file_scope("a.ts", &v),
+        );
+        assert_eq!(out.unwrap(), "a.ts=x2 a.ts");
+    }
+
+    #[test]
+    fn test_fill_text_keeps_filled_values_that_read_like_tokens() {
         let v = values(json!({ "k": "{{file}}" }));
-        let out = resolve_file("{{item.k}}", "{{item.k}}.ts", &v).unwrap();
+        let out = fill_text("{{item.k}}", file_scope("{{item.k}}.ts", &v)).unwrap();
         assert_eq!(out, "{{file}}");
-        let out = resolve_file("{{file}}", "{{item.k}}.ts", &v).unwrap();
+        let out = fill_text("{{file}}", file_scope("{{item.k}}.ts", &v)).unwrap();
         assert_eq!(out, "{{item.k}}.ts");
     }
 
     #[test]
-    fn test_resolve_file_returns_a_missing_key() {
+    fn test_fill_text_returns_a_missing_key() {
         let v = values(json!({}));
+        let missing = Missing {
+            namespace: "item",
+            key: "gone".into(),
+        };
         assert_eq!(
-            resolve_file("{{file}} {{item.gone}}", "a", &v),
-            Err("gone".into())
+            fill_text("{{file}} {{item.gone}}", file_scope("a", &v)),
+            Err(missing)
         );
+    }
+
+    #[test]
+    fn test_a_token_with_no_source_is_left_as_written() {
+        let out = fill_text(
+            "{{file}} {{item.k}} {{entry.k}} {{env.X}}",
+            Scope::default(),
+        );
+        assert_eq!(out.unwrap(), "{{file}} {{item.k}} {{entry.k}} {{env.X}}");
+    }
+
+    #[test]
+    fn test_entry_fields_and_the_whole_entry_fill_with_the_item() {
+        let item = values(json!({ "g": "team" }));
+        let entry = json!({ "name": "{{item.g}}" });
+        let scope = Scope {
+            item: Some(&item),
+            entry: Some(&entry),
+            ..Scope::default()
+        };
+        let out = fill_text("{{item.g}}: {{entry.name}}", scope).unwrap();
+        assert_eq!(out, "team: {{item.g}}");
+        let plain = json!("x");
+        let scope = Scope {
+            entry: Some(&plain),
+            ..Scope::default()
+        };
+        assert_eq!(fill_text("- {{entry}}", scope).unwrap(), "- x");
+    }
+
+    #[test]
+    fn test_fill_value_keeps_a_sole_tokens_type_and_recurses() {
+        let v = values(json!({ "n": 2, "list": [1, 2] }));
+        let value = json!({ "a": "{{item.n}}", "b": [" {{item.list}} ", "n={{item.n}}"] });
+        let out = fill_value(&value, file_scope("f", &v)).unwrap();
+        assert_eq!(out, json!({ "a": 2, "b": [[1, 2], "n=2"] }));
+    }
+
+    #[test]
+    fn test_file_item_puts_the_loop_item_on_top() {
+        let metadata = values(json!({ "k": "file", "added": 1 }));
+        let loop_item = values(json!({ "k": "row" }));
+        let item = file_item(&metadata, Some(&loop_item));
+        assert_eq!(Value::Object(item), json!({ "k": "row", "added": 1 }));
     }
 
     #[test]
     fn test_an_unclosed_placeholder_is_left_as_written() {
         let v = values(json!({ "k": "x" }));
-        assert_eq!(resolve("{{item.k", "item", &v).unwrap(), "{{item.k");
+        assert_eq!(
+            fill_text("{{item.k", file_scope("f", &v)).unwrap(),
+            "{{item.k"
+        );
     }
 }

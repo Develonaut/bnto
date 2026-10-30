@@ -161,6 +161,12 @@ impl NodeProcessor for ShellRun {
         true
     }
 
+    /// Outside `each` groups a loop's `{{item.*}}` is filled by the executor,
+    /// and SEC-27's `reserved_tokens` refuses one a value carries.
+    fn resolves_loop_items(&self) -> bool {
+        false
+    }
+
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
             node_type: crate::NODE_TYPE.to_string(),

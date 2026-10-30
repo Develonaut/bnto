@@ -193,6 +193,23 @@ fn test_item_values_in_the_destination_are_filled_per_file() {
 }
 
 #[test]
+fn test_in_a_loop_the_destination_reads_the_loop_item_on_top_of_the_files() {
+    // RED (ISS-58): `folder` came from a step inside the iteration, `row`
+    // from the loop's item.
+    let (_dir, a, _b) = two_inputs();
+    let out = TempDir::new().unwrap();
+    let dest = out.path().join("{{item.row}}-{{item.folder}}");
+    let ctx = crate::in_loop::in_loop(json!({ "row": "r1" }));
+    copy(
+        vec![in_folder(&a, "a.txt", "x")],
+        params(&dest, "skip"),
+        &ctx,
+    )
+    .unwrap();
+    assert!(out.path().join("r1-x/a.txt").is_file());
+}
+
+#[test]
 fn test_an_item_value_a_file_lacks_fails_naming_the_key_and_the_file() {
     let (_dir, a, b) = two_inputs();
     let out = TempDir::new().unwrap();

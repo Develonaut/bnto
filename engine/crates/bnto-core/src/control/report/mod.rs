@@ -8,7 +8,9 @@
 // It runs as a batch so it prints even when no files arrive. With `each`
 // (a list, usually a sole `{{node.<id>.<key>}}`) it prints a line per entry,
 // in order; else, when `message` reads `{{file}}` or `{{item.*}}`, a line
-// per incoming file; else one line. A dry run prints what it would report.
+// per incoming file; else one line. Inside a loop, `each` and an entry line
+// read the loop's item, and a file line reads it on top of the file's
+// metadata. A dry run prints what it would report.
 
 mod lines;
 mod params;
@@ -95,18 +97,32 @@ impl NodeProcessor for Report {
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let params = ReportParams::read(&input.params).map_err(BntoError::InvalidInput)?;
-        if ctx.dry_run() {
-            progress.report_output(&format!("Would report: {}", params.message));
-            return Ok(pass_through(input.files));
-        }
-        // Fill every line before printing any, so a refusal prints nothing.
-        let lines = lines::lines(&params, &input.files).map_err(BntoError::InvalidInput)?;
+        let loop_item = ctx.loop_item();
+        let lines = report_lines(&input, loop_item.as_ref(), ctx.dry_run())
+            .map_err(BntoError::InvalidInput)?;
+        // Every line is filled before any prints, so a refusal prints nothing.
+        let lead = if ctx.dry_run() { "Would report: " } else { "" };
         for line in &lines {
-            progress.report_output(line);
+            progress.report_output(&format!("{lead}{line}"));
         }
         Ok(pass_through(input.files))
     }
+}
+
+/// The lines to print, `each` filled from the loop's item first. In a dry
+/// run the step `each` reads may not have run, so an `each` that isn't a
+/// list yet prints the message as written.
+fn report_lines(
+    input: &BatchInput,
+    loop_item: Option<&serde_json::Map<String, serde_json::Value>>,
+    dry_run: bool,
+) -> Result<Vec<String>, String> {
+    let raw = params::with_each_filled(&input.params, loop_item)?;
+    let params = ReportParams::read(&raw)?;
+    if dry_run && params.entries().is_err() {
+        return Ok(vec![params.message]);
+    }
+    lines::lines(&params, &input.files, loop_item)
 }
 
 #[cfg(test)]

@@ -16,7 +16,9 @@ use crate::progress::ProgressReporter;
 use crate::{BntoError, ProcessContext};
 
 use super::pass_through::pass_through;
-use super::placeholder;
+use super::placeholder::{self, Scope};
+
+type Item = serde_json::Map<String, serde_json::Value>;
 use params::{AssertParams, build_assert_parameters};
 
 /// Assert processor — a comparison that fails the run when it doesn't hold.
@@ -95,11 +97,14 @@ impl NodeProcessor for Assert {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let params = AssertParams::read(&input.params).map_err(BntoError::InvalidInput)?;
+        let loop_item = ctx.loop_item();
         if ctx.dry_run() {
-            progress.report_output(&format!("Would check: {}", params.describe()));
+            for check in checks(&params, &input.files, loop_item.as_ref())? {
+                progress.report_output(&format!("Would check: {}", check.describe()));
+            }
             return Ok(pass_through(input.files));
         }
-        let reasons = failures(&params, &input.files);
+        let reasons = failures(&params, &input.files, loop_item.as_ref());
         if !reasons.is_empty() {
             let lead = params.message.as_deref().unwrap_or("Assertion failed");
             return Err(BntoError::ProcessingFailed(format!(
@@ -113,8 +118,8 @@ impl NodeProcessor for Assert {
 
 /// Every reason the check fails: once, or once per file when it reads
 /// `{{file}}` or `{{item.*}}` (no files, nothing to check).
-fn failures(params: &AssertParams, files: &[BatchFile]) -> Vec<String> {
-    if !(placeholder::reads_file(&params.value) || placeholder::reads_file(&params.expected)) {
+fn failures(params: &AssertParams, files: &[BatchFile], loop_item: Option<&Item>) -> Vec<String> {
+    if !reads_file(params) {
         return compare::compare(&params.value, params.op, &params.expected)
             .err()
             .into_iter()
@@ -122,21 +127,65 @@ fn failures(params: &AssertParams, files: &[BatchFile]) -> Vec<String> {
     }
     files
         .iter()
-        .filter_map(|f| file_failure(params, f))
+        .filter_map(|f| file_failure(params, f, loop_item))
         .collect()
 }
 
+fn reads_file(params: &AssertParams) -> bool {
+    placeholder::reads_file(&params.value) || placeholder::reads_file(&params.expected)
+}
+
 /// Why the check fails for one file, named by it; `None` when it holds.
-fn file_failure(params: &AssertParams, file: &BatchFile) -> Option<String> {
-    let resolve = |text: &str| {
-        placeholder::resolve_file(text, &file.filename, &file.metadata)
-            .map_err(|key| format!("has no item \"{key}\""))
-    };
-    let checked = resolve(&params.value).and_then(|value| {
-        let expected = resolve(&params.expected)?;
-        compare::compare(&value, params.op, &expected)
-    });
+fn file_failure(
+    params: &AssertParams,
+    file: &BatchFile,
+    loop_item: Option<&Item>,
+) -> Option<String> {
+    let checked = filled(params, file, loop_item)
+        .and_then(|check| compare::compare(&check.value, check.op, &check.expected));
     checked.err().map(|why| format!("{}: {why}", file.filename))
+}
+
+/// The checks a run makes, filled: once, or once per file.
+fn checks(
+    params: &AssertParams,
+    files: &[BatchFile],
+    loop_item: Option<&Item>,
+) -> Result<Vec<AssertParams>, BntoError> {
+    if !reads_file(params) {
+        return Ok(vec![params.clone()]);
+    }
+    let fill = |file: &BatchFile| {
+        filled(params, file, loop_item)
+            .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", file.filename)))
+    };
+    files.iter().map(fill).collect()
+}
+
+/// The check for one file: `{{file}}` and `{{item.*}}` filled in one pass,
+/// from its metadata with the loop's item on top.
+fn filled(
+    params: &AssertParams,
+    file: &BatchFile,
+    loop_item: Option<&Item>,
+) -> Result<AssertParams, String> {
+    let item = placeholder::file_item(&file.metadata, loop_item);
+    let scope = Scope {
+        file: Some(&file.filename),
+        item: Some(&item),
+        ..Scope::default()
+    };
+    let fill = |text: &str| {
+        placeholder::fill_text(text, scope).map_err(|m| {
+            let keys: Vec<&str> = item.keys().map(String::as_str).collect();
+            format!("has no item \"{}\" (it has: {})", m.key, keys.join(", "))
+        })
+    };
+    Ok(AssertParams {
+        value: fill(&params.value)?,
+        expected: fill(&params.expected)?,
+        ..params.clone()
+    })
 }
 
 #[cfg(test)]

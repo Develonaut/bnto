@@ -3,7 +3,8 @@
 // `record_write`/`recorded_writes` keep the run's write log, so a refusal in
 // a later loop iteration can name what earlier ones copied (ISS-59).
 // `check_time_limit` answers from the run's limit, so a batch node can stop
-// between files (ISS-60). Every other `ProcessContext` method forwards to the
+// between files (ISS-60). `loop_item` is the enclosing loop's item, which a
+// node that fills `{{item.*}}` itself reads (ISS-58). Every other `ProcessContext` method forwards to the
 // consumer's context unchanged.
 
 use std::path::{Path, PathBuf};
@@ -28,6 +29,7 @@ pub(super) struct RunScope<'a> {
     writes: &'a Mutex<Vec<PathBuf>>,
     time_limit: Option<TimeLimit>,
     now_ms: &'a (dyn Fn() -> u64 + Send + Sync),
+    loop_item: Option<&'a serde_json::Map<String, serde_json::Value>>,
 }
 
 impl<'a> RunScope<'a> {
@@ -39,6 +41,7 @@ impl<'a> RunScope<'a> {
             writes: &ctx.writes,
             time_limit: ctx.time_limit,
             now_ms: &*ctx.live_clock,
+            loop_item: ctx.loop_item.as_ref(),
         }
     }
 }
@@ -64,6 +67,10 @@ impl ProcessContext for RunScope<'_> {
 
     fn check_time_limit(&self) -> Result<(), BntoError> {
         check_limit(self.time_limit, self.now_ms)
+    }
+
+    fn loop_item(&self) -> Option<serde_json::Map<String, serde_json::Value>> {
+        self.loop_item.cloned()
     }
 
     // --- Forwarded to the consumer's context ---
@@ -181,6 +188,12 @@ mod tests {
         fn check_time_limit(&self) -> Result<(), BntoError> {
             Err(BntoError::TimedOut { secs: 1 })
         }
+        fn loop_item(&self) -> Option<serde_json::Map<String, serde_json::Value>> {
+            Some(serde_json::Map::from_iter([(
+                "consumer".to_string(),
+                true.into(),
+            )]))
+        }
     }
 
     fn text(result: Result<Vec<u8>, BntoError>) -> String {
@@ -224,6 +237,7 @@ mod tests {
                 writes,
                 time_limit: None,
                 now_ms: &|| 0,
+                loop_item: None,
             }
         }
     }
@@ -242,6 +256,16 @@ mod tests {
             scope.check_time_limit().is_ok(),
             "no limit, whatever the consumer says"
         );
+        assert!(
+            scope.loop_item().is_none(),
+            "no loop, whatever the consumer says"
+        );
+        let item = serde_json::Map::from_iter([("row".to_string(), "r1".into())]);
+        let in_loop = RunScope {
+            loop_item: Some(&item),
+            ..RunScope::unlimited(&marked, &writes)
+        };
+        assert_eq!(in_loop.loop_item(), Some(item.clone()));
     }
 
     fn at_3s() -> u64 {
