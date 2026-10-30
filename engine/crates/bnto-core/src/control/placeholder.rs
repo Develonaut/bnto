@@ -93,13 +93,11 @@ impl Scope<'_> {
         let Some(inner) = sole_token(text) else {
             return false;
         };
-        let own = inner == "file"
-            || inner == ENTRY
-            || inner.starts_with("item.")
-            || inner.starts_with("entry.");
-        !own && self
-            .run
-            .is_some_and(|run| run.run_placeholder(inner, true).is_none())
+        let of_run = RUN_NAMESPACES.iter().any(|ns| inner.starts_with(ns));
+        of_run
+            && self
+                .run
+                .is_some_and(|run| run.run_placeholder(inner, true).is_none())
     }
 
     fn lookup(&self, inner: &str, whole: bool) -> Result<Option<Value>, Missing> {
@@ -123,6 +121,10 @@ impl Scope<'_> {
 }
 
 const ENTRY: &str = "entry";
+
+/// The run's own namespaces, which `run_placeholder` answers. A node's own
+/// tokens (`{{file}}`, `{{item.*}}`, file-render's `{{count}}`) are not in it.
+const RUN_NAMESPACES: [&str; 4] = ["fields.", "env.", "ctx.", "node."];
 
 fn lookup(
     values: Option<&Map<String, Value>>,
@@ -390,6 +392,10 @@ mod tests {
         assert_eq!(fill_text(sole, scope).unwrap(), sole);
         assert_eq!(fill_value(&json!(sole), scope).unwrap(), json!(sole));
         assert_eq!(fill_text("a {{node.gone.list}}", scope).unwrap(), "a ");
+        // A node's own tokens aren't the run's, so the rule never keeps them.
+        for own in ["{{count}}", "{{file}}", "{{item.k}}", "{{entry}}"] {
+            assert!(!scope.keeps_as_written(own), "{own}");
+        }
     }
 
     #[test]

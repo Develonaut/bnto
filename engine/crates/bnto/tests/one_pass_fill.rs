@@ -195,3 +195,11 @@ fn file_render_escapes_a_field_value_in_a_row() {
     let out = render(params, &["-p", "t=a|b"]);
     assert!(out.contains(r"a\|b a.txt"), "{out}");
 }
+
+#[test]
+fn file_render_fills_a_whole_count_token() {
+    // `{{count}}` is file-render's own, not the run's, so it still fills.
+    let params = json!({ "header": "{{count}}", "row": "{{count}}", "footer": "{{count}}",
+        "filename": "index.md" });
+    assert_eq!(render(params, &[]), "1\n1\n1\n");
+}
