@@ -1,7 +1,7 @@
 # Open Issues: ISS-7 to ISS-18 — 15 PRs
 
 **Created:** October 24, 2026
-**Status:** Proposed, waiting for Ryan's approval. ISS-12 needs a product decision before PRs 7–8. Part B's decisions were made on October 24, 2026: rebuild the handoff work here, remove `precision`, keep codegen in TS.
+**Status:** Approved; most PRs shipped. Left as of October 30, 2026: PRs 5–6 (ISS-8), 7 (ISS-12), 8 (ISS-7) and 15 (ISS-18), scheduled in [ISSUES.md's Work order](../ISSUES.md#work-order) (batches 10 and 12). ISS-12 is decided: option (a), with the key as a constant in the source (PR 7). Part B's decisions were made on October 24, 2026: rebuild the handoff work here, remove `precision`, keep codegen in TS.
 **Related:** [ISSUES.md](../ISSUES.md), the dogfood-sessions handoff (October 21 sessions, summarized in Part B), [feature-planning.md](../scopes/process/feature-planning.md), [function-length.md](../decisions/function-length.md) (the enforce-in-tooling precedent)
 
 ## Context
@@ -313,7 +313,7 @@ The keep-awake files only run on their own OS, so CI's macOS, Linux and Windows 
 
 ---
 
-## PR 7: Ship the telemetry key in release builds (ISS-12) — needs a decision
+## PR 7: Ship the telemetry key in release builds (ISS-12)
 
 **Branch:** `fix/telemetry-key` from `main`
 **One sentence:** Release builds embed the PostHog key, so CLI telemetry actually reaches PostHog.
@@ -336,7 +336,7 @@ Option (a) matches the notice and the opt-out design. The web app already uses P
 - `.github/workflows/release.yml`: pass the `BNTO_POSTHOG_KEY` secret to the CLI build and crates publish steps, if the published crate should carry it (crates.io builds from source; see the open question below)
 - `.claude/environment-variables.md`
 
-**Open question:** `cargo install bnto` builds from crates.io source on the user's machine, so a build-time env var on our side never reaches those builds. Embedding the key there would mean putting it in the published source, as a constant in the code. PostHog project keys are write-only and public by design; the web bundle already ships one.
+**Decided October 30, 2026: a constant in the source** in `telemetry/mod.rs`, not `option_env!`, so `release.yml` needs no secret and the files list above shrinks to `mod.rs` and `environment-variables.md`. The question was this: `cargo install bnto` builds from crates.io source on the user's machine, so a build-time env var on our side never reaches those builds. Embedding the key there would mean putting it in the published source, as a constant in the code. PostHog project keys are write-only and public by design; the web bundle already ships one.
 
 ### RED tests
 
