@@ -7,7 +7,7 @@ use crate::control::placeholder::text;
 use crate::metadata::{Constraints, OptionEntry, ParameterDef, ParameterType};
 
 /// The node's params, read and checked.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(super) struct AssertParams {
     /// The left side, as text (a number or list from a sole placeholder too).
     pub value: String,
@@ -58,8 +58,8 @@ pub(super) fn build_assert_parameters() -> Vec<ParameterDef> {
             "value",
             "Value",
             "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} \
-             or {{file}} (the file's name) it is checked once per incoming file, and no files \
-             means nothing to check.",
+             or {{file}} (the file's name) it is checked once per incoming file (inside a loop, \
+             the loop's item wins a key both have), and no files means nothing to check.",
         )),
         required(op_param()),
         text_param("expected", "Expected", "What the value is compared to."),

@@ -15,7 +15,7 @@
         {
           "name": "value",
           "label": "Value",
-          "description": "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file, and no files means nothing to check.",
+          "description": "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file (inside a loop, the loop's item wins a key both have), and no files means nothing to check.",
           "paramType": {
             "type": "string"
           },
@@ -89,7 +89,7 @@
         {
           "name": "values",
           "label": "Values",
-          "description": "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run.",
+          "description": "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with (inside a loop, the loop's item wins a key both have), and one neither has fails the run.",
           "paramType": {
             "type": "object"
           },
@@ -723,7 +723,7 @@
         {
           "name": "header",
           "label": "Header",
-          "description": "Written once before the rows. Reads {{count}} (the number of items) and run templates such as {{vars.X}} or {{node.<id>.<key>}}.",
+          "description": "Written once before the rows. Reads {{count}} (the number of items), run templates such as {{vars.X}} or {{node.<id>.<key>}}, and inside a loop the loop's {{item.KEY}}.",
           "paramType": {
             "type": "string"
           },
@@ -733,7 +733,7 @@
         {
           "name": "row",
           "label": "Row",
-          "description": "Written once per item. {{item.KEY}} is that item's metadata value KEY (a key it lacks fails the run, naming the item); {{file}} is its file name.",
+          "description": "Written once per item. {{item.KEY}} is that item's metadata value KEY (inside a loop, the loop's item wins a key both have; a key neither has fails the run, naming the item); {{file}} is its file name.",
           "paramType": {
             "type": "string"
           },
@@ -766,7 +766,7 @@
         {
           "name": "filename",
           "label": "File Name",
-          "description": "Name of the file written, e.g. report.md (.md is text/markdown, anything else text/plain). Reads run templates, not {{item.*}}.",
+          "description": "Name of the file written, e.g. report.md (.md is text/markdown, anything else text/plain). Reads run templates, and inside a loop the loop's {{item.*}}.",
           "paramType": {
             "type": "string"
           },
@@ -1910,7 +1910,7 @@
         {
           "name": "message",
           "label": "Message",
-          "description": "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
+          "description": "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file (inside a loop, the loop's item wins a key both have), {{entry.<key>}} (or {{entry}}) once per entry of each, where {{item.<key>}} is the loop's item.",
           "paramType": {
             "type": "string"
           },
@@ -1922,7 +1922,7 @@
         {
           "name": "each",
           "label": "For Each",
-          "description": "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template.",
+          "description": "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template, or inside a loop the loop's {{item.<key>}}.",
           "paramType": {
             "type": "object"
           },
@@ -2612,7 +2612,7 @@
         {
           "name": "value",
           "label": "Value",
-          "description": "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file, and no files means nothing to check.",
+          "description": "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file (inside a loop, the loop's item wins a key both have), and no files means nothing to check.",
           "paramType": {
             "type": "string"
           },
@@ -2688,7 +2688,7 @@
         {
           "name": "values",
           "label": "Values",
-          "description": "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run.",
+          "description": "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with (inside a loop, the loop's item wins a key both have), and one neither has fails the run.",
           "paramType": {
             "type": "object"
           },
@@ -3336,7 +3336,7 @@
         {
           "name": "header",
           "label": "Header",
-          "description": "Written once before the rows. Reads {{count}} (the number of items) and run templates such as {{vars.X}} or {{node.<id>.<key>}}.",
+          "description": "Written once before the rows. Reads {{count}} (the number of items), run templates such as {{vars.X}} or {{node.<id>.<key>}}, and inside a loop the loop's {{item.KEY}}.",
           "paramType": {
             "type": "string"
           },
@@ -3346,7 +3346,7 @@
         {
           "name": "row",
           "label": "Row",
-          "description": "Written once per item. {{item.KEY}} is that item's metadata value KEY (a key it lacks fails the run, naming the item); {{file}} is its file name.",
+          "description": "Written once per item. {{item.KEY}} is that item's metadata value KEY (inside a loop, the loop's item wins a key both have; a key neither has fails the run, naming the item); {{file}} is its file name.",
           "paramType": {
             "type": "string"
           },
@@ -3379,7 +3379,7 @@
         {
           "name": "filename",
           "label": "File Name",
-          "description": "Name of the file written, e.g. report.md (.md is text/markdown, anything else text/plain). Reads run templates, not {{item.*}}.",
+          "description": "Name of the file written, e.g. report.md (.md is text/markdown, anything else text/plain). Reads run templates, and inside a loop the loop's {{item.*}}.",
           "paramType": {
             "type": "string"
           },
@@ -4018,7 +4018,7 @@
         {
           "name": "message",
           "label": "Message",
-          "description": "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
+          "description": "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file (inside a loop, the loop's item wins a key both have), {{entry.<key>}} (or {{entry}}) once per entry of each, where {{item.<key>}} is the loop's item.",
           "paramType": {
             "type": "string"
           },
@@ -4030,7 +4030,7 @@
         {
           "name": "each",
           "label": "For Each",
-          "description": "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template.",
+          "description": "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template, or inside a loop the loop's {{item.<key>}}.",
           "paramType": {
             "type": "object"
           },

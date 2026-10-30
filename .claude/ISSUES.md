@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-104**.
+- **IDs never get reused.** The next one is **ISS-111**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
@@ -18,7 +18,7 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 
 | #   | Batch               | Issues                                                                                              | Why                                                                                                                                                                                                                                                                                                                                                                                           |
 | --- | ------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 5   | Engine templating   | ISS-35, ISS-58                                                                                      | A value filled in from data is filled again as a template (ISS-35); a loop fills `{{item.*}}` keys a batch node should fill itself (ISS-58). If the [template-filters plan](PLAN.md#engine-from-the-october-21-dogfood-sessions) is written first, it takes both                                                                                                                              |
+| 5   | Engine templating   | ISS-35, ISS-110                                                                                     | `file-rename` and `file-decode` fill their own tokens over values the executor filled (ISS-35); `when` guards can't read a key added in the iteration (ISS-110). ISS-58 is fixed, and ISS-35 is fixed for `report`, `assert`, `edit-fields`, `file-render` and `file-copy`                                                                                                                    |
 | 6   | Small code cleanups | ISS-103, ISS-104, ISS-105, ISS-106, ISS-108, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a removed node's generated doc left behind (ISS-105); `platforms` leaving out `cli` (ISS-106); a loop's failure line repeating its step's "this step moved nothing" (ISS-108); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag |
 | 7   | Tooling and tests   | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18                                               | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                                                                                                         |
 | 8   | Analytics           | ISS-29, ISS-57, ISS-70                                                                              | Exception capture off and runs without one outcome event (ISS-29); a wrong `out_of_memory` category (ISS-57); recipe-page downloads never recorded (ISS-70)                                                                                                                                                                                                                                   |
@@ -30,6 +30,7 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 - ISS-31 (a PostHog project setting, not a repo change).
 - ISS-44 (pick option a or b).
 - ISS-45 (what progressive writes mean in each output mode).
+- ISS-109 (inside an iteration, should a value a step set win over the loop's item?).
 
 ## Open issues
 
@@ -41,12 +42,11 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-18  | A Windows process test times out waiting 20 s for PowerShell                                                            | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-29  | Errors on bnto.io go unseen: exception capture is off                                                                   | core        | Open                                             |
 | ISS-31  | Another app's events land in bnto.io's PostHog project                                                                  | analytics   | Open                                             |
-| ISS-35  | Inside a loop, a data value is filled in as a template                                                                  | engine      | Open                                             |
+| ISS-35  | `file-rename` and `file-decode` fill their own tokens over values the executor filled                                   | engine      | Open                                             |
 | ISS-37  | The homepage loads ~500 KB of JS that competes with its CSS                                                             | web perf    | Open                                             |
 | ISS-44  | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision)                   | web         | Open                                             |
 | ISS-45  | Progressive loop writes in message/none mode land in the folder unlisted                                                | cli tui     | Open                                             |
 | ISS-57  | `errorCategory` reports `out_of_memory` for any message containing `oom`                                                | core        | Open                                             |
-| ISS-58  | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                                      | engine      | Open                                             |
 | ISS-67  | `update_notice.rs` opens its ptys in parallel with no lock                                                              | cli test    | Open                                             |
 | ISS-70  | Recipe pages record no download a user clicks for                                                                       | web         | Open                                             |
 | ISS-84  | E2E specs pass `navigateToRecipe` a page heading it ignores                                                             | web test    | Open                                             |
@@ -66,6 +66,8 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser" | engine      | Open                                             |
 | ISS-108 | A loop's failure line repeats its step's "this step moved nothing", though the loop moved files in earlier iterations   | engine      | Open                                             |
+| ISS-109 | Inside an iteration, the loop's item hides a value a step set (needs Ryan's decision)                                   | engine      | Open                                             |
+| ISS-110 | Inside a loop, a `when` guard can't read a key added in the iteration                                                   | engine      | Open                                             |
 
 ---
 
@@ -112,21 +114,14 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 - **Fix:** this is a PostHog config fix, not a repo change. Either give that app its own project key, or add a `$host` filter (`^(www\.)?bnto\.io$`) to the test-account filters.
 - **No repo test:** it's project config. After the fix, rerun the review's `$host` breakdown to confirm only bnto.io remains.
 
-### ISS-35: Inside a loop, a data value is filled in as a template
+### ISS-35: `file-rename` and `file-decode` fill their own tokens over values the executor filled
 
-**Found:** October 24, 2026 (cold review of the ISS-24 fix; reproduced by the reviewer with a temp `HOME` and `BNTO_HOME`).
+**Found:** October 24, 2026 (cold review of the ISS-24 fix). Narrowed October 29, 2026: `report`, `assert`, `edit-fields`, `file-render` and `file-copy` now fill every token in one pass, and `file-rename`'s pattern and `file-decode`'s `filename` fill their own tokens in one pass ([batch-node-loop-items.md](decisions/batch-node-loop-items.md)).
 
-Inside a loop the executor fills `{{item.*}}` from the loop's item into a node's params before the node runs, so the item's _values_ become part of the template the node then fills. A CSV cell `note={{file}}` with `"message": "note={{item.note}}"`:
+`file-rename` and `file-decode` still get params the executor filled (`{{item.*}}`, `{{fields.*}}`, `{{env.*}}`, `{{node.*}}`), then fill their own tokens (`{{name}}`, `{{ext}}`, `{{index}}`, `{{counter}}`, `{{date}}`) over the result. Reproduced with the CLI: a loop over CSV rows (`title` = `{{name}}`) of `file-rename` with `pattern: "{{item.title}}.txt"` writes `people_row0.txt`, not `{{name}}.txt`. Only `shell-run` declares `reserved_tokens` (`bnto-shell/src/run.rs:104`), which SEC-27's `check_reserved` uses to refuse exactly this.
 
-- outside a loop, `report` prints `note={{file}}`;
-- inside a loop, it prints `note=people_row0.csv`.
-
-The same happens through `{{fields.*}}`: a field passed as `-p 'x={{file}}'` into `"label": "{{fields.x}}"` gives the file's name. `report` and `assert` do it today (`placeholder::resolve_file`); the ISS-24 fix makes `edit-fields` do it too. Only `shell-run` declares `reserved_tokens` (`bnto-shell/src/run.rs:104`), which SEC-27's `check_reserved` uses to refuse exactly this.
-
-- **`file-rename`'s pattern does it too, since ISS-107:** `apply_pattern` (`bnto-file/src/rename/naming.rs`) fills `{{name}}` first and then replaces `{{ext}}`, `{{index}}`, `{{counter}}` and `{{date}}` across the whole result, so a token in the filled name is filled. Since `{{name}}` became the transformed stem, that covers a `prefix` or `suffix` the recipe wrote (`prefix: "{{date}}-"` with `pattern: "{{name}}.{{ext}}"` puts in the date), as well as a file name carrying a token. Fill each token once, in one pass over the pattern.
-- **Secrets are not reached:** with `secrets: [{"key": "SOME_KEY"}]` set, a cell reading `{{env.SOME_KEY}}` inside the same loop prints as written (`note={{env.SOME_KEY}}`), checked with `main` at #745. Only `{{file}}` and `{{item.*}}` were seen re-filled; recheck any namespace the fix touches.
-- **Fix:** a value filled in from data is never re-scanned. Fill every namespace in one pass over the original template, or escape filled values, rather than adding `reserved_tokens` node by node.
-- **Regression test:** inside a loop, a cell holding `{{file}}`, `{{item.x}}` or `{{env.KEY}}` comes out as written, in `report`, `assert` and `edit-fields`.
+- **Fix:** have both nodes take their params unfilled and fill every token through `bnto_core::control::placeholder::Scope` with their own tokens added (`resolves_loop_items`, as the five batch nodes do), or declare their tokens in `reserved_tokens`. File-rename is a batch node; file-decode is per file, so it would need the executor to hand a per-file node its params unfilled too.
+- **Regression test:** a `{{item.*}}` value holding `{{name}}` in `file-rename`'s pattern and `file-decode`'s `filename` comes out as written.
 
 ### ISS-37: The homepage loads ~500 KB of JS that competes with its CSS
 
@@ -168,15 +163,6 @@ A loop with `outputPersistence: "progressive"` copies each iteration's files int
 
 - **Fix:** match `OOM` only as a whole, upper-case word (`/out of memory/i` or `/\bOOM\b/`).
 - **Regression test:** the message above isn't `out_of_memory`, and neither is `"zoom"` or `"Classroom"`, while `"out of memory"` and `"OOM"` still are.
-
-### ISS-58: Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration
-
-**Found:** October 25, 2026 (fixing ISS-52, which makes `file-copy` a batch node; see [file-copy-batch.md](decisions/file-copy-batch.md)).
-
-A per-file node inside a loop gets `{{item.*}}` from the file's current metadata, with the loop's item on top (`file_item`, `bnto-core/src/executor/primitive.rs`). A batch node gets it from the loop's item only: `resolve_node_params` resolves it there before the node runs, and refuses a key the loop's item lacks. The loop's item is the file's metadata when the iteration started (`build_loop_context`, `executor/container.rs`). So a key that a step inside the iteration adds (say `file-inspect`, then `file-copy` with `destination: "out/{{item.extension}}"`) fills for a per-file node but fails a batch one with "has no value". `file-copy` was per-file before ISS-52, so this used to work for it. `assert`, `report`, `edit-fields` and `file-render` behave the same way.
-
-- **Fix:** for a node that fills items itself (`resolves_items`), inside a loop, fill only the loop's keys and leave the rest as written, so the node fills them from each file's metadata. Not for `shell-run`, which also declares `resolves_items` but fills only inside `each` groups: a leftover `{{item.*}}` elsewhere in its command must still be refused.
-- **Regression test:** inside a loop, `file-inspect` then `file-copy` with `destination: "<dir>/{{item.extension}}"` copies each file into its extension's folder.
 
 ### ISS-67: `update_notice.rs` opens its ptys in parallel with no lock
 
@@ -356,3 +342,21 @@ Since ISS-100 every `file-move` refusal says "this step moved nothing", true of 
 
 - **Fix:** have a container's failure line say which iteration failed (`each, iteration 2 of 2: …`), or have `file-move` list the moves earlier iterations made, as `file-copy` lists earlier copies (the run would record moves).
 - **Regression test:** the ISS-100 loop's output names the failing iteration, or lists `b.txt` as moved earlier.
+
+### ISS-109: Inside an iteration, the loop's item hides a value a step set
+
+**Found:** October 29, 2026 (`/workflow-expert` review of the ISS-58 fix).
+
+Inside a loop, `{{item.*}}` reads the file's metadata with the loop's item on top, and the loop's item wins a shared key (`placeholder::file_item`, used by the executor's `file_item` for per-file nodes and by the five batch nodes that fill items). The loop's item is the file's metadata when the iteration started. So when a step inside the iteration changes a key the row already had (`edit-fields` setting `status: done` over a row's `status: pending`, or `file-inspect` refreshing `size` after a compress), a later step's `{{item.status}}` still reads `pending`, though the file holds `done` (`executor/tests/metadata.rs`). Nothing inside the iteration can read the new value. Tested as intended today (`test_inside_a_loop_the_loop_item_wins_a_shared_key`), so a change alters shipped behavior.
+
+- **Decision for Ryan:** keep the loop's item winning (a loop over CSV rows always reads its row's column), or let the file's current metadata win (a step's change is seen), perhaps keeping the row under a namespace of its own.
+- **Regression test:** whichever way is chosen, the `edit-fields` case above, for a per-file and a batch node.
+
+### ISS-110: Inside a loop, a `when` guard can't read a key added in the iteration
+
+**Found:** October 29, 2026 (`/workflow-expert` review of the ISS-58 fix).
+
+A `when` guard is decided against the loop's item only (`executor/guard.rs`, `skip_reason`: `loop_item: &ctx.loop_item`), not the file's metadata. Inside a loop, a guard on a key that an earlier step of the iteration added (`file-inspect`'s `extension`, an `edit-fields` value) sees no value, though a per-file step's params read it. Reproduced with the CLI: a loop over CSV rows of `edit-fields` setting `x: "y"`, then `file-rename` guarded on `{{item.x}}` equals `y`, prints `file-rename skipped: when {{item.x}} equals y: got "{{item.x}}", expected "y"`. `when_guard.rs` CJ8 runs `file-inspect` before the loop, so it doesn't show this.
+
+- **Fix:** decide a guard inside a loop against the file's item as a per-file node reads it (`placeholder::file_item`), or say in the docs that guards read the iteration's starting item.
+- **Regression test:** a loop of `file-inspect` then a step guarded on `{{item.extension}}` runs for the matching file.

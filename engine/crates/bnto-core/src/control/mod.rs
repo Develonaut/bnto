@@ -9,5 +9,8 @@ mod pass_through;
 /// `{{item.*}}` and `{{file}}` filled per file by a node that fills its own.
 pub mod placeholder;
 
+#[cfg(test)]
+pub(crate) mod in_loop;
+
 pub use assert::Assert;
 pub use report::Report;

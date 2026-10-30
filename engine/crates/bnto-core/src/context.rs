@@ -112,6 +112,24 @@ pub trait ProcessContext: Send + Sync {
     fn check_time_limit(&self) -> Result<(), BntoError> {
         Ok(())
     }
+
+    /// The enclosing loop's item: the metadata its iteration's file carried
+    /// when the iteration started. A node that fills `{{item.*}}` itself puts
+    /// it on top of each file's metadata (`placeholder::file_item`) and fills
+    /// its once-per-call templates from it. `None` outside a loop.
+    fn loop_item(&self) -> Option<serde_json::Map<String, serde_json::Value>> {
+        None
+    }
+
+    /// What the run fills `{{inner}}` with from its own namespaces (`fields`,
+    /// `env`, `ctx`, `node`), for a node the executor hands its params
+    /// unfilled (`NodeProcessor::resolves_loop_items`), so the node fills
+    /// every token in one pass. `whole` when the placeholder is the whole
+    /// value, which keeps its JSON type. `None` keeps it as written.
+    fn run_placeholder(&self, inner: &str, whole: bool) -> Option<serde_json::Value> {
+        let _ = (inner, whole);
+        None
+    }
 }
 
 /// No-op context for browser (WASM) execution.

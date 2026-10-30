@@ -206,17 +206,23 @@ fn test_a_missing_item_key_fails_naming_the_key_and_the_item() {
 
 #[test]
 fn test_header_and_footer_may_not_read_an_item() {
-    for (param, value) in [
-        ("header", "{{item.name}}"),
-        ("footer", "{{file}}"),
-        ("filename", "{{item.name}}.md"),
+    // `{{item.*}}` is the loop's item inside a loop, which validate can't
+    // see, so only the run refuses it (outside one); `{{file}}` never fills.
+    for (param, value, validate_refuses) in [
+        ("header", "{{item.name}}", false),
+        ("footer", "{{file}}", true),
+        ("filename", "{{item.name}}.md", false),
     ] {
         let mut params = table("none");
         params[param] = json!(value);
         let errors = FileRender::new().validate(params.as_object().unwrap());
-        assert_eq!(errors.len(), 1, "{param}: {errors:?}");
-        assert!(errors[0].contains(param), "{errors:?}");
-        assert!(render(params, three_items()).is_err());
+        assert_eq!(
+            errors.len(),
+            usize::from(validate_refuses),
+            "{param}: {errors:?}"
+        );
+        let err = render(params, three_items()).err().unwrap().to_string();
+        assert!(err.contains(param), "{err}");
     }
 }
 
@@ -311,4 +317,68 @@ fn test_mime_for_a_dotfile_is_plain_text() {
     // ISS-33: `notes/.md` has no extension.
     assert_eq!(mime_for("notes/.md"), "text/plain");
     assert_eq!(mime_for("v1.2/notes.md"), "text/markdown");
+}
+
+// --- Inside a loop ---
+
+fn render_in_loop(
+    params: Value,
+    files: Vec<BatchFile>,
+    item: Value,
+) -> Result<NodeOutput, BntoError> {
+    let input = BatchInput {
+        files,
+        params: params.as_object().cloned().unwrap(),
+    };
+    let ctx = crate::in_loop::in_loop(item);
+    FileRender::new().process_batch(input, &ProgressReporter::new_noop(), &ctx)
+}
+
+#[test]
+fn test_in_a_loop_header_footer_and_filename_read_the_loop_item() {
+    let params = json!({
+        "header": "# {{item.slug}} ({{count}})", "row": "- {{item.name}}",
+        "footer": "{{item.note}}", "filename": "{{item.slug}}.md",
+    });
+    let item = json!({ "slug": "team", "note": "{{count}}" });
+    let out = render_in_loop(params, three_items(), item).unwrap();
+    assert_eq!(out.files[0].filename, "team.md");
+    // A value that reads like a token is written as it is (ISS-35).
+    assert_eq!(
+        text(&out),
+        "# team (3)\n- alpha\n- beta\n- gamma\n{{count}}\n"
+    );
+}
+
+#[test]
+fn test_in_a_loop_a_row_reads_the_loop_item_on_top_and_escapes_it() {
+    // RED (ISS-58): a row reads the item's own keys and the loop's, the
+    // loop's winning a shared key; filled values are escaped.
+    let params =
+        json!({ "row": "{{item.name}} {{item.tag}}", "filename": "x.md", "escape": "markdown" });
+    let files = vec![item("a.csv", json!({ "name": "alpha", "tag": "own" }))];
+    let out = render_in_loop(params, files, json!({ "tag": "a|b" })).unwrap();
+    assert_eq!(text(&out), "alpha a\\|b\n");
+}
+
+#[test]
+fn test_in_a_loop_a_written_once_template_still_may_not_read_the_file() {
+    let params = json!({ "row": "x", "filename": "{{file}}.md" });
+    let err = render_in_loop(params, three_items(), json!({}))
+        .err()
+        .unwrap();
+    assert!(err.to_string().contains("'filename'"), "{err}");
+}
+
+#[test]
+fn test_in_a_loop_a_key_the_loop_item_lacks_is_refused_naming_it() {
+    let params = json!({ "row": "x", "filename": "{{item.slug}}.md" });
+    let err = render_in_loop(params, three_items(), json!({ "other": 1 }))
+        .err()
+        .unwrap();
+    let err = err.to_string();
+    assert!(
+        err.contains("'filename'") && err.contains("slug") && err.contains("other"),
+        "{err}"
+    );
 }

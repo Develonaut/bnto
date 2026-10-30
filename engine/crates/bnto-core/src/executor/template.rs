@@ -221,6 +221,23 @@ fn resolve_string(s: &str, ctx: &TemplateContext) -> Value {
     Value::String(interpolate(s, |inner| interpolated_value(inner, ctx)))
 }
 
+/// What the run fills `{{inner}}` with from its own namespaces (`fields`,
+/// `env`, `ctx`, `node`), by the rules above: `whole` when the placeholder is
+/// the whole value, which keeps its JSON type and leaves an unknown one as
+/// written; else the text it interpolates. `None` keeps it as written. A node
+/// that fills its params itself asks this through `ProcessContext`.
+pub(crate) fn run_placeholder(inner: &str, whole: bool, ctx: &TemplateContext) -> Option<Value> {
+    if !whole {
+        return interpolated_value(inner, ctx).map(Value::String);
+    }
+    let (prefix, key) = inner.split_once('.')?;
+    if prefix == "node" {
+        let (node_id, prop) = key.rsplit_once('.')?;
+        return resolve_node_ref(node_id, prop, ctx.node_outputs);
+    }
+    resolve_placeholder(prefix, key, ctx)
+}
+
 /// The text one `{{ns.key}}` fills in during interpolation, or `None` to
 /// leave it as written: unknown fields, item outside a loop, other
 /// namespaces. Unset env, ctx and node values fill in as empty text.

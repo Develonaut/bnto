@@ -86,6 +86,8 @@ mod changes_mid_run;
 #[cfg(test)]
 mod held_by;
 #[cfg(test)]
+mod in_loop;
+#[cfg(test)]
 mod time_runs_out;
 
 /// Name prefix of the folder the CLI and TUI output step sets files aside in

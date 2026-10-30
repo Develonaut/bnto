@@ -357,3 +357,109 @@ fn test_item_reads_what_any_earlier_node_attached() {
     );
     assert_eq!(names, vec!["renamed-a.txt"]);
 }
+
+// --- A batch node that fills `{{item.*}}` itself, inside a loop (ISS-58) ---
+
+/// A batch node that fills items itself: names each file after its `name`
+/// param as it arrived, and records the loop item its context answers.
+struct OwnItems {
+    in_loop_too: bool,
+}
+
+impl crate::processor::NodeProcessor for OwnItems {
+    fn name(&self) -> &str {
+        "own-items"
+    }
+
+    fn metadata(&self) -> crate::metadata::NodeMetadata {
+        crate::metadata::NodeMetadata {
+            input_cardinality: crate::metadata::InputCardinality::Batch,
+            ..crate::processor::NodeProcessor::metadata(&EchoProcessor)
+        }
+    }
+
+    fn resolves_items(&self) -> bool {
+        true
+    }
+
+    fn resolves_loop_items(&self) -> bool {
+        self.in_loop_too
+    }
+
+    fn process(
+        &self,
+        _input: NodeInput,
+        _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        unreachable!("own-items only runs as a batch")
+    }
+
+    fn process_batch(
+        &self,
+        input: crate::processor::BatchInput,
+        _progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        let name = input.params["name"]
+            .as_str()
+            .unwrap_or_default()
+            .to_string();
+        let mut metadata = serde_json::Map::new();
+        metadata.insert("loop_item".to_string(), ctx.loop_item().into());
+        let files = input.files.into_iter().map(|f| OutputFile {
+            data: f.data,
+            filename: name.clone(),
+            mime_type: "application/octet-stream".to_string(),
+            metadata: metadata.clone(),
+        });
+        Ok(NodeOutput {
+            files: files.collect(),
+            metadata: serde_json::Map::new(),
+        })
+    }
+}
+
+fn run_own_items(in_loop_too: bool) -> Vec<crate::pipeline::PipelineFileResult> {
+    let mut registry = item_registry();
+    registry.register("test-own-items", Box::new(OwnItems { in_loop_too }));
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "own", "type": "test-own-items", "parameters": { "name": "{{item.row}}" } }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let files = vec![file_with_metadata(
+        "a.txt",
+        serde_json::json!({ "row": "r1" }),
+    )];
+    let reporter = PipelineReporter::new_noop();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
+        .unwrap()
+        .files
+}
+
+#[test]
+fn test_in_a_loop_a_node_that_fills_items_gets_them_as_written_and_the_loop_item() {
+    // RED (ISS-58): the executor filled them from the loop's item, so a key
+    // a step inside the iteration added was refused before the node ran.
+    let files = run_own_items(true);
+    assert_eq!(files[0].name, "{{item.row}}");
+    let loop_item = &files[0].metadata["loop_item"];
+    assert_eq!(loop_item, &serde_json::json!({ "row": "r1" }));
+}
+
+#[test]
+fn test_in_a_loop_a_node_that_opts_out_gets_the_loop_item_filled_in() {
+    // shell-run fills items only inside `each` groups.
+    let files = run_own_items(false);
+    assert_eq!(files[0].name, "r1");
+}

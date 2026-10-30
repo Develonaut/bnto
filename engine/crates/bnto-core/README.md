@@ -107,7 +107,7 @@ src/
     ├── primitive.rs      # Leaf node execution
     ├── container.rs      # Container execution (loop, group, parallel)
     ├── held.rs           # Files a loop or graph level holds for later steps (held_elsewhere)
-    ├── run_scope.rs      # A batch node's ProcessContext: the consumer's, plus the run's held files, writes and time limit
+    ├── run_scope.rs      # A batch node's ProcessContext: the consumer's, plus the run's held files, writes, time limit, enclosing loop's item and own namespaces
     ├── node_events.rs    # NodeStarted / NodeCompleted / NodeFailed events
     ├── time_limit.rs     # The run's time limit, checked before each node, file and iteration (batch nodes ask it per file)
     ├── raw_params.rs     # Pre-flight: undeclared, required-and-empty and validate_raw params; raw_param_problems() for checks before consent

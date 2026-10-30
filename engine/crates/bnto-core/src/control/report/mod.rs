@@ -8,7 +8,9 @@
 // It runs as a batch so it prints even when no files arrive. With `each`
 // (a list, usually a sole `{{node.<id>.<key>}}`) it prints a line per entry,
 // in order; else, when `message` reads `{{file}}` or `{{item.*}}`, a line
-// per incoming file; else one line. A dry run prints what it would report.
+// per incoming file; else one line. Inside a loop, `each` and an entry line
+// read the loop's item, and a file line reads it on top of the file's
+// metadata. A dry run prints what it would report.
 
 mod lines;
 mod params;
@@ -19,6 +21,7 @@ use crate::progress::ProgressReporter;
 use crate::{BntoError, ProcessContext};
 
 use super::pass_through::pass_through;
+use super::placeholder::{self, Scope};
 use params::{ReportParams, build_report_parameters};
 
 /// Report processor — prints a templated line without failing the run.
@@ -95,18 +98,39 @@ impl NodeProcessor for Report {
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let params = ReportParams::read(&input.params).map_err(BntoError::InvalidInput)?;
-        if ctx.dry_run() {
-            progress.report_output(&format!("Would report: {}", params.message));
-            return Ok(pass_through(input.files));
-        }
-        // Fill every line before printing any, so a refusal prints nothing.
-        let lines = lines::lines(&params, &input.files).map_err(BntoError::InvalidInput)?;
+        let loop_item = ctx.loop_item();
+        let once = Scope {
+            item: loop_item.as_ref(),
+            run: Some(ctx),
+            ..Scope::default()
+        };
+        let lines = report_lines(&input, once, ctx.dry_run()).map_err(BntoError::InvalidInput)?;
+        // Every line is filled before any prints, so a refusal prints nothing.
+        let lead = if ctx.dry_run() { "Would report: " } else { "" };
         for line in &lines {
-            progress.report_output(line);
+            progress.report_output(&format!("{lead}{line}"));
         }
         Ok(pass_through(input.files))
     }
+}
+
+/// The lines to print: every param but `message` filled once from `once`
+/// (`each` keeps a whole placeholder's list a list), then each line. In a
+/// dry run the step `each` reads may not have run, so an `each` that isn't
+/// a list yet prints the message as written.
+fn report_lines(input: &BatchInput, once: Scope<'_>, dry_run: bool) -> Result<Vec<String>, String> {
+    let filled =
+        placeholder::fill_params(&input.params, once, &["message"]).map_err(|(param, m)| {
+            format!(
+                "'{param}': {}",
+                placeholder::no_value(&m.key, None, once.item)
+            )
+        })?;
+    let params = ReportParams::read(&filled)?;
+    if dry_run && params.entries().is_err() {
+        return Ok(vec![params.message]);
+    }
+    lines::lines(&params, &input.files, once)
 }
 
 #[cfg(test)]

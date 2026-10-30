@@ -153,14 +153,18 @@ fn require_filled_items(
     )))
 }
 
-/// Resolve a node's params once, against the enclosing loop's item. Outside
-/// a loop, a node that fills `{{item.*}}` itself, per file, gets those as
-/// written instead of refused.
+/// Resolve a node's params once, against the enclosing loop's item. A node
+/// that fills its params itself (`resolves_loop_items`) gets them unfilled,
+/// and fills every token in one pass (ISS-58, ISS-35). One that fills only
+/// `{{item.*}}` per file gets those as written outside a loop.
 fn resolve_node_params<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
     processor: &dyn crate::processor::NodeProcessor,
 ) -> Result<Params, BntoError> {
+    if processor.resolves_loop_items() {
+        return Ok(node.params.clone());
+    }
     let field_values = ctx.fields_for(node);
     let resolved = if processor.resolves_items() && ctx.loop_item.is_none() {
         resolve_templates(ctx, node, &field_values, &None)
@@ -179,10 +183,7 @@ fn file_item(loop_item: &Option<Params>, file: &PipelineFile) -> Option<Params> 
     if file.metadata.is_empty() {
         return loop_item.clone();
     }
-    let mut item = file.metadata.clone();
-    if let Some(loop_item) = loop_item {
-        item.extend(loop_item.clone());
-    }
+    let item = crate::control::placeholder::file_item(&file.metadata, loop_item.as_ref());
     Some(item)
 }
 
@@ -352,7 +353,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
     };
 
     let progress = build_node_reporter(ctx, &node.id);
-    let output = processor.process_batch(batch_input, &progress, &RunScope::of(ctx))?;
+    let output = processor.process_batch(batch_input, &progress, &RunScope::of(ctx, node))?;
 
     emit_file_progress(
         ctx,

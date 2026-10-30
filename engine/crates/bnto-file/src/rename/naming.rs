@@ -33,7 +33,9 @@ fn resolve_extension(
         .unwrap_or_else(|| original_ext.to_string())
 }
 
-/// Apply a template pattern: {{name}}, {{ext}}, {{index}}, {{counter}}, {{date}}.
+/// Apply a template pattern: {{name}}, {{ext}}, {{index}}, {{counter}}, {{date}},
+/// each filled once, in one pass over the pattern, so a token inside a filled
+/// value (a name the prefix gave `{{date}}`) is kept as written (ISS-35).
 fn apply_pattern(
     pattern: &str,
     name: &str,
@@ -42,12 +44,15 @@ fn apply_pattern(
     counter: &str,
     date: &str,
 ) -> String {
-    pattern
-        .replace("{{name}}", name)
-        .replace("{{ext}}", ext)
-        .replace("{{index}}", index)
-        .replace("{{counter}}", counter)
-        .replace("{{date}}", date)
+    let value = |token: &str| match token {
+        "name" => Some(name),
+        "ext" => Some(ext),
+        "index" => Some(index),
+        "counter" => Some(counter),
+        "date" => Some(date),
+        _ => None,
+    };
+    bnto_core::control::placeholder::fill_tokens(pattern, |token| value(token).map(str::to_string))
 }
 
 /// Format the counter value with zero-padding.
@@ -101,6 +106,21 @@ mod tests {
             "2026-02-25",
         );
         assert_eq!(result, "2026-02-25-photo-3.jpg");
+    }
+
+    #[test]
+    fn test_apply_pattern_fills_each_token_once() {
+        // RED (ISS-35): a token inside the filled name (here a prefix the
+        // recipe wrote) was filled by the later replaces.
+        let result = apply_pattern(
+            "{{name}}.{{ext}}",
+            "{{date}}-a{{ext}}",
+            "txt",
+            "0",
+            "1",
+            "D",
+        );
+        assert_eq!(result, "{{date}}-a{{ext}}.txt");
     }
 
     #[test]

@@ -5,8 +5,22 @@
 
 /// Replace each `{{inner}}` in `template` with `fill(inner)`. `None` keeps
 /// the placeholder as written; an unclosed `{{` is kept as text.
-#[expect(clippy::too_many_lines)]
 pub(crate) fn interpolate(template: &str, fill: impl Fn(&str) -> Option<String>) -> String {
+    let filled = try_interpolate(template, |inner| {
+        Ok::<_, std::convert::Infallible>(fill(inner))
+    });
+    match filled {
+        Ok(text) => text,
+        Err(never) => match never {},
+    }
+}
+
+/// `interpolate` with a fill that can fail: the first error stops the scan.
+#[expect(clippy::too_many_lines)]
+pub(crate) fn try_interpolate<E>(
+    template: &str,
+    mut fill: impl FnMut(&str) -> Result<Option<String>, E>,
+) -> Result<String, E> {
     let mut out = String::with_capacity(template.len());
     let mut rest = template;
     while let Some(start) = rest.find("{{") {
@@ -14,7 +28,7 @@ pub(crate) fn interpolate(template: &str, fill: impl Fn(&str) -> Option<String>)
         let after = &rest[start + 2..];
         let Some(end) = after.find("}}") else {
             out.push_str(&rest[start..]);
-            return out;
+            return Ok(out);
         };
         let inner = &after[..end];
         if inner.contains("{{") {
@@ -23,14 +37,14 @@ pub(crate) fn interpolate(template: &str, fill: impl Fn(&str) -> Option<String>)
             rest = after;
             continue;
         }
-        match fill(inner) {
+        match fill(inner)? {
             Some(value) => out.push_str(&value),
             None => out.push_str(&rest[start..start + end + 4]),
         }
         rest = &after[end + 2..];
     }
     out.push_str(rest);
-    out
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -60,6 +74,21 @@ mod tests {
     #[test]
     fn a_stray_open_brace_is_text() {
         assert_eq!(interpolate("{{ {{x.b}}", upper), "{{ B");
+    }
+
+    #[test]
+    fn a_failed_fill_stops_the_scan() {
+        let fill = |inner: &str| {
+            if inner == "bad" {
+                Err(inner.to_string())
+            } else {
+                Ok(None)
+            }
+        };
+        assert_eq!(
+            try_interpolate("{{ok}} {{bad}}", fill),
+            Err("bad".to_string())
+        );
     }
 
     #[test]

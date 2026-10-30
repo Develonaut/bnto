@@ -248,6 +248,18 @@ fn test_filename_ext_reads_the_input_extension() {
 }
 
 #[test]
+fn test_a_name_that_reads_like_a_token_is_kept_as_written() {
+    // RED (ISS-35): `{{ext}}` inside the filled name was filled next.
+    let out = run(
+        "a{{ext}}.png",
+        b"aGk=",
+        json!({ "filename": "{{name}}.{{ext}}" }),
+    )
+    .unwrap();
+    assert_eq!(out.files[0].filename, "a{{ext}}.png");
+}
+
+#[test]
 fn test_a_name_without_an_extension_fills_name_whole() {
     let out = run("README", b"aGk=", json!({ "filename": "{{name}}.md" })).unwrap();
     assert_eq!(out.files[0].filename, "README.md");

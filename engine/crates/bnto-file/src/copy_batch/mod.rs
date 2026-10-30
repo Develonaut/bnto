@@ -28,13 +28,19 @@ pub(crate) struct PerFile {
     pub(crate) inherited: Map<String, Value>,
 }
 
-/// One `PerFile` per file; a `{{item.KEY}}` a file lacks fails the batch.
-pub(crate) fn per_file(input: BatchInput) -> Result<Vec<PerFile>, BntoError> {
+/// One `PerFile` per file, its params filled from its metadata with the
+/// loop's item on top and from the run (`ctx`); a `{{item.KEY}}` neither
+/// has fails the batch.
+pub(crate) fn per_file(
+    input: BatchInput,
+    ctx: &dyn ProcessContext,
+) -> Result<Vec<PerFile>, BntoError> {
     let BatchInput { files, params } = input;
+    let loop_item = ctx.loop_item();
     let one = |file: BatchFile| {
         Ok(PerFile {
             input: NodeInput {
-                params: fill::filled(&params, &file)?,
+                params: fill::filled(&params, &file, loop_item.as_ref(), ctx)?,
                 data: file.data,
                 filename: file.filename,
                 mime_type: file.mime_type,

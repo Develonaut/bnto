@@ -60,7 +60,7 @@ After template resolution, empty strings drop silently, and nested arrays where 
 
 Inside a group, `{{path}}` is the file on disk (a relative reference is under the working directory; in-memory bytes are written to a temp file first, keeping the extension), `{{file}}` is its pipeline name and `{{item.KEY}}` its metadata. A group may hold several entries (`["--name", "{{file}}"]`), kept together per file. With no files a group adds nothing. An object entry that isn't `{"each": [text, ...]}` is refused.
 
-Without a group the command runs as it always has: incoming files are ignored and the output is still named after the command (`<command>-output`). Outside a loop the node fills `{{item.*}}` itself, so a `{{item.KEY}}` anywhere but inside a group fails the step; inside a loop the executor fills it from the loop's item first, as for every node. Windows limits a command line to about 32K characters, which caps how many paths one command can take.
+Without a group the command runs as it always has: incoming files are ignored and the output is still named after the command (`<command>-output`). Outside a loop the node fills `{{item.*}}` itself, so a `{{item.KEY}}` anywhere but inside a group fails the step; inside a loop the executor fills it from the loop's item first (the batch nodes that fill items themselves, such as `report`, do that in a loop too; this node opts out with `resolves_loop_items`). Windows limits a command line to about 32K characters, which caps how many paths one command can take.
 
 ## Directory Structure
 

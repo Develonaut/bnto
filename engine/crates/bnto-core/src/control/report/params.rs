@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::control::placeholder::{self, text};
+use crate::control::placeholder::{self, FILE, text};
 use crate::metadata::{Constraints, ParameterDef, ParameterType};
 
 /// The per-entry namespace: `{{entry.KEY}}` reads a field of `each`'s entry.
@@ -58,7 +58,9 @@ fn not_a_list(value: &Value) -> String {
     format!("'each' must resolve to a list, got {value}")
 }
 
-/// `{{entry}}` needs `each`, and a line is per entry or per file, not both.
+/// `{{entry}}` needs `each`, and a line is per entry or per file, not both:
+/// an entry line can't read `{{file}}`. It can read `{{item.*}}` inside a
+/// loop, where that is the loop's item (`lines` refuses it outside one).
 fn check_namespaces(message: &str, has_each: bool) -> Result<(), String> {
     let entry = placeholder::reads(message, ENTRY) || message.contains(WHOLE_ENTRY);
     if entry && !has_each {
@@ -66,8 +68,8 @@ fn check_namespaces(message: &str, has_each: bool) -> Result<(), String> {
                     set 'each' to the list to print a line per entry of"
             .to_string());
     }
-    if entry && placeholder::reads_file(message) {
-        return Err("'message' reads {{entry}} and {{file}} or {{item.*}}: \
+    if entry && message.contains(FILE) {
+        return Err("'message' reads {{entry}} and {{file}}: \
                     a report prints a line per entry or per file, not both"
             .to_string());
     }
@@ -84,8 +86,9 @@ fn message_param() -> ParameterDef {
         name: "message".to_string(),
         label: "Message".to_string(),
         description: "The line to print, usually a template. {{file}} (the file's name) or \
-                      {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) \
-                      once per entry of each."
+                      {{item.<key>}} prints it once per file (inside a loop, the loop's item \
+                      wins a key both have), {{entry.<key>}} (or {{entry}}) once per entry of \
+                      each, where {{item.<key>}} is the loop's item."
             .to_string(),
         param_type: ParameterType::String,
         constraints: Some(Constraints {
@@ -102,7 +105,7 @@ fn each_param() -> ParameterDef {
         name: "each".to_string(),
         label: "For Each".to_string(),
         description: "A list to print the message once per entry of, in order, usually a \
-                      {{node.<id>.<key>}} template."
+                      {{node.<id>.<key>}} template, or inside a loop the loop's {{item.<key>}}."
             .to_string(),
         param_type: ParameterType::Object,
         placeholder: Some("{{node.<id>.<key>}}".to_string()),
