@@ -12,25 +12,28 @@
 
 ## Work order
 
-Agreed with Ryan on October 27, 2026. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
+Agreed with Ryan on October 30, 2026, replacing the October 27 order's batches 5–9. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Done, October 30, 2026: ISS-58, and ISS-35 for five nodes (#821). Batches keep their numbers.
 
-| #   | Batch               | Issues                                                                                              | Why                                                                                                                                                                                                                                                                                                                                                                                           |
-| --- | ------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 5   | Engine templating   | ISS-35, ISS-110                                                                                     | `file-rename` and `file-decode` fill their own tokens over values the executor filled (ISS-35); `when` guards can't read a key added in the iteration (ISS-110). ISS-58 is fixed, and ISS-35 is fixed for `report`, `assert`, `edit-fields`, `file-render` and `file-copy`                                                                                                                    |
-| 6   | Small code cleanups | ISS-103, ISS-104, ISS-105, ISS-106, ISS-108, ISS-90, ISS-88, ISS-91, ISS-93, ISS-94, ISS-84, ISS-85 | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a removed node's generated doc left behind (ISS-105); `platforms` leaving out `cli` (ISS-106); a loop's failure line repeating its step's "this step moved nothing" (ISS-108); dead exports, dot-notation leftovers, `React.*` types, a stale README, a stale codegen file, the E2E helper grab bag |
-| 7   | Tooling and tests   | ISS-86, ISS-92, ISS-95, ISS-89, ISS-67, ISS-8, ISS-18                                               | Prettier and `scripts/` type checks unenforced, a misleading crate check, a `seo:audit` hint, a test lock, CLI tests touching the real `~/.bnto`, a slow Windows test                                                                                                                                                                                                                         |
-| 8   | Analytics           | ISS-29, ISS-57, ISS-70                                                                              | Exception capture off and runs without one outcome event (ISS-29); a wrong `out_of_memory` category (ISS-57); recipe-page downloads never recorded (ISS-70)                                                                                                                                                                                                                                   |
-| 9   | Web performance     | ISS-99, ISS-37                                                                                      | Public pages render per request (ISS-99); the homepage's ~500 KB of JS (ISS-37). Larger and riskier, so last                                                                                                                                                                                                                                                                                  |
+Batches group issues that share code and verification, so each runs while its build and test setup is warm: the engine batches (5–7) first, then the web batches (8–10; batch 10's ISS-12 is the CLI's telemetry), then codegen and tooling. Within that, silent wrong results come first and hygiene last.
+
+| #   | Batch                    | Issues, in PR order                                         | Why                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --- | ------------------------ | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5   | Loop semantics           | ISS-109 + ISS-110 (one PR), ISS-108                         | Inside an iteration, a step's change is hidden by the loop's item (ISS-109) and a `when` guard can't see a key the iteration added (ISS-110); with ISS-109 decided, both read the file's current item. A loop's failure line doesn't say which iteration failed (ISS-108). All in `bnto-core`'s executor                                                                                                                         |
+| 6   | Template unification     | ISS-35                                                      | `file-rename` and `file-decode` move onto the shared one-pass fill. These are the first PRs of the template-filters plan ([PLAN.md backlog](PLAN.md#backlog)), which must unify the interpolators before adding filters; write that plan first                                                                                                                                                                                   |
+| 7   | TUI and CLI behavior     | ISS-103, ISS-104, ISS-45                                    | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                                                                                                                            |
+| 8   | Web performance          | ISS-99, then ISS-37                                         | Public pages render per request, which costs compute that static pages don't (ISS-99), then the homepage's ~500 KB of JS (mobile LCP 4.9 s, ISS-37). Moved up from last: first of the web batches. Its own plan, profiling first; ISS-99 first because it changes what ISS-37 measures                                                                                                                                           |
+| 9   | Web cleanups             | ISS-86, ISS-91, ISS-88, ISS-90, ISS-84, then ISS-85, ISS-44 | Prettier first, so later PRs don't fight the formatter (ISS-86); `React.*` types (ISS-91); dot-notation names (ISS-88); dead `@bnto/form` exports (ISS-90); the E2E heading check, then the helpers split in the same file (ISS-84, ISS-85); old params in the browser, which also moves the migrations out of the CLI crate (ISS-44). `ui:lint`, `task e2e`, `seo:audit`; ISS-44 also needs the engine's tests and a WASM build |
+| 10  | Telemetry and analytics  | ISS-12, then ISS-7 (same release), ISS-57, ISS-29, ISS-70   | Released CLIs send nothing (ISS-12) and the notice links a 404 (ISS-7); a wrong `out_of_memory` category (ISS-57); exception capture off (ISS-29); recipe-page downloads not recorded (ISS-70)                                                                                                                                                                                                                                   |
+| 11  | Codegen and catalog      | ISS-105 + ISS-94 (one PR), ISS-93, ISS-106                  | Codegen leaving stale files behind (ISS-105, ISS-94); a stale `@bnto/nodes` README (ISS-93); `platforms` leaving out `cli` (ISS-106). `task nodes:generate`                                                                                                                                                                                                                                                                      |
+| 12  | Tooling and test hygiene | ISS-92, ISS-95, ISS-89, ISS-67, ISS-18, ISS-8 (two PRs)     | `scripts/` never type-checked (ISS-92); a misleading crate check (ISS-95); a `seo:audit` hint (ISS-89); a pty lock (ISS-67); a slow Windows test (ISS-18); CLI tests touching the real `~/.bnto` ([open-issues-plan.md](strategy/open-issues-plan.md) PRs 5–6, ISS-8)                                                                                                                                                            |
+
+After batch 6, the rest of the template-filters plan (the filters themselves, a feature rather than a defect) can run straight on or after batch 12; Ryan decides when.
 
 **Waiting on Ryan:**
 
-- ISS-12 (ship the PostHog key in released CLIs, or say telemetry is off), then ISS-7, whose page says which.
-- ISS-31 (a PostHog project setting, not a repo change).
-- ISS-44 (pick option a or b).
-- ISS-45 (what progressive writes mean in each output mode).
-- ISS-109 (inside an iteration, should a value a step set win over the loop's item?).
+- ISS-31: move the other app (Darkmatter) to a PostHog project of its own. That's outside this repo; the issue closes once the review's `$host` breakdown shows only bnto.io.
 
 ## Open issues
 
@@ -44,7 +47,7 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-31  | Another app's events land in bnto.io's PostHog project                                                                  | analytics   | Open                                             |
 | ISS-35  | `file-rename` and `file-decode` fill their own tokens over values the executor filled                                   | engine      | Open                                             |
 | ISS-37  | The homepage loads ~500 KB of JS that competes with its CSS                                                             | web perf    | Open                                             |
-| ISS-44  | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision)                   | web         | Open                                             |
+| ISS-44  | In the browser, a renamed or removed param's error says to run `bnto migrate`                                           | web         | Open                                             |
 | ISS-45  | Progressive loop writes in message/none mode land in the folder unlisted                                                | cli tui     | Open                                             |
 | ISS-57  | `errorCategory` reports `out_of_memory` for any message containing `oom`                                                | core        | Open                                             |
 | ISS-67  | `update_notice.rs` opens its ptys in parallel with no lock                                                              | cli test    | Open                                             |
@@ -66,7 +69,7 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser" | engine      | Open                                             |
 | ISS-108 | A loop's failure line repeats its step's "this step moved nothing", though the loop moved files in earlier iterations   | engine      | Open                                             |
-| ISS-109 | Inside an iteration, the loop's item hides a value a step set (needs Ryan's decision)                                   | engine      | Open                                             |
+| ISS-109 | Inside an iteration, the loop's item hides a value a step set                                                           | engine      | Open                                             |
 | ISS-110 | Inside a loop, a `when` guard can't read a key added in the iteration                                                   | engine      | Open                                             |
 
 ---
@@ -76,6 +79,8 @@ Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #80
 **Found:** October 23, 2026 (fixing ISS-2).
 
 The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnto "collects anonymous usage data" and sends people to `https://bnto.io/telemetry` for more. That URL renders the `[bnto]` route's "Page Not Found" (`curl -sL https://www.bnto.io/telemetry | grep -o not-found-heading`), and no page says what the CLI collects: `privacy/privacy.mdx` lists PostHog without mentioning the CLI, and the CLI recipe FAQ (`apps/web/lib/cliRecipeFaq.ts:9`) has one line. Add a `/telemetry` page listing the four events (`cli_command`, `cli_recipe_run`, `cli_error`, `cli_tui_session`), their properties (bundled slugs only, else `"custom"`; bucketed counts, sizes and durations), the anonymous id and the three opt-outs, or point the notice at a page that has them.
+
+- **Decided (Ryan, October 30, 2026):** ships after ISS-12, in the same release, so the page says telemetry is on and that PostHog discards IPs. Plan: [open-issues-plan.md](strategy/open-issues-plan.md) PR 8.
 
 ### ISS-8: Most CLI integration tests run `bnto` against the real `~/.bnto`
 
@@ -87,7 +92,9 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 
 **Found:** October 24, 2026 (planning ISS-7).
 
-`engine/crates/bnto/src/telemetry/mod.rs:57` reads the key from the `BNTO_POSTHOG_KEY` env var at run time, and telemetry is inactive without one (`:60`). Nothing sets it: there's no `option_env!`, no build script, and nothing in `release.yml` (`grep -rn BNTO_POSTHOG_KEY` finds only `mod.rs` and a test). So shipped CLIs collect nothing, while the first-run notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`mod.rs:134`). Needs Ryan's decision: ship the key, or say telemetry is off.
+`engine/crates/bnto/src/telemetry/mod.rs:57` reads the key from the `BNTO_POSTHOG_KEY` env var at run time, and telemetry is inactive without one (`:60`). Nothing sets it: there's no `option_env!`, no build script, and nothing in `release.yml` (`grep -rn BNTO_POSTHOG_KEY` finds only `mod.rs` and a test). So shipped CLIs collect nothing, while the first-run notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`mod.rs:134`).
+
+- **Decided (Ryan, October 26 and 30, 2026):** turn it on, with the key as a constant in the source, so `cargo install` builds send too, and `BNTO_POSTHOG_KEY` kept as a runtime override. PostHog project keys are public and write-only; the web bundle already ships one. `status` says when there's no key. Plan: [open-issues-plan.md](strategy/open-issues-plan.md) PR 7.
 
 ### ISS-18: A Windows process test times out waiting 20 s for PowerShell
 
@@ -104,6 +111,7 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 - **Effect:** unhandled rejections are invisible. For example, `runAction` throws at `recipeStepperActions.ts:127` with no `recipe_run_failed`. Runs are also undercounted: 58 starts against 42 completions and 13 failures leaves 3 with no outcome event, and a run that completes with no results emits nothing (`:133`).
 - **Why the tests missed it:** `posthogAdapter.ts` has no test file (only `flagAdapter.test.ts` sits beside it), so nothing asserts its init options.
 - **Fix:** enable exception capture, and give every run exactly one outcome event.
+- **Decided (Ryan, October 30, 2026):** turn on exception autocapture with a `before_send` that removes message text, since an engine error can name the user's files (ISS-57's `bedroom.jpg`); keep the type and stack.
 - **Regression test:** a unit test on the PostHog adapter's init options that exception capture is on, and a check that every run emits exactly one of `recipe_run_completed` / `recipe_run_failed`.
 
 ### ISS-31: Another app's events land in bnto.io's PostHog project
@@ -112,6 +120,7 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 
 - **What PostHog shows:** 190 events (`$pageview`, `$web_vitals` and a custom event) from three hosts outside bnto.io, June 14 to October 7, 2026, arriving through a different `/ingest` proxy. The project's test-account filters exclude only localhost, an internal cohort and one IP, so these count in web analytics.
 - **Fix:** this is a PostHog config fix, not a repo change. Either give that app its own project key, or add a `$host` filter (`^(www\.)?bnto\.io$`) to the test-account filters.
+- **Decided (Ryan, October 30, 2026):** move the other app (Darkmatter, which shares the project) to a project of its own. A `$host` test-account filter would also hide Darkmatter's events from its own filtered views.
 - **No repo test:** it's project config. After the fix, rerun the review's `$host` breakdown to confirm only bnto.io remains.
 
 ### ISS-35: `file-rename` and `file-decode` fill their own tokens over values the executor filled
@@ -141,10 +150,11 @@ On a trace of `https://www.bnto.io/` (mobile viewport, 4x CPU, Slow 4G) the HTML
 
 The engine refuses an undeclared param before any step runs, for every consumer, and its hint for a renamed or removed one says to run `bnto migrate` (`bnto-core/src/renamed.rs`, applied in `executor/raw_params.rs:35`). In the browser that's a CLI command the user may not have. The editor keeps unknown params as they are (`definitionToGraph.ts:68`, `rfNodesToDefinition.ts:53`) and its config panel no longer shows them, so someone who opens an old exported recipe, or has an old draft in sessionStorage, can't clear it from the UI. The earlier renames (`PARAMS`, `NODE_TYPES`) behave the same way.
 
-- **Decision for Ryan:**
+- **Options:**
   - **(a) Migrate in the browser:** run the same migrations when a recipe is opened or imported (they're pure JSON rewrites), so old recipes upgrade silently.
   - **(b) Ignore removed params:** pre-flight skips `REMOVED_PARAMS` (they did nothing by definition), while `bnto check` still warns and points at `bnto migrate`. This departs from "undeclared params fail loudly" for removals only.
-- **Regression test:** an old recipe with `precision` opened in the web editor runs (a) or is accepted with a warning (b), with no CLI step.
+- **Decided (Ryan, October 30, 2026):** (a), the engine's own migrations, so there's one implementation and renames are covered too. They live in the CLI crate (`bnto/src/migrate/`), which `bnto-wasm` doesn't depend on, so the fix first moves them into `bnto-engine` (or `bnto-core`), then exports them through WASM for the editor to call on open and import. Needs the engine's tests and a WASM build besides the web checks.
+- **Regression test:** an old recipe with `precision` opened in the web editor runs, with no CLI step.
 
 ### ISS-45: Progressive loop writes in message/none mode land in the folder unlisted
 
@@ -152,8 +162,9 @@ The engine refuses an undeclared param before any step runs, for every consumer,
 
 A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs:230`) and the TUI both do it. Outside preview and overwrite mode, the TUI bridge's reporter copies each finished iteration's files on the pipeline's thread, into the folder that `resolve_output_dir` (`tui/bridge.rs:215`) resolves and creates: see `progressive_dir` and `channel_reporter`, `tui/bridge/reporter.rs:18-44`. Since the ISS-21 fix (#750), the TUI's results list doesn't show those files. In write mode, an iteration file that a later step renames also stays on disk under its old name.
 
-- **Fix:** decide what progressive persistence means per mode: either only in write mode, or always, with those files listed. Then make the CLI and the TUI agree.
-- **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched (or lists what it wrote), in `bnto run` and the TUI bridge.
+- **Decided (Ryan, October 30, 2026):** progressive persistence happens only in write mode. Message and none mode promise to write nothing (the other option was always, with those files listed).
+- **Fix:** skip progressive writes outside write mode, in `bnto run` and the TUI bridge alike.
+- **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched, in `bnto run` and the TUI bridge.
 
 ### ISS-57: `errorCategory` reports `out_of_memory` for any message containing `oom`
 
@@ -191,7 +202,7 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 
 `navigateToRecipe(page, slug, _h1?)` (`apps/web/e2e/helpers.ts:45`) waits for the `recipe-heading` test ID and never reads `_h1`. It checked the heading's text until #208 standardized selectors on `getByTestId`, which kept the parameter. 64 calls in 18 specs still pass a heading: 62 as text (`navigateToRecipe(page, "clean-csv", "Clean CSV Online Free")`) and 2 as `recipe.h1` (`pipeline-smoke.spec.ts:72`, `recipe-switching.spec.ts:110`). Each reads as if it checks the page title, and a page that renders the wrong heading passes.
 
-- **Fix:** either assert the heading text again (`expect(page.getByTestId("recipe-heading")).toHaveText(h1)`), or drop the parameter and the 64 arguments.
+- **Fix:** either assert the heading text again (`expect(page.getByTestId("recipe-heading")).toHaveText(h1)`), or drop the parameter and the 64 arguments. Default (October 30, 2026): assert it again.
 - **Regression test:** if the check comes back, a spec that navigates with the wrong heading fails.
 
 ### ISS-85: `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips
@@ -331,7 +342,7 @@ Since ISS-75, a file param's value is a path the CLI reads, and the TUI's Detail
 
 Every processor runs in the CLI, which registers them all (`compress-images` runs there). But 13 processors declare `platforms: ["browser"]` alone, among them every image node, `file-rename` and the CSV nodes (`engine/catalog.snapshot.json`), while others list `["browser", "cli", "desktop"]`. The generated node docs print the field as is, so `packages/@bnto/nodes/docs/image-compress.md` says "**Platforms:** browser" and a reader takes it for a browser-only node. `vector-optimize` says `["browser", "native"]`, a value no other node uses.
 
-- **Fix:** decide what `platforms` means (everywhere a node runs, or only whether it runs in the browser, which is what `metadata.rs`'s browser filter reads), then make every processor's list say it, and the docs with it.
+- **Fix:** decide what `platforms` means (everywhere a node runs, or only whether it runs in the browser, which is what `metadata.rs`'s browser filter reads), then make every processor's list say it, and the docs with it. Default (October 30, 2026): everywhere a node runs.
 - **Regression test:** a catalog test that every processor lists `cli` (or whatever the agreed values are), and no value outside the agreed set.
 
 ### ISS-108: A loop's failure line repeats its step's "this step moved nothing" after earlier iterations moved files
@@ -340,7 +351,7 @@ Every processor runs in the CLI, which registers them all (`compress-images` run
 
 Since ISS-100 every `file-move` refusal says "this step moved nothing", true of the refusing iteration. But a container passes a child's error up as its own: the CLI prints `FAILED mv: File move refused, this step moved nothing: 1 conflict`, then `FAILED each: …` and `Pipeline failed: …` with the same text, and the loop `each` did move `b.txt` in its first iteration (`Moved 1 file` shows just above). Both iterations also show as `[1/1] file-move`, so nothing marks which iteration refused. `file-copy`'s "nothing more copied" plus its list of earlier copies avoids this.
 
-- **Fix:** have a container's failure line say which iteration failed (`each, iteration 2 of 2: …`), or have `file-move` list the moves earlier iterations made, as `file-copy` lists earlier copies (the run would record moves).
+- **Fix:** have a container's failure line say which iteration failed (`each, iteration 2 of 2: …`), or have `file-move` list the moves earlier iterations made, as `file-copy` lists earlier copies (the run would record moves). Default (October 30, 2026): name the iteration.
 - **Regression test:** the ISS-100 loop's output names the failing iteration, or lists `b.txt` as moved earlier.
 
 ### ISS-109: Inside an iteration, the loop's item hides a value a step set
@@ -349,8 +360,8 @@ Since ISS-100 every `file-move` refusal says "this step moved nothing", true of 
 
 Inside a loop, `{{item.*}}` reads the file's metadata with the loop's item on top, and the loop's item wins a shared key (`placeholder::file_item`, used by the executor's `file_item` for per-file nodes and by the five batch nodes that fill items). The loop's item is the file's metadata when the iteration started. So when a step inside the iteration changes a key the row already had (`edit-fields` setting `status: done` over a row's `status: pending`, or `file-inspect` refreshing `size` after a compress), a later step's `{{item.status}}` still reads `pending`, though the file holds `done` (`executor/tests/metadata.rs`). Nothing inside the iteration can read the new value. Tested as intended today (`test_inside_a_loop_the_loop_item_wins_a_shared_key`), so a change alters shipped behavior.
 
-- **Decision for Ryan:** keep the loop's item winning (a loop over CSV rows always reads its row's column), or let the file's current metadata win (a step's change is seen), perhaps keeping the row under a namespace of its own.
-- **Regression test:** whichever way is chosen, the `edit-fields` case above, for a per-file and a batch node.
+- **Decided (Ryan, October 30, 2026):** the file's current metadata wins, so a step's change is seen, and the loop's row stays readable under a namespace of its own (named in a `/workflow-expert` review before code). This changes shipped behavior, so the changelog says so. ISS-110 then follows the same rule.
+- **Regression test:** the `edit-fields` case above reads `done`, for a per-file and a batch node, and the loop's row is still readable under its new namespace.
 
 ### ISS-110: Inside a loop, a `when` guard can't read a key added in the iteration
 
@@ -358,5 +369,5 @@ Inside a loop, `{{item.*}}` reads the file's metadata with the loop's item on to
 
 A `when` guard is decided against the loop's item only (`executor/guard.rs`, `skip_reason`: `loop_item: &ctx.loop_item`), not the file's metadata. Inside a loop, a guard on a key that an earlier step of the iteration added (`file-inspect`'s `extension`, an `edit-fields` value) sees no value, though a per-file step's params read it. Reproduced with the CLI: a loop over CSV rows of `edit-fields` setting `x: "y"`, then `file-rename` guarded on `{{item.x}}` equals `y`, prints `file-rename skipped: when {{item.x}} equals y: got "{{item.x}}", expected "y"`. `when_guard.rs` CJ8 runs `file-inspect` before the loop, so it doesn't show this.
 
-- **Fix:** decide a guard inside a loop against the file's item as a per-file node reads it (`placeholder::file_item`), or say in the docs that guards read the iteration's starting item.
+- **Fix:** decide a guard inside a loop against the file's item as a per-file node reads it (`placeholder::file_item`), with ISS-109's precedence. One PR with ISS-109.
 - **Regression test:** a loop of `file-inspect` then a step guarded on `{{item.extension}}` runs for the matching file.

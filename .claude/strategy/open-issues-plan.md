@@ -1,7 +1,7 @@
 # Open Issues: ISS-7 to ISS-18 — 15 PRs
 
 **Created:** October 24, 2026
-**Status:** Proposed, waiting for Ryan's approval. ISS-12 needs a product decision before PRs 7–8. Part B's decisions were made on October 24, 2026: rebuild the handoff work here, remove `precision`, keep codegen in TS.
+**Status:** Approved; most PRs shipped. Left as of October 30, 2026: PRs 5–6 (ISS-8), 7 (ISS-12), 8 (ISS-7) and 15 (ISS-18), scheduled in [ISSUES.md's Work order](../ISSUES.md#work-order) (batches 10 and 12). ISS-12 is decided: telemetry on, with the key as a constant in the source (PR 7). Part B's decisions were made on October 24, 2026: rebuild the handoff work here, remove `precision`, keep codegen in TS.
 **Related:** [ISSUES.md](../ISSUES.md), the dogfood-sessions handoff (October 21 sessions, summarized in Part B), [feature-planning.md](../scopes/process/feature-planning.md), [function-length.md](../decisions/function-length.md) (the enforce-in-tooling precedent)
 
 ## Context
@@ -313,35 +313,28 @@ The keep-awake files only run on their own OS, so CI's macOS, Linux and Windows 
 
 ---
 
-## PR 7: Ship the telemetry key in release builds (ISS-12) — needs a decision
+## PR 7: Ship the telemetry key (ISS-12)
 
 **Branch:** `fix/telemetry-key` from `main`
-**One sentence:** Release builds embed the PostHog key, so CLI telemetry actually reaches PostHog.
+**One sentence:** Every CLI build carries the PostHog key, so CLI telemetry actually reaches PostHog.
 
 ### What
 
 `telemetry/mod.rs:57` reads `BNTO_POSTHOG_KEY` from the run's environment, and with no key, telemetry is off (`:60`). Nothing sets it: no `option_env!`, nothing in `release.yml`. So shipped CLIs send nothing, even though the notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`:134`).
 
-**Decision for Ryan:**
+**Decided (Ryan, October 26 and 30, 2026):** turn it on, with the key as a constant in the source. `cargo install bnto` builds from crates.io source on the user's machine, so a key passed in at our build time (`option_env!` and a release secret) would never reach those builds. PostHog project keys are write-only and public by design, and the web bundle already ships one. `BNTO_POSTHOG_KEY` stays as a runtime override (a different project, or empty to send nothing), and `status` says when the effective key is empty. The project discards IPs (`anonymize_ips`, turned on October 26, 2026), which PR 8's page says. The rejected option was to drop the first-run notice and say telemetry is off.
 
-- **(a) Turn it on:** embed the key at build time with `option_env!("BNTO_POSTHOG_KEY")` and the release secret. Keep the runtime variable as an override, and make `status` say when there's no key.
-- **(b) Turn it off honestly:** drop the first-run notice and say telemetry is off until a key ships.
+### Files (~0 new, ~2 modified)
 
-Option (a) matches the notice and the opt-out design. The web app already uses PostHog. Note that PostHog will see each request's IP address. There's no geoip opt-out today, and the page in PR 8 must say so.
-
-### Files for option (a) (~0 new, ~4 modified)
-
-- `src/telemetry/mod.rs`: compile-time key with a runtime override
-- `src/telemetry/mod.rs` `print_status`: report "no key: nothing is sent"
-- `.github/workflows/release.yml`: pass the `BNTO_POSTHOG_KEY` secret to the CLI build and crates publish steps, if the published crate should carry it (crates.io builds from source; see the open question below)
+- `src/telemetry/mod.rs`: the key as a constant, with `BNTO_POSTHOG_KEY` as an override; `print_status` reports "no key: nothing is sent" when the override empties it
 - `.claude/environment-variables.md`
 
-**Open question:** `cargo install bnto` builds from crates.io source on the user's machine, so a build-time env var on our side never reaches those builds. Embedding the key there would mean putting it in the published source, as a constant in the code. PostHog project keys are write-only and public by design; the web bundle already ships one.
+`release.yml` needs no secret.
 
 ### RED tests
 
-- With `BNTO_POSTHOG_KEY` unset, `status` names the missing key (unit test on a pure `effective()` function).
-- A compile-time key is used when no runtime value is set.
+- With no override, the effective key is the built-in constant (unit test on a pure `effective_key()` function).
+- An override replaces it, and an empty override means nothing is sent, which `status` names.
 
 ### No count changes
 
@@ -349,7 +342,7 @@ Option (a) matches the notice and the opt-out design. The web app already uses P
 
 ## PR 8: A `/telemetry` page that says what the CLI sends (ISS-7)
 
-**Branch:** `docs/telemetry-page` from `main`, after the PR 7 decision
+**Branch:** `docs/telemetry-page` from `main`, after PR 7 (same release)
 **One sentence:** bnto.io/telemetry documents the CLI's four events, what's never sent, and how to opt out.
 
 ### What
@@ -365,7 +358,7 @@ The notice's link (`consent.rs:27`) renders "Page Not Found", with HTTP 200 and 
 - **Opt-outs:** the three ways to turn it off.
 - **See it yourself:** `BNTO_TELEMETRY_DEBUG=1`.
 
-The wording depends on PR 7: "when telemetry is on" versus "currently off".
+Telemetry is on (PR 7), and the page says PostHog discards IPs.
 
 ### Files (~4 new, ~7 modified)
 
