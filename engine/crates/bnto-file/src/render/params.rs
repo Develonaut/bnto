@@ -101,8 +101,8 @@ const HEADER_DESCRIPTION: &str = "Written once before the rows. Reads {{count}} 
      the loop's {{item.KEY}}.";
 
 const ROW_DESCRIPTION: &str = "Written once per item. {{item.KEY}} is that item's metadata \
-     value KEY (inside a loop, the loop's item wins a key both have; a key neither has fails \
-     the run, naming the item); {{file}} is its file name.";
+     value KEY (inside a loop, over the loop's item, which {{loop.<key>}} reads as it was; a \
+     key neither has fails the run, naming the item); {{file}} is its file name.";
 
 const FOOTER_DESCRIPTION: &str = "Written once after the rows. Reads what the header reads.";
 

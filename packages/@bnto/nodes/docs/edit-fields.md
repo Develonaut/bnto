@@ -8,7 +8,7 @@
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| values | object | - | - | Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with (inside a loop, the loop's item wins a key both have), and one neither has fails the run. |
+| values | object | - | - | Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with (inside a loop, over the loop's item, which {{loop.<key>}} reads as it was), and one neither has fails the run. |
 | keepOnlySet | boolean | false | - | When on, each item keeps only the fields set in values; every other field it carried is dropped. |
 
 ## Configuration Example

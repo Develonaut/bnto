@@ -296,30 +296,80 @@ fn test_params_without_item_templates_are_unaffected_by_missing_metadata() {
     );
     assert_eq!(names, vec!["fixed.txt"]);
 }
+/// A loop over one row file (`new_name` = "from-row.txt") whose children
+/// tag the file (`new_name` = "renamed-a.txt"), then name it from `name`.
+fn tagged_in_a_loop(name: &str) -> String {
+    format!(
+        r#"{{
+        "nodes": [
+            {{ "id": "in", "type": "input" }},
+            {{
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    {{ "id": "tag", "type": "test-tag" }},
+                    {{ "id": "name", "type": "test-name", "parameters": {{ "name": "{name}" }} }}
+                ]
+            }},
+            {{ "id": "out", "type": "output" }}
+        ]
+    }}"#
+    )
+}
+
+fn row_file() -> PipelineFile {
+    file_with_metadata("a.txt", serde_json::json!({ "new_name": "from-row.txt" }))
+}
+
 #[test]
-fn test_inside_a_loop_the_loop_item_wins_a_shared_key() {
-    // A loop over CSV rows keeps reading its row's column even when a child
-    // attaches metadata under the same key.
-    let names = run_names(
-        r#"{
+fn test_inside_a_loop_a_steps_value_wins_a_shared_key() {
+    // ISS-109: a step's change to a key the row had is seen.
+    let names = run_names(&tagged_in_a_loop("{{item.new_name}}"), vec![row_file()]);
+    assert_eq!(names, vec!["renamed-a.txt"]);
+}
+
+#[test]
+fn test_loop_reads_the_loop_item_as_the_iteration_started() {
+    let names = run_names(&tagged_in_a_loop("{{loop.new_name}}"), vec![row_file()]);
+    assert_eq!(names, vec!["from-row.txt"]);
+}
+
+#[test]
+fn test_in_a_nested_loop_loop_reads_the_innermost_loops_item() {
+    // The outer loop's item has "from-row.txt"; a step tags the file before
+    // the inner loop starts, so the inner loop's item has "renamed-a.txt".
+    let def = r#"{
         "nodes": [
             { "id": "in", "type": "input" },
             {
-                "id": "loop-1", "type": "loop",
+                "id": "outer", "type": "loop",
                 "children": [
                     { "id": "tag", "type": "test-tag" },
-                    { "id": "name", "type": "test-name", "parameters": { "name": "{{item.new_name}}" } }
+                    {
+                        "id": "inner", "type": "loop",
+                        "children": [
+                            { "id": "name", "type": "test-name", "parameters": { "name": "{{loop.new_name}}" } }
+                        ]
+                    }
                 ]
             },
             { "id": "out", "type": "output" }
         ]
-    }"#,
-        vec![file_with_metadata(
-            "a.txt",
-            serde_json::json!({ "new_name": "from-row.txt" }),
-        )],
-    );
-    assert_eq!(names, vec!["from-row.txt"]);
+    }"#;
+    assert_eq!(run_names(def, vec![row_file()]), vec!["renamed-a.txt"]);
+}
+
+#[test]
+fn test_loop_outside_a_loop_is_refused() {
+    let def = r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "name", "type": "test-name", "parameters": { "name": "{{loop.new_name}}" } },
+            { "id": "out", "type": "output" }
+        ]
+    }"#;
+    let error = run_error(def, vec![row_file()]);
+    assert!(error.contains("{{loop.new_name}}"), "{error}");
+    assert!(error.contains("not inside a loop"), "{error}");
 }
 
 #[test]

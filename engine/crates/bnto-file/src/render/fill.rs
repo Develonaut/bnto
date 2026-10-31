@@ -3,7 +3,7 @@
 //
 // The node opts in with `resolves_items()`, so the executor hands its params
 // over unfilled, in a loop too, and the run's namespaces fill here as well.
-// A row reads each item's metadata with the loop's item on top, its values
+// A row reads each item's metadata over the loop's item, its values
 // escaped (run values too); the header, footer and filename are written
 // once, so they read only the loop's item (`fill_once`). Filling is
 // `bnto_core::control::placeholder`'s, so a value that reads like a token is
@@ -32,7 +32,7 @@ pub(super) fn per_item_token(text: &str, in_loop: bool) -> Option<&'static str> 
 }
 
 /// `row` filled for one item, its values escaped, or the first `{{item.KEY}}`
-/// key `values` (the item's metadata, the loop's item on top) lacks.
+/// key `values` (the item's metadata over the loop's item) lacks.
 pub(super) fn fill_row(
     row: &str,
     item: &BatchFile,

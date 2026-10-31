@@ -59,7 +59,8 @@ pub(super) fn build_assert_parameters() -> Vec<ParameterDef> {
             "Value",
             "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} \
              or {{file}} (the file's name) it is checked once per incoming file (inside a loop, \
-             the loop's item wins a key both have), and no files means nothing to check.",
+             over the loop's item, which {{loop.<key>}} reads as it was), and no files means \
+             nothing to check.",
         )),
         required(op_param()),
         text_param("expected", "Expected", "What the value is compared to."),

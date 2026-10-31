@@ -181,13 +181,25 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 | `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms             | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                                                                        |
 | `{{node.<id>.*}}` | An earlier node's output metadata                 | `{{node.step1.count}}`     | Engine, before each node runs (see below)                                                                       |
 | `{{entry.*}}`     | One entry of a `report` node's `each` list        | `{{entry.status}}`         | The `report` node, once per entry (see below)                                                                   |
+| `{{item.*}}`      | The file's metadata, over the loop's item         | `{{item.status}}`          | Engine or the node, once per file (see below)                                                                   |
+| `{{loop.*}}`      | The innermost loop's item, as the iteration began | `{{loop.status}}`          | Engine, before each node runs inside a loop; refused outside one or for a key it lacks (see below)              |
+
+### Inside a Loop
+
+A loop runs its steps once per incoming file, and that file's metadata (a CSV row, after `spreadsheet-read`) is the loop's item.
+
+- **`{{item.KEY}}`** reads the metadata of the file a step is working on, over the loop's item. A key a step inside the iteration set or changed wins (`edit-fields` setting `status: done` over a row's `pending`), and a key only the loop's item has still fills, so a file a step made inside the iteration reads the row's columns.
+- **`{{loop.KEY}}`** reads the loop's item as the iteration began, whatever later steps set. A nested loop's is its own. Outside a loop, or for a key the loop's item lacks, the step fails before it runs.
+- **Templates written once per call read the loop's item alone, by design:** `file-render`'s `header`, `footer` and `filename`, and `report`'s `each` and entry lines aren't filled for any one file, so their `{{item.*}}` is the loop's item as the iteration began, like `{{loop.*}}`.
+- **Not yet for steps decided once per step:** a `when` guard, and a batch step the engine fills (`summarize`, `file-join`, `file-sort`, `file-list`, `file-move`, `file-delete`, `spreadsheet-merge`, `spreadsheet-export`, and `shell-run` outside `each`), still read `{{item.*}}` from the loop's item alone, so they miss a step's change until ISS-110.
+- Until October 31, 2026 the loop's item won a key both had (ISS-109, [loop-item-current.md](../decisions/loop-item-current.md)).
 
 ### Per-Entry References
 
 `report`'s `each` param takes a list, usually a sole `{{node.<id>.<key>}}` such as `{{node.opt.entries}}` (a `file-list`'s every path, in listed order). The node prints its `message` once per entry, and `{{entry.<key>}}` in the message reads that entry's field: `{{entry.status}}: {{entry.full_path}}`. An entry that is a plain value (text, a number) is `{{entry}}`, and `{{entry}}` on an object entry prints it as JSON.
 
 - **Recipe mistakes fail the run.** An `each` that doesn't resolve to a list, an entry without a key the message reads, `{{entry}}` with no `each`, or one message reading both `{{entry}}` and `{{file}}`. An entry line may read `{{item.*}}` only inside a loop, where it is the loop's item.
-- **Per file instead.** Without `each`, a message that reads `{{file}}` (the file's name) or `{{item.<key>}}` (from the file's metadata) prints once per incoming file. `report` and `assert` resolve `{{item.*}}` themselves per file (`NodeProcessor::resolves_items`), so the engine hands them their params unfilled and they fill every token in one pass. Inside a loop the file's metadata has the loop's item on top, as for a per-file node, so a message that reads only loop keys prints once per file of the iteration, not once per iteration (see [batch-node-loop-items.md](../decisions/batch-node-loop-items.md)).
+- **Per file instead.** Without `each`, a message that reads `{{file}}` (the file's name) or `{{item.<key>}}` (from the file's metadata) prints once per incoming file. `report` and `assert` resolve `{{item.*}}` themselves per file (`NodeProcessor::resolves_items`), so the engine hands them their params unfilled and they fill every token in one pass. Inside a loop the file's metadata sits over the loop's item, as for a per-file node, so a message that reads only loop keys prints once per file of the iteration, not once per iteration (see [batch-node-loop-items.md](../decisions/batch-node-loop-items.md)).
 - **`assert` per file.** An `assert` whose `value` or `expected` reads `{{item.<key>}}` or `{{file}}` (the file's name) checks once per incoming file and names every file that fails; with no files it checks nothing. So "fail if any file reaches this step" is `value: "{{file}}"`, `op: "equals"`, `expected: ""` after a `file-filter` that keeps the forbidden files.
 
 ### Node Output References

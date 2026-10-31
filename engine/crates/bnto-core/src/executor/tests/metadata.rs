@@ -263,8 +263,8 @@ fn test_a_batch_node_output_carries_only_what_it_sets() {
 
 #[test]
 fn test_inside_a_loop_a_childs_value_still_wins_on_the_file() {
-    // The loop item wins for {{item.*}} reads; the file's own metadata keeps
-    // what the child set.
+    // The file's own metadata keeps what the child set, and since ISS-109
+    // `{{item.*}}` reads it over the loop's item too.
     let def = r#"{
         "nodes": [
             { "id": "in", "type": "input" },

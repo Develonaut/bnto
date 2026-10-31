@@ -142,6 +142,7 @@ fn resolve_shell_command(node: &PipelineNode, field_values: &FieldValues) -> She
         process_ctx: &noop,
         node_outputs: &empty_outputs,
         loop_item: &None,
+        loop_row: None,
         run_started_ms: None,
     };
     let resolved_params = resolve_templates(&node.params, &tpl_ctx);

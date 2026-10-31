@@ -28,8 +28,8 @@ pub(crate) struct PerFile {
     pub(crate) inherited: Map<String, Value>,
 }
 
-/// One `PerFile` per file, its params filled from its metadata with the
-/// loop's item on top and from the run (`ctx`); a `{{item.KEY}}` neither
+/// One `PerFile` per file, its params filled from its metadata over the
+/// loop's item and from the run (`ctx`); a `{{item.KEY}}` neither
 /// has fails the batch.
 pub(crate) fn per_file(
     input: BatchInput,

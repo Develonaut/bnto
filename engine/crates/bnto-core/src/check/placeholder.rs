@@ -6,7 +6,9 @@ use serde_json::Value;
 /// Namespaces a `{{namespace.key}}` placeholder may name: the executor's
 /// (`executor/template.rs`), run vars (`vars.rs`) and the report node's
 /// per-entry `entry` (`control/report`).
-const NAMESPACES: [&str; 7] = ["fields", "env", "ctx", "node", "item", "vars", "entry"];
+const NAMESPACES: [&str; 8] = [
+    "fields", "env", "ctx", "node", "item", "loop", "vars", "entry",
+];
 
 const OPEN: &str = "{{";
 const CLOSE: &str = "}}";

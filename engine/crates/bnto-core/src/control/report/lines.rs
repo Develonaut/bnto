@@ -1,8 +1,8 @@
 // The lines report prints: one per entry of `each`, one per file when the
 // message reads `{{file}}` or `{{item.*}}`, else one. Each line is filled in
 // one pass (`placeholder::fill_text`), the run's namespaces included: an
-// entry line reads the loop's item, a file line the file's metadata with the
-// loop's item on top.
+// entry line reads the loop's item, a file line the file's metadata over the
+// loop's item.
 
 use serde_json::Value;
 
@@ -55,7 +55,7 @@ fn entry_line(message: &str, n: usize, entry: &Value, once: Scope<'_>) -> Result
 }
 
 /// The line for one file: `{{file}}` is its name, `{{item.KEY}}` reads its
-/// metadata, the loop's item on top.
+/// metadata over the loop's item.
 fn file_line(message: &str, file: &BatchFile, once: Scope<'_>) -> Result<String, String> {
     let item = placeholder::file_item(&file.metadata, once.item);
     let scope = Scope {

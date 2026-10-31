@@ -27,7 +27,7 @@ export const fileRenderProcessor: ProcessorDef = {
       name: "row",
       label: "Row",
       description:
-        "Written once per item. {{item.KEY}} is that item's metadata value KEY (inside a loop, the loop's item wins a key both have; a key neither has fails the run, naming the item); {{file}} is its file name.",
+        "Written once per item. {{item.KEY}} is that item's metadata value KEY (inside a loop, over the loop's item, which {{loop.<key>}} reads as it was; a key neither has fails the run, naming the item); {{file}} is its file name.",
       type: "string" as const,
       constraints: { required: true },
     },

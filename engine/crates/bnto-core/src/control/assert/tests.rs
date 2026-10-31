@@ -294,12 +294,16 @@ fn test_a_dry_run_refuses_a_key_no_file_has() {
 // --- Inside a loop ---
 
 #[test]
-fn test_in_a_loop_a_check_reads_the_loop_item_on_top_of_the_files() {
-    // RED (ISS-58): `size` came from a step inside the iteration; the loop's
-    // item wins the shared `k`.
-    let ctx = in_loop(json!({ "k": "loop" }));
+fn test_in_a_loop_a_check_reads_the_files_metadata_over_the_loop_item() {
+    // `size` came from a step inside the iteration (ISS-58); the file wins
+    // the shared `k` (ISS-109), and a key only the loop's item has fills.
+    let ctx = in_loop(json!({ "k": "loop", "row": "r1" }));
     let files = vec![file("a.txt", json!({ "size": 3, "k": "file" }))];
-    let params = check(json!("{{item.size}}-{{item.k}}"), "equals", json!("3-loop"));
+    let params = check(
+        json!("{{item.size}}-{{item.k}}-{{item.row}}"),
+        "equals",
+        json!("3-file-r1"),
+    );
     assert!(run_with(params, files, &ctx).is_ok());
 }
 

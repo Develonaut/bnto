@@ -62,8 +62,8 @@ fn values_param() -> ParameterDef {
                       e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); \
                       one that is exactly {{item.<key>}} keeps that field's type. \
                       Templates read the fields the item arrived with (inside a loop, \
-                      the loop's item wins a key both have), and one neither has fails \
-                      the run."
+                      over the loop's item, which {{loop.<key>}} reads as it was), and \
+                      one neither has fails the run."
             .to_string(),
         param_type: ParameterType::Object,
         constraints: Some(Constraints {

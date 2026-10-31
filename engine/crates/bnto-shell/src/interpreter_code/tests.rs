@@ -118,3 +118,11 @@ fn python_names_are_recognised_without_overmatching() {
     assert!(!is_python("python-config"));
     assert!(!is_python("pythonista"));
 }
+
+#[test]
+fn the_loops_item_in_code_is_refused() {
+    // `{{loop.*}}` reads a loop's row, data like `{{item.*}}` (ISS-109).
+    let found = problems("python3", json!(["-c", "print('{{loop.cell}}')"]));
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert!(found[0].contains("{{loop.cell}}"), "{}", found[0]);
+}
