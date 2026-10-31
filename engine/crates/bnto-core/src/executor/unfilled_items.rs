@@ -39,6 +39,11 @@ pub(super) fn loop_refusal(params: &Params, row: Option<&Params>) -> Option<Stri
     })
 }
 
+/// Every key referenced as `{{item.KEY}}` anywhere in `params`.
+pub(super) fn item_keys(params: &Params) -> Vec<String> {
+    unfilled_keys(params, ITEM_OPEN, None)
+}
+
 fn unfilled_keys(params: &Params, open: &str, values: Option<&Params>) -> Vec<String> {
     let mut keys = Vec::new();
     for value in params.values() {

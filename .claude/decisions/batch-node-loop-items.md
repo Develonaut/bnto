@@ -37,4 +37,4 @@ Five batch nodes fill `{{item.*}}` (and `{{file}}`) themselves, once per file: `
 
 - `file-rename` and `file-decode` still get params the executor filled, then fill their own tokens over them: a `{{item.x}}` in a pattern whose value holds `{{name}}` is filled again (ISS-35). They could opt into the same handoff.
 - Inside an iteration the loop's item still won over a value a step set (ISS-109). Since fixed: the file wins, and `{{loop.*}}` reads the row ([loop-item-current.md](loop-item-current.md)).
-- `when` guards read only the loop's item (`executor/guard.rs`), so they can't see a key added during the iteration (ISS-110).
+- `when` guards read only the loop's item (`executor/guard.rs`), so they couldn't see a key added during the iteration (ISS-110). Since fixed: a guard reads the item the step's files agree on ([loop-item-current.md](loop-item-current.md)); `shell-run` still reads the loop's item (ISS-111).

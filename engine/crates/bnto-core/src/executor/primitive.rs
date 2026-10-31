@@ -172,11 +172,13 @@ fn require_filled_items(
 /// Resolve a node's params once, against the enclosing loop's item. A node
 /// that fills its params itself (`resolves_loop_items`) gets them unfilled,
 /// and fills every token in one pass (ISS-58, ISS-35). One that fills only
-/// `{{item.*}}` per file gets those as written outside a loop.
+/// `{{item.*}}` per file gets those as written outside a loop. Any other
+/// reads, inside a loop, the item `files` agree on (`step_item`, ISS-110).
 fn resolve_node_params<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
     processor: &dyn crate::processor::NodeProcessor,
+    files: &[PipelineFile],
 ) -> Result<Params, BntoError> {
     require_filled_loop(ctx, node)?;
     if processor.resolves_loop_items() {
@@ -185,8 +187,12 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
     let field_values = ctx.fields_for(node);
     let resolved = if processor.resolves_items() && ctx.loop_item.is_none() {
         resolve_templates(ctx, node, &field_values, &None)
-    } else {
+    } else if processor.resolves_items() {
         resolve_with(ctx, node, &field_values, &ctx.loop_item, None)?
+    } else {
+        let item = super::step_item::for_step(&ctx.loop_item, files, &node.params)
+            .map_err(|why| BntoError::InvalidInput(format!("Node '{}': {why}", node.id)))?;
+        resolve_with(ctx, node, &field_values, &item, None)?
     };
     let reserved = processor.reserved_tokens();
     super::reserved_tokens::check_reserved(reserved, &node.params, &resolved, &node.id)?;
@@ -224,11 +230,11 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
     let processor = resolve_processor(ctx, node)?;
     match processor.metadata().input_cardinality {
         InputCardinality::Batch => {
-            let params = resolve_node_params(ctx, node, processor)?;
+            let params = resolve_node_params(ctx, node, processor, &files)?;
             process_batch(ctx, processor, node, &params, files, file_offset)
         }
         InputCardinality::Source => {
-            let params = resolve_node_params(ctx, node, processor)?;
+            let params = resolve_node_params(ctx, node, processor, &[])?;
             process_source(ctx, processor, node, &params, file_offset)
         }
         InputCardinality::PerFile => process_per_file(ctx, processor, node, files, file_offset),
