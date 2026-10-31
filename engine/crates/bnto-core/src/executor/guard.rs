@@ -1,6 +1,7 @@
 // A node's `when` guard, decided just before the node would start: resolve
 // its value and expected with the node's own template context (the fields it
-// and its containers declare, ctx, earlier records, the loop item), compare.
+// and its containers declare, ctx, earlier records, and inside a loop the item
+// the step's files agree on, `step_item`), compare.
 
 use super::template::TemplateContext;
 use super::{NodeExecutionResult, PipelineContext};
@@ -24,7 +25,7 @@ pub(super) fn decide<F: Fn() -> u64 + Copy>(
     position: (usize, usize),
     files: Vec<PipelineFile>,
 ) -> Result<Decision, BntoError> {
-    Ok(match skip_reason(ctx, node)? {
+    Ok(match skip_reason(ctx, node, &files)? {
         Some(reason) => Decision::Skipped(skip(ctx, node, position, reason, files)),
         None => Decision::Run(files),
     })
@@ -35,24 +36,36 @@ pub(super) fn decide<F: Fn() -> u64 + Copy>(
 fn skip_reason<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: &PipelineNode,
+    files: &[PipelineFile],
 ) -> Result<Option<String>, BntoError> {
     let Some(when) = &node.when else {
         return Ok(None);
     };
+    let invalid = |message: String| BntoError::InvalidInput(format!("{}: {message}", node.id));
+    let item =
+        super::step_item::for_step(&ctx.loop_item, files, &guard_texts(when)).map_err(invalid)?;
     let field_values = ctx.fields_for(node);
     let tpl = TemplateContext {
         field_values: &field_values,
         process_ctx: ctx.process_ctx,
         node_outputs: &ctx.node_outputs,
-        loop_item: &ctx.loop_item,
+        loop_item: &item,
         loop_row: ctx.loop_item.as_ref(),
         run_started_ms: Some(ctx.started_ms),
     };
     match when.decide_in(&tpl) {
         Ok(Guard::Run) => Ok(None),
         Ok(Guard::Skip { reason }) => Ok(Some(reason)),
-        Err(message) => Err(BntoError::InvalidInput(format!("{}: {message}", node.id))),
+        Err(message) => Err(invalid(message)),
     }
+}
+
+/// The guard's two templates, as params `step_item` reads keys from.
+fn guard_texts(when: &crate::when::When) -> serde_json::Map<String, serde_json::Value> {
+    serde_json::Map::from_iter([
+        ("value".to_string(), when.value.clone().into()),
+        ("expected".to_string(), when.expected.clone().into()),
+    ])
 }
 
 /// Report `node` skipped and hand its input files on, untouched and with no

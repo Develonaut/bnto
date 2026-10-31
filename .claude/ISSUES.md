@@ -7,20 +7,20 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-111**.
+- **IDs never get reused.** The next one is **ISS-112**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
 
 Agreed with Ryan on October 30, 2026, replacing the October 27 order's batches 5–9. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Done, October 30, 2026: ISS-58, and ISS-35 for five nodes (#821). Done, October 31, 2026: ISS-109 (#823). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Done, October 30, 2026: ISS-58, and ISS-35 for five nodes (#821). Done, October 31, 2026: ISS-109 (#823), ISS-110 (#824). Batches keep their numbers.
 
 Batches group issues that share code and verification, so each runs while its build and test setup is warm: the engine batches (5–7) first, then the web batches (8–10; batch 10's ISS-12 is the CLI's telemetry), then codegen and tooling. Within that, silent wrong results come first and hygiene last.
 
 | #   | Batch                    | Issues, in PR order                                         | Why                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --- | ------------------------ | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 5   | Loop semantics           | ISS-110, ISS-108                                            | A `when` guard, and a batch step the executor fills, read only the loop's item inside an iteration (ISS-110); ISS-109's fix makes per-file steps read the file's current item, and these should too. A loop's failure line doesn't say which iteration failed (ISS-108). All in `bnto-core`'s executor                                                                                                                           |
+| 5   | Loop semantics           | ISS-108, ISS-111                                            | A loop's failure line doesn't say which iteration failed (ISS-108); `shell-run` reads only the loop's item inside a loop, `each` groups included (ISS-111). Both in `bnto-core`'s executor                                                                                                                                                                                                                                       |
 | 6   | Template unification     | ISS-35                                                      | `file-rename` and `file-decode` move onto the shared one-pass fill. These are the first PRs of the template-filters plan ([PLAN.md backlog](PLAN.md#backlog)), which must unify the interpolators before adding filters; write that plan first                                                                                                                                                                                   |
 | 7   | TUI and CLI behavior     | ISS-103, ISS-104, ISS-45                                    | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                                                                                                                            |
 | 8   | Web performance          | ISS-99, then ISS-37                                         | Public pages render per request, which costs compute that static pages don't (ISS-99), then the homepage's ~500 KB of JS (mobile LCP 4.9 s, ISS-37). Moved up from last: first of the web batches. Its own plan, profiling first; ISS-99 first because it changes what ISS-37 measures                                                                                                                                           |
@@ -69,7 +69,7 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser" | engine      | Open                                             |
 | ISS-108 | A loop's failure line repeats its step's "this step moved nothing", though the loop moved files in earlier iterations   | engine      | Open                                             |
-| ISS-110 | Inside a loop, a `when` guard and an executor-filled batch step read only the loop's item                               | engine      | Open                                             |
+| ISS-111 | Inside a loop, `shell-run` reads `{{item.*}}` from the loop's item alone, in `each` groups too                          | engine      | Open                                             |
 
 ---
 
@@ -353,12 +353,16 @@ Since ISS-100 every `file-move` refusal says "this step moved nothing", true of 
 - **Fix:** have a container's failure line say which iteration failed (`each, iteration 2 of 2: …`), or have `file-move` list the moves earlier iterations made, as `file-copy` lists earlier copies (the run would record moves). Default (October 30, 2026): name the iteration.
 - **Regression test:** the ISS-100 loop's output names the failing iteration, or lists `b.txt` as moved earlier.
 
-### ISS-110: Inside a loop, a `when` guard can't read a key added in the iteration
+### ISS-111: Inside a loop, `shell-run` reads `{{item.*}}` from the loop's item alone, in `each` groups too
 
-**Found:** October 29, 2026 (`/workflow-expert` review of the ISS-58 fix).
+**Found:** October 31, 2026 (fixing ISS-110).
 
-A `when` guard is decided against the loop's item only (`executor/guard.rs`, `skip_reason`: `loop_item: &ctx.loop_item`), not the file's metadata. Inside a loop, a guard on a key that an earlier step of the iteration added (`file-inspect`'s `extension`, an `edit-fields` value) sees no value, though a per-file step's params read it. Reproduced with the CLI: a loop over CSV rows of `edit-fields` setting `x: "y"`, then `file-rename` guarded on `{{item.x}}` equals `y`, prints `file-rename skipped: when {{item.x}} equals y: got "{{item.x}}", expected "y"`. `when_guard.rs` CJ8 runs `file-inspect` before the loop, so it doesn't show this.
+`shell-run` declares `resolves_items` (it fills `{{item.*}}` inside `each` groups itself) but not `resolves_loop_items`, so inside a loop the executor fills every `{{item.*}}` in its params from the loop's item before it runs (`resolve_node_params`, `executor/primitive.rs`), `each` groups included (`bnto-shell/src/each/unfilled.rs` says the executor hands them over as written only outside a loop). So inside a loop:
 
-- **Also:** a batch step the executor fills (`summarize`, `file-join`, `file-sort`, `file-list`, `file-move`, `file-delete`, `spreadsheet-merge`, `spreadsheet-export`, and `shell-run` outside `each`) gets its `{{item.*}}` from the loop's item alone too (`resolve_node_params`), so it misses a key a step changed, though ISS-109 made per-file steps read it.
-- **Fix:** one rule for anything decided once per step, guards and these batch fills: the item a per-file step would read, from the files the step gets: one file's item, the loop's item with none, and with several the value they agree on, refusing files that disagree ([loop-item-current.md](decisions/loop-item-current.md)). Split from ISS-109 so each PR has one concern.
-- **Regression test:** a loop of `file-inspect` then a step guarded on `{{item.extension}}` runs for the matching file.
+- an `each` group reads the loop's item, not each file's own metadata. Reproduced with the CLI (temp `HOME` and `BNTO_HOME`): a loop over a CSV file whose steps are `spreadsheet-read` (fanning it out into rows) then `shell-run` `echo` with `{ "each": ["{{item.name}}"] }` fails with `Node 'sh': {{item.name}} has no value (it has: inputSize)`: the loop's item is the CSV file, so the group can't reach the rows at all;
+- outside `each`, it misses a key a step inside the iteration changed, which every other step reads since ISS-109 and ISS-110.
+
+ISS-110's step rule left `shell-run` out because applying it here would refuse that fan-out instead of filling each file.
+
+- **Fix:** have the executor leave `{{item.*}}` inside `each` groups as written in a loop too, so `shell-run` fills them per file over the loop's item (`placeholder::file_item`), and fill the rest with ISS-110's step rule (`step_item`).
+- **Regression test:** in a loop, `spreadsheet-read` fanning a CSV out, then `shell-run` with an `each` group over `{{item.name}}`, gets each row's name; and outside `each`, a key `edit-fields` changed reads the new value.

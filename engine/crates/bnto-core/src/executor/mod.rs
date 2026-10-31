@@ -50,6 +50,7 @@ mod result;
 mod routed;
 mod run_scope;
 mod segments;
+mod step_item;
 pub mod template;
 mod time_limit;
 mod unfilled_items;
