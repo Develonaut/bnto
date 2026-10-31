@@ -6,7 +6,7 @@
 //! data here.
 
 /// Namespaced placeholders the executor fills: `{{ns.key}}`.
-const DATA_NAMESPACES: &[&str] = &["fields", "env", "ctx", "node", "item"];
+const DATA_NAMESPACES: &[&str] = &["fields", "env", "ctx", "node", "item", "loop"];
 
 /// Bare tokens shell-run fills: `{{url}}`, `{{path}}`, ...
 const DATA_TOKENS: &[&str] = &["url", "input", "path", "file", "output_dir"];
@@ -68,6 +68,12 @@ mod tests {
                 "{{path}}"
             ]
         );
+    }
+
+    #[test]
+    fn the_loops_item_is_data() {
+        // A loop over CSV rows reads a cell through `{{loop.*}}` (ISS-109).
+        assert_eq!(data_placeholders("x {{loop.cmd}}"), ["{{loop.cmd}}"]);
     }
 
     #[test]

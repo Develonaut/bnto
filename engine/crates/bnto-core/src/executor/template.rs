@@ -25,6 +25,9 @@ pub struct TemplateContext<'a> {
     /// The {{item.*}} source: the metadata of the file being processed, under the
     /// innermost loop's item. `None` when there is neither.
     pub loop_item: &'a Option<serde_json::Map<String, Value>>,
+    /// The {{loop.*}} source: the innermost loop's item as its iteration
+    /// started, whatever later steps set. `None` outside a loop.
+    pub loop_row: Option<&'a serde_json::Map<String, Value>>,
     /// The run's start (Unix epoch ms) for `{{ctx.started}}`; `None` outside a run.
     pub run_started_ms: Option<u64>,
 }
@@ -60,6 +63,7 @@ fn has_placeholder(s: &str) -> bool {
         || s.contains("{{ctx.")
         || s.contains("{{node.")
         || s.contains("{{item.")
+        || s.contains("{{loop.")
 }
 
 /// If the string is exactly one `{{namespace.key}}` placeholder, return (prefix, key).
@@ -98,6 +102,7 @@ fn resolve_placeholder(prefix: &str, key: &str, ctx: &TemplateContext) -> Option
         }
         "ctx" => resolve_ctx(key, ctx.process_ctx, ctx.run_started_ms),
         "item" => ctx.loop_item.as_ref().and_then(|m| m.get(key).cloned()),
+        "loop" => ctx.loop_row.and_then(|row| row.get(key).cloned()),
         p if p.starts_with("node.") => {
             let node_id = &p[5..]; // strip "node."
             resolve_node_ref(node_id, key, ctx.node_outputs)
@@ -252,6 +257,7 @@ fn interpolated_value(inner: &str, ctx: &TemplateContext) -> Option<String> {
             .loop_item
             .as_ref()
             .map(|item| text(item.get(key).cloned())),
+        "loop" => ctx.loop_row.map(|row| text(row.get(key).cloned())),
         "node" => {
             let (node_id, prop) = key.rsplit_once('.')?;
             Some(text(resolve_node_ref(node_id, prop, ctx.node_outputs)))
@@ -324,6 +330,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: outputs,
             loop_item: &None,
+            loop_row: None,
             run_started_ms: started,
         }
     }
@@ -425,6 +432,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -440,6 +448,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -455,6 +464,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -472,6 +482,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -487,6 +498,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -502,6 +514,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -519,6 +532,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -534,6 +548,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -553,6 +568,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -576,6 +592,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -599,6 +616,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -624,6 +642,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -654,6 +673,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -689,6 +709,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -704,6 +725,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -719,6 +741,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -738,6 +761,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -753,6 +777,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -774,6 +799,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -789,6 +815,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -804,6 +831,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -822,6 +850,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -840,6 +869,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -854,6 +884,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -870,6 +901,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -887,6 +919,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -906,6 +939,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -920,6 +954,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -936,6 +971,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -951,6 +987,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -965,6 +1002,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -981,6 +1019,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1007,6 +1046,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1022,6 +1062,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1038,6 +1079,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1052,6 +1094,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1067,6 +1110,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1083,6 +1127,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1218,6 +1263,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1234,6 +1280,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            loop_row: None,
             run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
@@ -1253,6 +1300,7 @@ mod tests {
             process_ctx,
             node_outputs: outputs,
             loop_item: item,
+            loop_row: None,
             run_started_ms: None,
         }
     }

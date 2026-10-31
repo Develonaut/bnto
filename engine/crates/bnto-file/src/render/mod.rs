@@ -149,7 +149,7 @@ type Params = serde_json::Map<String, serde_json::Value>;
 
 /// The file's text: header, rows joined by the separator, footer, each part
 /// present on its own line and ending with a newline. A row reads each item's
-/// metadata with the loop's item on top.
+/// metadata over the loop's item.
 fn render(
     params: &RenderParams,
     items: &[BatchFile],

@@ -101,6 +101,7 @@ impl ProcessContext for RunScope<'_> {
             process_ctx: self.inner,
             node_outputs: self.run.node_outputs,
             loop_item: &None,
+            loop_row: self.loop_item,
             run_started_ms: Some(self.run.started_ms),
         };
         run_placeholder(inner, whole, &tpl)

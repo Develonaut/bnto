@@ -5,7 +5,7 @@
 // fields the file arrived with (`{{item.first}} {{item.last}}`). Files pass
 // through with their data untouched; only their metadata changes. It runs as
 // a batch and fills `{{item.*}}` and `{{file}}` (the file's name) itself, in
-// a loop too (the loop's item on top of the file's), so a field an item lacks
+// a loop too (the file's fields over the loop's item), so a field an item lacks
 // fails the run naming the field and the item. A dry run sets fields too:
 // nothing is written.
 
@@ -130,7 +130,7 @@ fn read_filled(
 }
 
 /// One file with its fields set, its data and name as they arrived. The
-/// values read its metadata with the loop's item on top; the file keeps
+/// values read its metadata over the loop's item; the file keeps
 /// only its own metadata and what was set.
 fn edit_file(
     params: &EditFieldsParams,

@@ -45,6 +45,7 @@ fn skip_reason<F: Fn() -> u64 + Copy>(
         process_ctx: ctx.process_ctx,
         node_outputs: &ctx.node_outputs,
         loop_item: &ctx.loop_item,
+        loop_row: ctx.loop_item.as_ref(),
         run_started_ms: Some(ctx.started_ms),
     };
     match when.decide_in(&tpl) {

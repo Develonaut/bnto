@@ -202,7 +202,7 @@ pub trait NodeProcessor {
     /// True when such a node fills all its params itself, in one pass, so a
     /// filled value is never scanned again (ISS-35): the executor hands them
     /// over unfilled, in a loop too. The node fills `{{item.*}}` from each
-    /// file's metadata with the loop's item on top (`ProcessContext::loop_item`,
+    /// file's metadata over the loop's item (`ProcessContext::loop_item`,
     /// ISS-58) and the run's namespaces through `ProcessContext::run_placeholder`
     /// (`control::placeholder::Scope` does both). False keeps the executor
     /// filling them first, for a node that fills items only in part of its

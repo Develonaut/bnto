@@ -8,7 +8,7 @@
 // (`{{fields.*}}`, `{{env.*}}`, `{{ctx.*}}`, `{{node.*}}`, answered by
 // `ProcessContext::run_placeholder`). A filled value is never scanned again,
 // so one that reads like a token is kept as written (ISS-35). A file's item
-// is its metadata with the enclosing loop's item on top (`file_item`), as
+// is its metadata over the enclosing loop's item (`file_item`), as
 // the executor builds it for a per-file node, so a key a step inside the
 // iteration adds is there (ISS-58).
 
@@ -122,9 +122,10 @@ impl Scope<'_> {
 
 const ENTRY: &str = "entry";
 
-/// The run's own namespaces, which `run_placeholder` answers. A node's own
+/// The run's own namespaces, which `run_placeholder` answers (`loop` is the
+/// enclosing loop's item, refused before the step when it can't fill). A node's own
 /// tokens (`{{file}}`, `{{item.*}}`, file-render's `{{count}}`) are not in it.
-const RUN_NAMESPACES: [&str; 4] = ["fields.", "env.", "ctx.", "node."];
+const RUN_NAMESPACES: [&str; 5] = ["fields.", "env.", "ctx.", "node.", "loop."];
 
 fn lookup(
     values: Option<&Map<String, Value>>,
@@ -213,17 +214,16 @@ fn sole_token(text: &str) -> Option<&str> {
     (!inner.contains('{') && !inner.contains('}')).then_some(inner)
 }
 
-/// A file's `{{item.*}}` source: its metadata, with the enclosing loop's
-/// item on top. The loop item wins a shared key, so a loop over CSV rows
-/// keeps reading its row's columns.
+/// A file's `{{item.*}}` source: its metadata over the enclosing loop's
+/// item. The file wins a shared key, so a step's change inside the
+/// iteration is seen (ISS-109); a key only the loop's item has still fills,
+/// so a file a step made reads the row. `{{loop.*}}` reads the row as is.
 pub fn file_item(
     metadata: &Map<String, Value>,
     loop_item: Option<&Map<String, Value>>,
 ) -> Map<String, Value> {
-    let mut item = metadata.clone();
-    if let Some(loop_item) = loop_item {
-        item.extend(loop_item.clone());
-    }
+    let mut item = loop_item.cloned().unwrap_or_default();
+    item.extend(metadata.clone());
     item
 }
 
@@ -334,11 +334,14 @@ mod tests {
     }
 
     #[test]
-    fn test_file_item_puts_the_loop_item_on_top() {
+    fn test_file_item_puts_the_files_metadata_over_the_loop_item() {
         let metadata = values(json!({ "k": "file", "added": 1 }));
-        let loop_item = values(json!({ "k": "row" }));
+        let loop_item = values(json!({ "k": "row", "only": 2 }));
         let item = file_item(&metadata, Some(&loop_item));
-        assert_eq!(Value::Object(item), json!({ "k": "row", "added": 1 }));
+        assert_eq!(
+            Value::Object(item),
+            json!({ "k": "file", "added": 1, "only": 2 })
+        );
     }
 
     /// A run whose `fields.x` holds a token and whose `fields.n` is a number.

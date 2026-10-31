@@ -114,6 +114,7 @@ fn resolve_with<F: Fn() -> u64 + Copy>(
     item: &Option<Params>,
     file: Option<&str>,
 ) -> Result<Params, BntoError> {
+    require_filled_loop(ctx, node)?;
     require_filled_items(node, item, file)?;
     Ok(resolve_templates(ctx, node, field_values, item))
 }
@@ -130,9 +131,24 @@ fn resolve_templates<F: Fn() -> u64 + Copy>(
         process_ctx: ctx.process_ctx,
         node_outputs: &ctx.node_outputs,
         loop_item: item,
+        loop_row: ctx.loop_item.as_ref(),
         run_started_ms: Some(ctx.started_ms),
     };
     super::template::resolve_templates(&node.params, &tpl_ctx)
+}
+
+/// Error when a `{{loop.*}}` param reference has nothing to fill it.
+fn require_filled_loop<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    node: PipelineNodeRef,
+) -> Result<(), BntoError> {
+    match super::unfilled_items::loop_refusal(&node.params, ctx.loop_item.as_ref()) {
+        Some(why) => Err(BntoError::InvalidInput(format!(
+            "Node '{}': {why}",
+            node.id
+        ))),
+        None => Ok(()),
+    }
 }
 
 /// Error when a `{{item.*}}` param reference has nothing to fill it, naming
@@ -162,6 +178,7 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
     node: PipelineNodeRef,
     processor: &dyn crate::processor::NodeProcessor,
 ) -> Result<Params, BntoError> {
+    require_filled_loop(ctx, node)?;
     if processor.resolves_loop_items() {
         return Ok(node.params.clone());
     }
@@ -177,8 +194,9 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
 }
 
 /// The `{{item.*}}` source for one file: the file's own metadata (what every
-/// earlier node attached), under the innermost loop's item. The loop item wins
-/// a shared key, so a loop over CSV rows keeps reading its row's columns.
+/// earlier node attached), over the innermost loop's item: the file wins a
+/// shared key, so a step's change is seen (ISS-109), and `{{loop.*}}` reads
+/// the row as it was.
 fn file_item(loop_item: &Option<Params>, file: &PipelineFile) -> Option<Params> {
     if file.metadata.is_empty() {
         return loop_item.clone();

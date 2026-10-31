@@ -32,6 +32,7 @@ fn skip_reason(path: &[&PipelineNode]) -> Option<String> {
         process_ctx: &NoopContext,
         node_outputs: &BTreeMap::new(),
         loop_item: &None,
+        loop_row: None,
         run_started_ms: None,
     };
     match when.decide_in(&tpl) {

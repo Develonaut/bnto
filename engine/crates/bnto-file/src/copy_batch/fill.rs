@@ -1,5 +1,5 @@
 // Each file's params, with `{{item.KEY}}` filled from that file's metadata
-// and the loop's item on top, and the run's namespaces (`run_placeholder`),
+// over the loop's item, and the run's namespaces (`run_placeholder`),
 // as the executor fills them for a per-file node:
 // a value that is one whole placeholder keeps its JSON type, anything else is
 // filled in as text, in one pass, so a value that reads like a token is kept

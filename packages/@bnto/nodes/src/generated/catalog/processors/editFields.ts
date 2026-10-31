@@ -20,7 +20,7 @@ export const editFieldsProcessor: ProcessorDef = {
       name: "values",
       label: "Values",
       description:
-        "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with (inside a loop, the loop's item wins a key both have), and one neither has fails the run.",
+        "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with (inside a loop, over the loop's item, which {{loop.<key>}} reads as it was), and one neither has fails the run.",
       type: "object" as const,
       constraints: { required: true },
     },

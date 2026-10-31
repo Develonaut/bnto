@@ -351,14 +351,14 @@ fn test_in_a_loop_header_footer_and_filename_read_the_loop_item() {
 }
 
 #[test]
-fn test_in_a_loop_a_row_reads_the_loop_item_on_top_and_escapes_it() {
-    // RED (ISS-58): a row reads the item's own keys and the loop's, the
-    // loop's winning a shared key; filled values are escaped.
-    let params =
-        json!({ "row": "{{item.name}} {{item.tag}}", "filename": "x.md", "escape": "markdown" });
-    let files = vec![item("a.csv", json!({ "name": "alpha", "tag": "own" }))];
-    let out = render_in_loop(params, files, json!({ "tag": "a|b" })).unwrap();
-    assert_eq!(text(&out), "alpha a\\|b\n");
+fn test_in_a_loop_a_row_reads_its_own_keys_over_the_loops_and_escapes_them() {
+    // A row reads the item's own keys and the loop's (ISS-58), its own
+    // winning a shared key (ISS-109); filled values are escaped.
+    let params = json!({ "row": "{{item.name}} {{item.tag}} {{item.row}}", "filename": "x.md",
+        "escape": "markdown" });
+    let files = vec![item("a.csv", json!({ "name": "alpha", "tag": "o|wn" }))];
+    let out = render_in_loop(params, files, json!({ "tag": "loop", "row": "a|b" })).unwrap();
+    assert_eq!(text(&out), "alpha o\\|wn a\\|b\n");
 }
 
 #[test]

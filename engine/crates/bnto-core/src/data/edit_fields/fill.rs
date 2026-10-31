@@ -1,5 +1,5 @@
 // The values edit-fields sets on one item, every `{{item.KEY}}` filled from
-// the fields that item arrived with (the loop's item on top) and every
+// the fields that item arrived with (over the loop's item) and every
 // `{{file}}` with its name.
 //
 // The executor hands this node its params unfilled (`resolves_loop_items`),

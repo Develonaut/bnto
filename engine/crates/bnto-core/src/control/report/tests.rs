@@ -259,15 +259,15 @@ fn test_entry_and_item_together_are_refused_outside_a_loop() {
 // --- Inside a loop ---
 
 #[test]
-fn test_in_a_loop_a_file_line_reads_the_loop_item_on_top_of_the_files() {
-    // RED (ISS-58): a key the file gained in the iteration (`size`) and the
-    // loop's own (`row`) both fill; the loop's item wins a shared key.
+fn test_in_a_loop_a_file_line_reads_the_files_metadata_over_the_loop_item() {
+    // A key the file gained in the iteration (`size`, ISS-58) and the loop's
+    // own (`row`) both fill; the file wins a shared key (ISS-109).
     let ctx = in_loop(json!({ "row": "r1", "k": "loop" }));
     let files = vec![file("a.txt", json!({ "size": 3, "k": "file" }))];
     let params = json!({ "message": "{{item.row}} {{item.size}} {{item.k}}" });
     let (result, lines) = run_with(params, files, &ctx);
     result.unwrap();
-    assert_eq!(lines, ["r1 3 loop"]);
+    assert_eq!(lines, ["r1 3 file"]);
 }
 
 #[test]

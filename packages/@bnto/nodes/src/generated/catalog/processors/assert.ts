@@ -20,7 +20,7 @@ export const assertProcessor: ProcessorDef = {
       name: "value",
       label: "Value",
       description:
-        "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file (inside a loop, the loop's item wins a key both have), and no files means nothing to check.",
+        "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file (inside a loop, over the loop's item, which {{loop.<key>}} reads as it was), and no files means nothing to check.",
       type: "string" as const,
       constraints: { required: true },
     },
