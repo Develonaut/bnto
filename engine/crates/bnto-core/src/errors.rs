@@ -123,6 +123,28 @@ impl BntoError {
         }
     }
 
+    /// This error, raised in iteration `index` (from 0) of `total` of a loop:
+    /// its message starts with that, so the loop's failure line says which
+    /// iteration failed (ISS-108). The variant, and any output it carries, stay.
+    pub fn in_iteration(self, index: usize, total: usize) -> Self {
+        let at = |message: String| format!("iteration {} of {total}: {message}", index + 1);
+        match self {
+            Self::InvalidInput(m) => Self::InvalidInput(at(m)),
+            Self::UnsupportedFormat(m) => Self::UnsupportedFormat(at(m)),
+            Self::ProcessingFailed(m) => Self::ProcessingFailed(at(m)),
+            Self::OutOfMemory(m) => Self::OutOfMemory(at(m)),
+            Self::CommandFailed { message, stdout } => Self::CommandFailed {
+                message: at(message),
+                stdout,
+            },
+            Self::FailedWithOutput(mut failed) => {
+                failed.error = failed.error.in_iteration(index, total);
+                Self::FailedWithOutput(failed)
+            }
+            other => other,
+        }
+    }
+
     /// The error itself and the output it handed over, if any.
     pub fn into_parts(self) -> (BntoError, Option<NodeOutput>) {
         match self {
@@ -247,6 +269,48 @@ mod tests {
         let (error, output) = error.into_parts();
         assert!(matches!(error, BntoError::ProcessingFailed(_)));
         assert_eq!(output.unwrap().files[0].filename, "tool.log");
+    }
+
+    #[test]
+    fn test_in_iteration_names_the_iteration_and_keeps_the_variant() {
+        let error = BntoError::ProcessingFailed("this step moved nothing".into());
+        let error = error.in_iteration(1, 2);
+        assert!(matches!(error, BntoError::ProcessingFailed(_)));
+        assert_eq!(
+            error.to_string(),
+            "Processing failed: iteration 2 of 2: this step moved nothing"
+        );
+        let invalid = BntoError::InvalidInput("x".into()).in_iteration(0, 3);
+        assert_eq!(invalid.to_string(), "Invalid input: iteration 1 of 3: x");
+        let command = BntoError::CommandFailed {
+            message: "boom".into(),
+            stdout: b"out".to_vec(),
+        };
+        let BntoError::CommandFailed { message, stdout } = command.in_iteration(0, 1) else {
+            panic!("variant changed");
+        };
+        assert_eq!(
+            (message.as_str(), stdout.as_slice()),
+            ("iteration 1 of 1: boom", &b"out"[..])
+        );
+    }
+
+    #[test]
+    fn test_in_iteration_keeps_output_and_leaves_timeouts_and_cancels() {
+        let inner = BntoError::ProcessingFailed("tool exited 2".to_string());
+        let error = BntoError::with_output(inner, log_output()).in_iteration(1, 2);
+        assert_eq!(
+            error.to_string(),
+            "Processing failed: iteration 2 of 2: tool exited 2"
+        );
+        assert_eq!(error.into_parts().1.unwrap().files[0].filename, "tool.log");
+        let timeout = BntoError::TimedOut { secs: 3 }.in_iteration(0, 2);
+        assert!(timeout.is_timeout());
+        assert_eq!(timeout.to_string(), "Run timed out after 3s");
+        assert!(matches!(
+            BntoError::Cancelled.in_iteration(0, 2),
+            BntoError::Cancelled
+        ));
     }
 
     #[test]

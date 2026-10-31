@@ -163,7 +163,9 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                     return Err(error);
                 }
                 match config.on_error {
-                    OnErrorStrategy::FailFast => return Err(error),
+                    OnErrorStrategy::FailFast => {
+                        return Err(error.in_iteration(i, total_iterations));
+                    }
                     OnErrorStrategy::Continue => {
                         warnings.push(format!(
                             "Iteration {}/{}: {}",
