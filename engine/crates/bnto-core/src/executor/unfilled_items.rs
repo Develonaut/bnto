@@ -25,8 +25,8 @@ pub(super) fn loop_refusal(params: &Params, row: Option<&Params>) -> Option<Stri
     Some(match row {
         None => {
             format!(
-                "{{{{loop.{key}}}}} reads the loop's item, but this step is not inside a loop \
-                 (or the file the loop started from has no values)"
+                "{{{{loop.{key}}}}} has no loop item to read: this step is not inside a loop, \
+                 or the file the loop started from carries no values"
             )
         }
         Some(row) => {
