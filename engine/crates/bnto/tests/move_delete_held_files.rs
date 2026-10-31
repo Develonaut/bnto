@@ -258,6 +258,12 @@ fn a_conflict_after_earlier_iterations_moved_files_claims_only_its_own_step() {
         "{stderr}"
     );
     assert!(!stderr.contains("nothing moved"), "{stderr}");
+    // ISS-108: the loop's line says which iteration refused, so "this step
+    // moved nothing" isn't read as the whole loop's.
+    assert!(
+        stderr.contains("FAILED each: Invalid input: iteration 2 of 2: File move refused"),
+        "{stderr}"
+    );
     assert_eq!(
         std::fs::read_to_string(out.path().join("b.txt")).unwrap(),
         "BBBB"

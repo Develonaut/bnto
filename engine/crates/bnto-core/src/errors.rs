@@ -123,6 +123,49 @@ impl BntoError {
         }
     }
 
+    /// This error, raised in iteration `index` (from 0) of `total` of a loop:
+    /// its message starts with that, so the loop's failure line says which
+    /// iteration failed (ISS-108). The variant, and any output it carries, stay.
+    pub fn in_iteration(self, index: usize, total: usize) -> Self {
+        self.map_message(&|m| format!("iteration {} of {total}: {m}", index + 1))
+    }
+
+    /// This error with `f` applied to its message. A wrapper applies it to
+    /// the error it carries (for a closing step's, the first failure, the
+    /// run's verdict); a variant with no message is unchanged.
+    fn map_message(self, f: &dyn Fn(String) -> String) -> Self {
+        match self {
+            Self::InvalidInput(m) => Self::InvalidInput(f(m)),
+            Self::UnsupportedFormat(m) => Self::UnsupportedFormat(f(m)),
+            Self::ProcessingFailed(m) => Self::ProcessingFailed(f(m)),
+            Self::OutOfMemory(m) => Self::OutOfMemory(f(m)),
+            Self::CommandFailed { message, stdout } => Self::CommandFailed {
+                message: f(message),
+                stdout,
+            },
+            wrapper => wrapper.map_wrapped(f),
+        }
+    }
+
+    fn map_wrapped(self, f: &dyn Fn(String) -> String) -> Self {
+        match self {
+            Self::FailedWithOutput(mut failed) => {
+                failed.error = failed.error.map_message(f);
+                Self::FailedWithOutput(failed)
+            }
+            Self::ClosingStepFailed {
+                first,
+                node_id,
+                error,
+            } => Self::ClosingStepFailed {
+                first: Box::new(first.map_message(f)),
+                node_id,
+                error,
+            },
+            other => other,
+        }
+    }
+
     /// The error itself and the output it handed over, if any.
     pub fn into_parts(self) -> (BntoError, Option<NodeOutput>) {
         match self {
@@ -247,6 +290,64 @@ mod tests {
         let (error, output) = error.into_parts();
         assert!(matches!(error, BntoError::ProcessingFailed(_)));
         assert_eq!(output.unwrap().files[0].filename, "tool.log");
+    }
+
+    #[test]
+    fn test_in_iteration_names_the_iteration_and_keeps_the_variant() {
+        let error = BntoError::ProcessingFailed("this step moved nothing".into());
+        let error = error.in_iteration(1, 2);
+        assert!(matches!(error, BntoError::ProcessingFailed(_)));
+        assert_eq!(
+            error.to_string(),
+            "Processing failed: iteration 2 of 2: this step moved nothing"
+        );
+        let invalid = BntoError::InvalidInput("x".into()).in_iteration(0, 3);
+        assert_eq!(invalid.to_string(), "Invalid input: iteration 1 of 3: x");
+        let command = BntoError::CommandFailed {
+            message: "boom".into(),
+            stdout: b"out".to_vec(),
+        };
+        let BntoError::CommandFailed { message, stdout } = command.in_iteration(0, 1) else {
+            panic!("variant changed");
+        };
+        assert_eq!(
+            (message.as_str(), stdout.as_slice()),
+            ("iteration 1 of 1: boom", &b"out"[..])
+        );
+    }
+
+    #[test]
+    fn test_in_iteration_keeps_output_and_leaves_timeouts_and_cancels() {
+        let inner = BntoError::ProcessingFailed("tool exited 2".to_string());
+        let error = BntoError::with_output(inner, log_output()).in_iteration(1, 2);
+        assert_eq!(
+            error.to_string(),
+            "Processing failed: iteration 2 of 2: tool exited 2"
+        );
+        assert_eq!(error.into_parts().1.unwrap().files[0].filename, "tool.log");
+        let timeout = BntoError::TimedOut { secs: 3 }.in_iteration(0, 2);
+        assert!(timeout.is_timeout());
+        assert_eq!(timeout.to_string(), "Run timed out after 3s");
+        assert!(matches!(
+            BntoError::Cancelled.in_iteration(0, 2),
+            BntoError::Cancelled
+        ));
+    }
+
+    #[test]
+    fn test_in_iteration_names_the_iteration_of_a_failure_a_closing_step_followed() {
+        // The iteration's own failure is the verdict, so it carries the name.
+        let error = BntoError::ClosingStepFailed {
+            first: Box::new(BntoError::ProcessingFailed("assert broke".into())),
+            node_id: "tidy".into(),
+            error: Box::new(BntoError::ProcessingFailed("tidy broke".into())),
+        };
+        let error = BntoError::with_output(error, log_output()).in_iteration(1, 2);
+        assert_eq!(
+            error.to_string(),
+            "Processing failed: iteration 2 of 2: assert broke; closing step 'tidy' also failed: \
+             Processing failed: tidy broke"
+        );
     }
 
     #[test]

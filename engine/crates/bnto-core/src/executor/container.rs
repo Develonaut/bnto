@@ -162,16 +162,10 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                 if error.is_timeout() {
                     return Err(error);
                 }
+                let error = error.in_iteration(i, total_iterations);
                 match config.on_error {
                     OnErrorStrategy::FailFast => return Err(error),
-                    OnErrorStrategy::Continue => {
-                        warnings.push(format!(
-                            "Iteration {}/{}: {}",
-                            i + 1,
-                            total_iterations,
-                            error_msg
-                        ));
-                    }
+                    OnErrorStrategy::Continue => warnings.push(error.to_string()),
                 }
 
                 emit_empty_completion(ctx, container_id, i, total_iterations, iter_duration);
