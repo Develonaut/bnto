@@ -24,7 +24,10 @@ pub(super) fn loop_refusal(params: &Params, row: Option<&Params>) -> Option<Stri
     let key = unfilled_keys(params, LOOP_OPEN, row).into_iter().next()?;
     Some(match row {
         None => {
-            format!("{{{{loop.{key}}}}} reads the loop's item, but this step is not inside a loop")
+            format!(
+                "{{{{loop.{key}}}}} reads the loop's item, but this step is not inside a loop \
+                 (or the file the loop started from has no values)"
+            )
         }
         Some(row) => {
             let keys: Vec<&str> = row.keys().map(String::as_str).collect();

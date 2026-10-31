@@ -88,8 +88,8 @@ fn message_param() -> ParameterDef {
         description: "The line to print, usually a template. {{file}} (the file's name) or \
                       {{item.<key>}} prints it once per file (inside a loop, over the loop's \
                       item, which {{loop.<key>}} reads as it was), {{entry.<key>}} (or \
-                      {{entry}}) once per entry of \
-                      each, where {{item.<key>}} is the loop's item."
+                      {{entry}}) once per entry of each, where {{item.<key>}} is the loop's \
+                      item."
             .to_string(),
         param_type: ParameterType::String,
         constraints: Some(Constraints {

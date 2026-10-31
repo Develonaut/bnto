@@ -69,7 +69,7 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser" | engine      | Open                                             |
 | ISS-108 | A loop's failure line repeats its step's "this step moved nothing", though the loop moved files in earlier iterations   | engine      | Open                                             |
-| ISS-110 | Inside a loop, a `when` guard can't read a key added in the iteration                                                   | engine      | Open                                             |
+| ISS-110 | Inside a loop, a `when` guard and an executor-filled batch step read only the loop's item                               | engine      | Open                                             |
 
 ---
 
@@ -359,6 +359,6 @@ Since ISS-100 every `file-move` refusal says "this step moved nothing", true of 
 
 A `when` guard is decided against the loop's item only (`executor/guard.rs`, `skip_reason`: `loop_item: &ctx.loop_item`), not the file's metadata. Inside a loop, a guard on a key that an earlier step of the iteration added (`file-inspect`'s `extension`, an `edit-fields` value) sees no value, though a per-file step's params read it. Reproduced with the CLI: a loop over CSV rows of `edit-fields` setting `x: "y"`, then `file-rename` guarded on `{{item.x}}` equals `y`, prints `file-rename skipped: when {{item.x}} equals y: got "{{item.x}}", expected "y"`. `when_guard.rs` CJ8 runs `file-inspect` before the loop, so it doesn't show this.
 
-- **Also:** a batch step the executor fills (`file-rename`, `shell-run` outside `each`, the spreadsheet nodes) gets its `{{item.*}}` from the loop's item alone too (`resolve_node_params`), so it misses a key a step changed, though ISS-109 made per-file steps read it.
+- **Also:** a batch step the executor fills (`summarize`, `file-join`, `file-sort`, `file-list`, `file-move`, `file-delete`, `spreadsheet-merge`, `spreadsheet-export`, and `shell-run` outside `each`) gets its `{{item.*}}` from the loop's item alone too (`resolve_node_params`), so it misses a key a step changed, though ISS-109 made per-file steps read it.
 - **Fix:** one rule for anything decided once per step, guards and these batch fills: the item a per-file step would read, from the files the step gets: one file's item, the loop's item with none, and with several the value they agree on, refusing files that disagree ([loop-item-current.md](decisions/loop-item-current.md)). Split from ISS-109 so each PR has one concern.
 - **Regression test:** a loop of `file-inspect` then a step guarded on `{{item.extension}}` runs for the matching file.

@@ -9,7 +9,8 @@
 // (a list, usually a sole `{{node.<id>.<key>}}`) it prints a line per entry,
 // in order; else, when `message` reads `{{file}}` or `{{item.*}}`, a line
 // per incoming file; else one line. Inside a loop, `each` and an entry line
-// read the loop's item, and a file line reads the file's metadata over it. A dry run prints what it would report.
+// read the loop's item, and a file line reads the file's metadata over it.
+// A dry run prints what it would report.
 
 mod lines;
 mod params;

@@ -124,3 +124,37 @@ fn check_accepts_the_loop_namespace() {
     assert!(output.status.success(), "{text}");
     assert!(!text.contains("namespace"), "{text}");
 }
+
+#[test]
+fn a_template_written_once_reads_loop_too() {
+    // file-render's header and filename are written once per call, from the
+    // loop's item; its row reads the file's metadata over it.
+    let dir = temp_output_dir();
+    let render = json!({ "id": "render", "type": "file-render", "parameters": {
+        "header": "# {{loop.status}}", "row": "- {{item.status}}", "filename": "{{loop.name}}.md"
+    } });
+    let recipe = write_recipe(
+        dir.path(),
+        json!([
+            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+            { "id": "rows", "type": "spreadsheet-read" },
+            { "id": "each", "type": "loop", "nodes": [mark_done(), render] },
+            { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+        ]),
+    );
+    let table = dir.path().join("people.csv");
+    std::fs::write(&table, CSV).unwrap();
+    let out = dir.path().join("out");
+    let output = Sandbox::new()
+        .command()
+        .arg("run")
+        .arg(&recipe)
+        .arg(&table)
+        .arg("-o")
+        .arg(&out)
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", text(&output));
+    let ada = std::fs::read_to_string(out.join("Ada.md")).unwrap();
+    assert_eq!(ada, "# pending\n- done\n");
+}

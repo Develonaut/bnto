@@ -1,6 +1,6 @@
 // Inside a loop, a batch node that fills `{{item.*}}` itself (report,
 // assert, edit-fields, file-render, file-copy) fills it once, from each
-// file's metadata with the loop's item on top: a key a step inside the
+// file's metadata over the loop's item: a key a step inside the
 // iteration adds is there (ISS-58), and a value that reads like a token
 // comes out as written (ISS-35). A template written once per call (a
 // header, a filename, report's entry lines) still reads the loop's item.

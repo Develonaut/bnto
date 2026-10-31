@@ -334,6 +334,31 @@ fn test_loop_reads_the_loop_item_as_the_iteration_started() {
 }
 
 #[test]
+fn test_in_a_nested_loop_loop_reads_the_innermost_loops_item() {
+    // The outer loop's item has "from-row.txt"; a step tags the file before
+    // the inner loop starts, so the inner loop's item has "renamed-a.txt".
+    let def = r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "outer", "type": "loop",
+                "children": [
+                    { "id": "tag", "type": "test-tag" },
+                    {
+                        "id": "inner", "type": "loop",
+                        "children": [
+                            { "id": "name", "type": "test-name", "parameters": { "name": "{{loop.new_name}}" } }
+                        ]
+                    }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#;
+    assert_eq!(run_names(def, vec![row_file()]), vec!["renamed-a.txt"]);
+}
+
+#[test]
 fn test_loop_outside_a_loop_is_refused() {
     let def = r#"{
         "nodes": [

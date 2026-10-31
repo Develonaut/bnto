@@ -190,6 +190,7 @@ A loop runs its steps once per incoming file, and that file's metadata (a CSV ro
 
 - **`{{item.KEY}}`** reads the metadata of the file a step is working on, over the loop's item. A key a step inside the iteration set or changed wins (`edit-fields` setting `status: done` over a row's `pending`), and a key only the loop's item has still fills, so a file a step made inside the iteration reads the row's columns.
 - **`{{loop.KEY}}`** reads the loop's item as the iteration began, whatever later steps set. A nested loop's is its own. Outside a loop, or for a key the loop's item lacks, the step fails before it runs.
+- **Not yet for steps decided once per step:** a `when` guard, and a batch step the engine fills (`summarize`, `file-join`, `file-sort`, `file-list`, `file-move`, `file-delete`, `spreadsheet-merge`, `spreadsheet-export`, and `shell-run` outside `each`), still read `{{item.*}}` from the loop's item alone, so they miss a step's change until ISS-110.
 - Until October 31, 2026 the loop's item won a key both had (ISS-109, [loop-item-current.md](../decisions/loop-item-current.md)).
 
 ### Per-Entry References
