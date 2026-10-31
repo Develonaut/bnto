@@ -134,3 +134,35 @@ fn a_guard_over_files_that_disagree_is_refused() {
     assert!(!output.status.success(), "{text}");
     assert!(text.contains("{{item.name}} differ"), "{text}");
 }
+
+#[test]
+fn a_guard_reads_a_key_file_inspect_added() {
+    // ISS-110's own case: `extension` is added inside the iteration.
+    let dir = temp_output_dir();
+    let recipe = write_recipe(
+        dir.path(),
+        json!([
+            input(),
+            { "id": "each", "type": "loop", "nodes": [
+                { "id": "inspect", "type": "file-inspect" },
+                guarded_report("extension", "txt")
+            ] },
+            output("none")
+        ]),
+    );
+    let (a, b) = (dir.path().join("a.txt"), dir.path().join("b.csv"));
+    std::fs::write(&a, "a").unwrap();
+    std::fs::write(&b, "b").unwrap();
+    let output = Sandbox::new()
+        .command()
+        .arg("run")
+        .arg(&recipe)
+        .arg(&a)
+        .arg(&b)
+        .output()
+        .unwrap();
+    let text = text(&output);
+    assert!(output.status.success(), "{text}");
+    assert_eq!(text.matches("ran").count(), 1, "{text}");
+    assert_eq!(text.matches("skipped").count(), 1, "{text}");
+}
