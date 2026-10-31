@@ -79,7 +79,8 @@ fn disagree(
     };
     format!(
         "the step gets {count} files whose {{{{item.{key}}}}} differ ({} and {}): \
-         read the loop's with {{{{loop.{key}}}}}, or split the files with file-filter",
+         split the files with file-filter, or read the loop's item with {{{{loop.{key}}}}} \
+         if it has that key",
         show(a),
         show(b)
     )

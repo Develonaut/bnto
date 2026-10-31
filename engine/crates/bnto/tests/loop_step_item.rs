@@ -67,7 +67,7 @@ fn mark_done() -> Value {
 }
 
 fn guarded_report(key: &str, expected: &str) -> Value {
-    json!({ "id": "say", "type": "report", "parameters": { "message": "ran" },
+    json!({ "id": "say", "type": "report", "parameters": { "message": "GUARD_RAN" },
         "when": { "value": format!("{{{{item.{key}}}}}"), "op": "equals", "expected": expected } })
 }
 
@@ -82,7 +82,7 @@ fn a_guard_reads_a_key_a_step_changed() {
     let output = run(dir.path(), &recipe);
     let text = text(&output);
     assert!(output.status.success(), "{text}");
-    assert_eq!(text.matches("ran").count(), 2, "{text}");
+    assert_eq!(text.matches("GUARD_RAN").count(), 2, "{text}");
     assert!(!text.contains("skipped"), "{text}");
 }
 
@@ -122,7 +122,7 @@ fn a_guard_over_files_that_agree_reads_their_value() {
     let output = run(dir.path(), &recipe);
     let text = text(&output);
     assert!(output.status.success(), "{text}");
-    assert!(text.contains("ran"), "{text}");
+    assert!(text.contains("GUARD_RAN"), "{text}");
 }
 
 #[test]
@@ -163,6 +163,6 @@ fn a_guard_reads_a_key_file_inspect_added() {
         .unwrap();
     let text = text(&output);
     assert!(output.status.success(), "{text}");
-    assert_eq!(text.matches("ran").count(), 1, "{text}");
+    assert_eq!(text.matches("GUARD_RAN").count(), 1, "{text}");
     assert_eq!(text.matches("skipped").count(), 1, "{text}");
 }
