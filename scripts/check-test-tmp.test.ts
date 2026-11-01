@@ -37,7 +37,9 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "check-test-tmp-"));
   mkdirSync(join(root, "scripts"));
   copyFileSync(SCRIPT, join(root, "scripts/check-test-tmp.sh"));
-  testTmp = join(root, "engine/target/tmp");
+  testTmp = join(root, "engine/.tmp");
+  mkdirSync(testTmp, { recursive: true });
+  writeFileSync(join(testTmp, ".gitignore"), "*\n!.gitignore\n");
   systemTmp = join(root, "system-tmp");
   mkdirSync(systemTmp);
 });
@@ -47,10 +49,17 @@ afterEach(() => {
 });
 
 describe("check-test-tmp.sh", () => {
-  it("reset empties the tests' temp folder", () => {
-    mkdirSync(join(testTmp, "bnto-mod-test-abc"), { recursive: true });
+  it("reset empties the tests' temp folder but keeps its .gitignore", () => {
+    mkdirSync(join(testTmp, "bnto-mod-test-abc"));
+    writeFileSync(join(testTmp, "bnto-abc-output"), "");
     assert.equal(run("reset").status, 0);
-    assert.deepEqual(readdirSync(testTmp), []);
+    assert.deepEqual(readdirSync(testTmp).sort(), [".gitignore", ".system-tmp-baseline"]);
+  });
+
+  it("reset makes the folder when it is missing", () => {
+    rmSync(testTmp, { recursive: true });
+    assert.equal(run("reset").status, 0);
+    assert.equal(existsSync(testTmp), true);
   });
 
   it("check passes when a run left nothing", () => {
@@ -82,12 +91,11 @@ describe("check-test-tmp.sh", () => {
   });
 
   it("check skips the warning without a reset first", () => {
-    mkdirSync(testTmp, { recursive: true });
     mkdirSync(join(systemTmp, "bnto-new"));
     const result = run("check");
     assert.equal(result.status, 0);
     assert.equal(result.stderr, "");
-    assert.equal(existsSync(join(root, "engine/target/test-tmp-baseline")), false);
+    assert.equal(existsSync(join(testTmp, ".system-tmp-baseline")), false);
   });
 
   it("refuses an unknown mode", () => {

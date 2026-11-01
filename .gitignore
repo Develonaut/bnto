@@ -35,6 +35,8 @@ vendor/
 
 # Temp files
 *.tmp
+# ...but not the engine tests' temp folder, kept by its own .gitignore
+!/engine/.tmp/
 *.log
 
 # Bento-specific

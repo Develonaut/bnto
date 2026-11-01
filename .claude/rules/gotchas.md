@@ -245,13 +245,15 @@ CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-w
 - **Tests don't spawn `sh` or `echo` directly.** On Windows `echo` is a `cmd` built-in, not a program, and `sh` is not guaranteed on PATH. Run the script through the platform shell — see the `shell()` test helper in `bnto/src/context.rs` (`cmd /c` on Windows, `sh -c` elsewhere). Trim captured lines before asserting: `cmd` keeps the space before a redirect (`echo err >&2` prints `err `).
 - **Gate items that only one OS reads.** A constant or function used only inside a `#[cfg(unix)]` path is dead code on Windows, and clippy `-D warnings` fails there. Move it inside the `#[cfg(unix)]` function that reads it, or gate its declaration to match its readers (e.g. `#[cfg(any(unix, test))]`).
 
-## Rust Tests' Temp Files Live in `engine/target/tmp`
+## Rust Tests' Temp Files Live in `engine/.tmp`
 
-`engine/.cargo/config.toml` sets `TMP`, `TEMP` and `TMPDIR` for every process cargo runs (tests, the `bnto` binaries they spawn, build scripts) to `engine/target/tmp`, which cargo creates itself. So `tempfile::tempdir()` and `std::env::temp_dir()` in a test never reach the user's temp folder. Windows walks `%TEMP%` at every sign-in, and leaked test folders there once added up to tens of thousands and slowed logon to minutes.
+`engine/.cargo/config.toml` sets `TMP`, `TEMP` and `TMPDIR` to `engine/.tmp` for every process cargo runs: tests, the `bnto` binaries they spawn, `cargo run`, build scripts, rustc and the linker. So `tempfile::tempdir()` and `std::env::temp_dir()` in a test never reach the user's temp folder. Windows walks `%TEMP%` at every sign-in, and leaked test folders there once added up to tens of thousands and slowed logon to minutes. `scratch.rs` has a test that fails if the redirect goes.
+
+**The folder must exist.** MSVC's `link.exe` writes to `%TMP%`, so every Windows build that links fails with `LNK1104` without it. It's committed, its own `.gitignore` keeping its contents out of git. If it's gone, `git restore engine/.tmp` (or any test task's reset) brings it back.
 
 **Never `.keep()` a test's `TempDir`** (or `into_path()`): hold the guard for as long as the path is used. When a struct can only hold the path (the TUI's `AppModel`), park the guard in a thread-local the way `tui/test_home.rs` does: each test runs on its own thread, so it drops when the test ends, pass or panic.
 
-The Rust test tasks (`task wasm:test`, `cli:test`, `tui:test`, …) and CI's Rust jobs run `scripts/check-test-tmp.sh reset` before the tests and `check` after: it fails naming anything a run left in `engine/target/tmp`, and warns when the system temp folder gained `bnto*` entries meanwhile. A plain `cargo test` still uses the redirect, but nothing wipes or checks it.
+The Rust test tasks (`task wasm:test`, `cli:test`, `tui:test`, …) and CI's Rust jobs run `scripts/check-test-tmp.sh reset` before the tests and `check` after: it fails naming anything a run left in `engine/.tmp`, and warns when the system temp folder gained `bnto*` entries meanwhile. A plain `cargo test` uses the folder too, but nothing empties or checks it. A `task tui` (`cargo run`) also writes its run scratch and `bnto-tui-<slug>` output there, which the next test task's reset deletes, and one running alongside a test task makes `check` name its files.
 
 ## No Object.assign Compound Components (RSC Incompatible)
 
