@@ -3,8 +3,8 @@
 
 use std::io;
 
+use crossterm::execute;
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
-use crossterm::{event as crossterm_event, execute};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
@@ -32,7 +32,11 @@ pub(super) fn setup() -> io::Result<TuiTerminal> {
     terminal::enable_raw_mode()?;
     let mut stderr = io::stderr();
     execute!(stderr, EnterAlternateScreen)?;
-    execute!(stderr, crossterm_event::DisableMouseCapture)?;
+    // On Windows crossterm runs this through the console API, which can only
+    // restore a mode an `EnableMouseCapture` saved. The TUI never enables
+    // capture, so there it always fails with "Initial console modes not set".
+    #[cfg(not(windows))]
+    execute!(stderr, crossterm::event::DisableMouseCapture)?;
     let backend = CrosstermBackend::new(io::stderr());
     Terminal::new(backend)
 }
