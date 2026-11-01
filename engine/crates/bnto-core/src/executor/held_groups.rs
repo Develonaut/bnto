@@ -3,7 +3,10 @@
 // (`NodeProcessor::holds_item_templates`) keep their `{{item.*}}` for the
 // node, which fills them per file over the loop's item; every other token in
 // them is filled here. The rest of the params read the step's item
-// (`step_item`), and only their keys must be filled and agree.
+// (`step_item`), and only their keys must be filled and agree. SEC-27 counts
+// a node's own tokens in each marked value alone too: across the whole params
+// a token the executor used up outside could mask one a value brought into a
+// marked value, which the node would then fill.
 
 use serde_json::Value;
 
@@ -35,7 +38,60 @@ pub(super) fn resolve<F: Fn() -> u64 + Copy>(
     }
     let filled = template(ctx, field_values, &item);
     let held = template(ctx, field_values, &None);
-    Ok(fill_holding(&node.params, &filled, &held, &holds))
+    let resolved = fill_holding(&node.params, &filled, &held, &holds);
+    check_each_held(processor, node, &resolved, &holds)?;
+    Ok(resolved)
+}
+
+/// SEC-27 within each marked value: filling it may not add a token the
+/// node fills itself.
+fn check_each_held(
+    processor: &dyn NodeProcessor,
+    node: PipelineNodeRef,
+    resolved: &Params,
+    holds: &dyn Fn(&Value) -> bool,
+) -> Result<(), BntoError> {
+    let (mut raw, mut filled) = (Vec::new(), Vec::new());
+    for (key, value) in &node.params {
+        held_pairs(value, &resolved[key], holds, &mut raw, &mut filled);
+    }
+    for (raw, filled) in raw.into_iter().zip(filled) {
+        let one = |v: Value| Params::from_iter([("held".to_string(), v)]);
+        let reserved = processor.reserved_tokens();
+        super::reserved_tokens::check_reserved(reserved, &one(raw), &one(filled), &node.id)?;
+    }
+    Ok(())
+}
+
+/// Every marked value under `raw`, with its filled copy from `filled` (the
+/// same shape: filling keeps arrays and maps as they are).
+fn held_pairs(
+    raw: &Value,
+    filled: &Value,
+    holds: &dyn Fn(&Value) -> bool,
+    raws: &mut Vec<Value>,
+    filleds: &mut Vec<Value>,
+) {
+    if holds(raw) {
+        raws.push(raw.clone());
+        filleds.push(filled.clone());
+        return;
+    }
+    match (raw, filled) {
+        (Value::Array(a), Value::Array(b)) => {
+            a.iter()
+                .zip(b)
+                .for_each(|(a, b)| held_pairs(a, b, holds, raws, filleds));
+        }
+        (Value::Object(a), Value::Object(b)) => {
+            for (k, v) in a {
+                if let Some(w) = b.get(k) {
+                    held_pairs(v, w, holds, raws, filleds);
+                }
+            }
+        }
+        _ => {}
+    }
 }
 
 fn template<'a, F: Fn() -> u64 + Copy>(
@@ -105,5 +161,46 @@ fn strip(value: &Value, holds: &dyn Fn(&Value) -> bool) -> Value {
         ),
         Value::Object(map) => Value::Object(without_held(map, holds)),
         other => other.clone(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn is_group(v: &Value) -> bool {
+        v.as_object().is_some_and(|m| m.contains_key("each"))
+    }
+
+    fn params(v: Value) -> Params {
+        v.as_object().cloned().unwrap()
+    }
+
+    #[test]
+    fn test_without_held_leaves_out_marked_values_at_any_depth() {
+        let p = params(json!({
+            "args": ["{{item.a}}", { "each": ["{{item.b}}"] }, ["x", { "each": [] }]],
+            "env": { "K": { "each": ["{{item.c}}"] }, "L": "{{item.d}}" }
+        }));
+        let out = without_held(&p, &is_group);
+        let expected = json!({ "args": ["{{item.a}}", ["x"]], "env": { "L": "{{item.d}}" } });
+        assert_eq!(Value::Object(out), expected);
+    }
+
+    #[test]
+    fn test_held_pairs_finds_each_marked_value_with_its_filled_copy() {
+        let raw = json!(["a", { "each": ["{{loop.n}}"] }, { "x": { "each": ["b"] } }]);
+        let filled = json!(["A", { "each": ["{{item.s}}"] }, { "x": { "each": ["b"] } }]);
+        let (mut raws, mut filleds) = (Vec::new(), Vec::new());
+        held_pairs(&raw, &filled, &is_group, &mut raws, &mut filleds);
+        assert_eq!(
+            raws,
+            [json!({ "each": ["{{loop.n}}"] }), json!({ "each": ["b"] })]
+        );
+        assert_eq!(
+            filleds,
+            [json!({ "each": ["{{item.s}}"] }), json!({ "each": ["b"] })]
+        );
     }
 }

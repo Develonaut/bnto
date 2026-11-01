@@ -84,7 +84,7 @@ fn read_group(arg: &Value) -> Result<Option<Vec<&str>>, String> {
 }
 
 /// The group's templates filled for each file in turn, its `{{item.*}}`
-/// from the file's metadata over the enclosing loop's item (ISS-109).
+/// from the file's metadata over the enclosing loop's item (ISS-111).
 fn fill_group(
     group: Vec<&str>,
     files: &[BatchFile],

@@ -194,3 +194,50 @@ fn test_well_formed_or_absent_groups_pass_the_check() {
     assert_eq!(check_groups(Some(&json!(["a", ["b"]]))), Ok(()));
     assert_eq!(check_groups(Some(&json!([{ "each": [] }]))), Ok(()));
 }
+
+/// A context inside a loop whose item is `item`; everything else is no-op.
+struct InLoop(serde_json::Map<String, Value>);
+
+impl ProcessContext for InLoop {
+    fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+        NoopContext.run_command(cmd, args)
+    }
+    fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
+        NoopContext.temp_file(suffix)
+    }
+    fn env_var(&self, _key: &str) -> Option<String> {
+        None
+    }
+    fn work_dir(&self) -> Result<&Path, BntoError> {
+        NoopContext.work_dir()
+    }
+    fn loop_item(&self) -> Option<serde_json::Map<String, Value>> {
+        Some(self.0.clone())
+    }
+}
+
+#[test]
+fn test_inside_a_loop_item_reads_the_files_metadata_over_the_loops() {
+    // ISS-111: the file wins a shared key; a key only the loop's item has fills.
+    let mut file = path_file("a.txt", &abs("a.txt"));
+    file.metadata.insert("name".into(), json!("Ada"));
+    file.metadata.insert("k".into(), json!("file"));
+    let ctx = InLoop(
+        json!({ "k": "loop", "team": "core" })
+            .as_object()
+            .unwrap()
+            .clone(),
+    );
+    let args = [json!({ "each": ["{{item.name}}-{{item.k}}-{{item.team}}"] })];
+    let out = expand_each(&args, &[file], &ctx).unwrap();
+    assert_eq!(strings(out), ["Ada-file-core"]);
+}
+
+#[test]
+fn test_is_group_matches_only_a_well_formed_group() {
+    assert!(is_group(&json!({ "each": ["{{item.k}}", "x"] })));
+    assert!(!is_group(&json!({ "each": ["x"], "more": 1 })));
+    assert!(!is_group(&json!({ "each": [1] })));
+    assert!(!is_group(&json!("{{item.k}}")));
+    assert!(!is_group(&json!(["{{item.k}}"])));
+}

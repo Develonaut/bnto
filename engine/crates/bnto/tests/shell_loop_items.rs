@@ -150,3 +150,33 @@ fn a_cell_carrying_an_output_dir_token_read_in_a_group_is_refused() {
         stderr(&output)
     );
 }
+
+#[test]
+fn a_value_cant_bring_back_into_a_group_a_token_the_step_used_outside_it() {
+    // SEC-27: the executor fills `{{item.secret}}` outside the group, so a
+    // count over the whole params stays even when a cell brings one into the
+    // group, which shell-run would then fill. Each group is counted alone.
+    let dir = temp_output_dir();
+    let tool = quote(json!(["{{item.secret}}", { "each": ["{{loop.note}}"] }]));
+    let csv = "note,secret\n{{item.secret}},S3CRET\n";
+    let (output, text) = run(dir.path(), per_row(tool), csv, &[]);
+    assert!(!output.status.success(), "{text}");
+    assert!(
+        stderr(&output).contains("contains '{{item.secret}}'"),
+        "{}",
+        stderr(&output)
+    );
+}
+
+#[test]
+fn outside_a_group_a_key_a_step_changed_reads_the_new_value() {
+    // The brief's second case: the rest of the command reads the step's item.
+    let dir = temp_output_dir();
+    let set = json!({ "id": "set", "type": "edit-fields", "parameters": { "values": { "team": "new" } } });
+    let tool = quote(json!(["{{item.team}}", "{{loop.team}}", { "each": ["each-{{item.team}}"] }]));
+    let nodes = json!([input(), { "id": "rows", "type": "spreadsheet-read" },
+        { "id": "each", "type": "loop", "nodes": [set, tool] }, output()]);
+    let (output, text) = run(dir.path(), nodes, "team\nold\n", &[]);
+    assert!(output.status.success(), "{}", stderr(&output));
+    assert!(text.contains("'new' 'old' 'each-new'"), "{text}");
+}
