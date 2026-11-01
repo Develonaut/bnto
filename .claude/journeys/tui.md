@@ -60,4 +60,4 @@ Every journey runs with temp `HOME`, `BNTO_HOME` and config dirs, and never touc
 
 ## Known gaps
 
-See the run output audit in [tui-testing.md](../strategy/tui-testing.md#run-output-audit-october-21-2026) (R1–R9). Journeys TJ5 and TJ6 covered R2 and R1 (fixed); TJ4 is the RED test for R5–R8. The journeys run on Windows too, over ConPTY, except those listed in `tui_journeys.rs`'s `WINDOWS_SKIPS` (TJ6, whose fixture script runs under `sh`). TJ16 presses Down once on Home and checks the selection moves one row, which catches a key acting on both press and release (#827).
+See the run output audit in [tui-testing.md](../strategy/tui-testing.md#run-output-audit-october-21-2026) (R1–R9). Journeys TJ5 and TJ6 covered R2 and R1 (fixed); TJ4 is the RED test for R5–R8. Every journey runs on Windows too, over ConPTY; TJ5 and TJ6 use PowerShell twins of their `sh` fixtures. A journey may skip Windows only if `tui_journeys.rs`'s `WINDOWS_SKIPS` lists it (empty today). TJ16 presses Down once on Home and checks the selection moves one row, which catches a key acting on both press and release (#827).

@@ -40,7 +40,7 @@ fn select(tui: &mut Tui, name: &str) {
 
 /// The journeys allowed to skip Windows, each with its reason. Windows CI
 /// runs every other one (ISS-112); a new skip must be added here, in review.
-const WINDOWS_SKIPS: &[(&str, &str)] = &[("tj6_", "the fixture's script runs under sh")];
+const WINDOWS_SKIPS: &[(&str, &str)] = &[];
 
 #[test]
 fn only_the_listed_journeys_skip_windows() {
@@ -208,8 +208,14 @@ fn tj14_a_run_keeps_what_is_already_in_the_recipes_folder() {
 
 #[test]
 fn tj5_shell_output_streams_live_and_stays_after_the_run() {
+    // Windows has no `sh`, so its twin runs the same loop in PowerShell.
+    let fixture = if cfg!(windows) {
+        "slow-shell-windows"
+    } else {
+        "slow-shell"
+    };
     let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/fixtures/tui/slow-shell.bnto.json");
+        .join(format!("tests/fixtures/tui/{fixture}.bnto.json"));
     let mut tui = Tui::launch_with_library(120, 40, &[&recipe]);
     tui.wait_for("slow-shell"); // the home Library pane lists file names
     tui.press(&[Key::Enter]); // Library pane is focused: open the library
@@ -221,7 +227,7 @@ fn tj5_shell_output_streams_live_and_stays_after_the_run() {
 
     // A library shell recipe asks first, showing the whole script.
     tui.wait_until("the consent prompt with the script", |screen| {
-        screen.contains("This recipe runs commands") && screen.contains("echo \"line $i\"")
+        screen.contains("This recipe runs commands") && screen.contains("line $i")
     });
     tui.press(&[Key::Char('y')]);
 
@@ -237,12 +243,17 @@ fn tj5_shell_output_streams_live_and_stays_after_the_run() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "the fixture's script runs under sh")]
 fn tj6_a_message_recipe_shows_its_message() {
     // A recipe whose output is a message (keep-awake's session log) shows
-    // it on the results screen under the output's label.
+    // it on the results screen under the output's label. Windows has no
+    // `sh`, so its twin prints the same report in PowerShell.
+    let fixture = if cfg!(windows) {
+        "report-windows"
+    } else {
+        "report"
+    };
     let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/fixtures/tui/report.bnto.json");
+        .join(format!("tests/fixtures/tui/{fixture}.bnto.json"));
     let mut tui = Tui::launch_with_library(120, 40, &[&recipe]);
     tui.wait_for("report"); // the home Library pane lists file names
     tui.press(&[Key::Enter]);
