@@ -221,8 +221,8 @@ pub(crate) mod tests {
         // The hidden ping is a grandchild that only dies if the tree is killed.
         let script = "$p = Start-Process ping -ArgumentList '-n','30','127.0.0.1' \
                       -PassThru -WindowStyle Hidden; $p.Id; $p.WaitForExit()";
-        // The killed PowerShell can't clean up its temp files, so they go in
-        // a folder of the test's own.
+        // A force-killed PowerShell may leave temp files behind, so they go
+        // in a folder of the test's own.
         let temp = tempfile::tempdir().unwrap();
         let mut command = Command::new("powershell");
         command
