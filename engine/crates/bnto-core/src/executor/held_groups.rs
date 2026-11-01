@@ -209,6 +209,7 @@ mod tests {
         held_pairs(&raw, &filled, &is_group_list, &mut raws, &mut filleds);
         assert_eq!(raws, [json!("{{loop.g}}"), json!({ "each": "{{loop.h}}" })]);
         assert_eq!(filleds[0], json!(["y", { "each": ["{{item.s}}"] }]));
+        assert_eq!(filleds[1], json!({ "each": ["z"] }));
     }
 
     /// A group as shell-run reads one: `each` holding a list.
