@@ -102,6 +102,17 @@ fn persisted_temp_file(dir: &Path, suffix: &str) -> Result<PathBuf, BntoError> {
 mod tests {
     use super::*;
 
+    #[test]
+    fn test_tests_keep_temp_files_in_the_engines_own_folder() {
+        // engine/.cargo/config.toml points TMP, TEMP and TMPDIR here, so a
+        // leaked test folder can't land in the user's temp folder.
+        let scratch = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.tmp");
+        assert_eq!(
+            std::env::temp_dir().canonicalize().unwrap(),
+            scratch.canonicalize().unwrap()
+        );
+    }
+
     // --- Interrupt cleanup ---
 
     #[test]

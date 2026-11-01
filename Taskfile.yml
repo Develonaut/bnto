@@ -99,13 +99,17 @@ tasks:
     desc: Run CLI unit + integration + golden tests
     dir: ./engine
     cmds:
+      - sh ../scripts/check-test-tmp.sh reset
       - cargo test --package bnto
+      - sh ../scripts/check-test-tmp.sh check
 
   cli:golden:
     desc: Run CLI golden tests only (byte-exact output verification)
     dir: ./engine
     cmds:
+      - sh ../scripts/check-test-tmp.sh reset
       - cargo test --package bnto -- golden
+      - sh ../scripts/check-test-tmp.sh check
 
   cli:golden:bless:
     desc: Regenerate golden files from current CLI output
@@ -117,8 +121,10 @@ tasks:
     desc: TUI checks — screen snapshots + journeys in a real pseudo-terminal
     dir: ./engine
     cmds:
+      - sh ../scripts/check-test-tmp.sh reset
       - cargo test --package bnto --bin bnto screen_snapshots
       - cargo test --package bnto --test tui_journeys
+      - sh ../scripts/check-test-tmp.sh check
 
   tui:snapshots:
     desc: Check TUI screen snapshots (engine/crates/bnto/src/tui/snapshots)
@@ -334,17 +340,21 @@ tasks:
     desc: Run Rust unit tests (native) + WASM integration tests (Node.js)
     dir: ./engine
     cmds:
+      - sh ../scripts/check-test-tmp.sh reset
       - cargo test --workspace
       - wasm-pack test --node crates/bnto-wasm
       - wasm-pack test --node crates/bnto-spreadsheet
       - wasm-pack test --node crates/bnto-file
       - wasm-pack test --node crates/bnto-image
+      - sh ../scripts/check-test-tmp.sh check
 
   wasm:test:unit:
     desc: Run Rust unit tests only (native, fast)
     dir: ./engine
     cmds:
+      - sh ../scripts/check-test-tmp.sh reset
       - cargo test --workspace
+      - sh ../scripts/check-test-tmp.sh check
 
   wasm:lint:
     desc: Run clippy (Rust linter) on all WASM crates

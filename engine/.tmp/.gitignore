@@ -1,0 +1,4 @@
+# The Rust tests' temp folder (engine/.cargo/config.toml): committed so it
+# always exists, its contents never.
+*
+!.gitignore

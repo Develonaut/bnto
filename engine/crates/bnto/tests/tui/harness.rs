@@ -1,7 +1,8 @@
 // Drive the real `bnto tui` in a pseudo-terminal, like Playwright drives a
 // browser: press keys, wait for text, read the screen a user would see.
-// Each session gets its own HOME and BNTO_HOME, so it never sees or touches
-// a real ~/.bnto (.claude/strategy/tui-testing.md).
+// Each session gets its own HOME, BNTO_HOME and temp folder, so it never
+// sees or touches a real ~/.bnto (.claude/strategy/tui-testing.md) and
+// leaves nothing behind.
 
 use std::io::{Read, Write};
 use std::num::NonZeroU16;
@@ -71,8 +72,8 @@ pub struct Tui {
     child: Box<dyn Child + Send + Sync>,
     writer: Writer,
     screen: Arc<Mutex<vt100::Parser>>,
-    // Kept alive for the session; the pty closes when it drops.
-    _master: Box<dyn MasterPty + Send>,
+    // Kept alive for the session; closed first when the session ends.
+    master: Option<Box<dyn MasterPty + Send>>,
     _homes: (TempDir, TempDir),
 }
 
@@ -130,6 +131,7 @@ impl Tui {
         let homes = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
         let work = work_dir(&homes);
         std::fs::create_dir_all(&work).unwrap();
+        std::fs::create_dir_all(temp_dir(&homes)).unwrap();
         for file in files {
             std::fs::copy(file, work.join(file.file_name().unwrap())).unwrap();
         }
@@ -162,7 +164,7 @@ impl Tui {
             child,
             writer,
             screen,
-            _master: pair.master,
+            master: Some(pair.master),
             _homes: homes,
         }
     }
@@ -269,6 +271,25 @@ impl Drop for Tui {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
+        // Close the pty before removing the session's folders: on Windows
+        // its console host can still hold files in them open.
+        drop(self.master.take());
+        remove_with_retries(self._homes.0.path());
+        remove_with_retries(self._homes.1.path());
+    }
+}
+
+/// Remove `dir`, retrying for a few seconds. Windows can't delete a folder
+/// while a process that just exited, or an antivirus scan, still holds a
+/// file in it, and `TempDir` tries once and gives up, leaving it in the
+/// tests' temp folder.
+fn remove_with_retries(dir: &std::path::Path) {
+    for _ in 0..50 {
+        match std::fs::remove_dir_all(dir) {
+            Ok(()) => return,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return,
+            Err(_) => thread::sleep(Duration::from_millis(100)),
+        }
     }
 }
 
@@ -287,6 +308,11 @@ fn command(homes: &(TempDir, TempDir)) -> CommandBuilder {
     // Off unless a journey asks for it: no journey may reach the network.
     cmd.env("BNTO_NO_UPDATE_CHECK", "1");
     cmd.env("TERM", "xterm-256color");
+    // The TUI's run scratch and `bnto-tui-<slug>` output go in the sandbox
+    // too, removed with it, not left in the tests' shared temp folder.
+    for var in ["TMP", "TEMP", "TMPDIR"] {
+        cmd.env(var, temp_dir(homes));
+    }
     cmd
 }
 
@@ -330,6 +356,11 @@ fn allow_update_check(cmd: &mut CommandBuilder) {
     ] {
         cmd.env_remove(var);
     }
+}
+
+/// The TUI's own temp folder, inside the sandbox.
+fn temp_dir(homes: &(TempDir, TempDir)) -> std::path::PathBuf {
+    homes.0.path().join("tmp")
 }
 
 /// The empty folder the TUI starts in. Not HOME itself, where bnto keeps

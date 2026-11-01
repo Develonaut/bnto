@@ -94,6 +94,12 @@ jobs:
           sudo install "$RUNNER_TEMP/shellcheck-$SHELLCHECK_VERSION/shellcheck" /usr/local/bin/shellcheck
           shellcheck --version | grep -q "version: ${SHELLCHECK_VERSION#v}"
 
+      # Every process cargo runs keeps its temp files in engine/.tmp
+      # (engine/.cargo/config.toml). Start it empty, so the check after the
+      # tests names only what the tests left, not the builds before them.
+      - name: Empty the tests' temp folder
+        run: sh ../scripts/check-test-tmp.sh reset
+
       - name: Unit tests (native)
         run: cargo test --workspace --exclude bnto
         env:
@@ -163,6 +169,9 @@ jobs:
       - name: WASM integration tests (bnto-image)
         run: wasm-pack test --node crates/bnto-image
 
+      - name: Tests left no temp files (scripts/check-test-tmp.sh)
+        run: sh ../scripts/check-test-tmp.sh check
+
   # ── Rust CI on Windows (only when engine files changed) ──
   rust-windows:
     name: "Rust Engine (Windows: fmt + lint + test)"
@@ -195,6 +204,10 @@ jobs:
       - name: Function length
         run: cargo clippy --workspace -- -W clippy::too_many_lines -D warnings
 
+      - name: Empty the tests' temp folder
+        shell: bash
+        run: sh ../scripts/check-test-tmp.sh reset
+
       - name: Tests
         run: cargo test --workspace
         env:
@@ -204,6 +217,12 @@ jobs:
           # ...and PSScriptAnalyzer, which lints bundled PowerShell scripts
           # (bnto-engine/tests/bundled_powershell.rs).
           BNTO_REQUIRE_PSSCRIPTANALYZER: "1"
+
+      # Windows walks %TEMP% at every sign-in, which is where a leaked test
+      # folder would land without the redirect this checks.
+      - name: Tests left no temp files (scripts/check-test-tmp.sh)
+        shell: bash
+        run: sh ../scripts/check-test-tmp.sh check
 
   # keep-awake's macOS branch drives caffeinate and osascript, so its round
   # trips (bnto/tests/keep_awake.rs) only run on a Mac. Free on a public repo.

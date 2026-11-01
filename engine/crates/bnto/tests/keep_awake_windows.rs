@@ -37,11 +37,19 @@ struct Sandbox {
 impl Sandbox {
     fn new() -> Self {
         let turn = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
-        Self {
+        let sandbox = Self {
             bnto: temp_output_dir(),
             user: temp_output_dir(),
             _turn: turn,
-        }
+        };
+        std::fs::create_dir(sandbox.temp()).unwrap();
+        sandbox
+    }
+
+    /// The session's temp folder. Its PowerShell is force-killed, so what it
+    /// keeps there is removed with the sandbox, not left in the tests' own.
+    fn temp(&self) -> PathBuf {
+        self.user.path().join("tmp")
     }
 
     /// Run keep-awake with `params`, which must succeed.
@@ -56,6 +64,8 @@ impl Sandbox {
         let mut cmd = Command::new(bnto_bin());
         cmd.env("BNTO_HOME", self.bnto.path())
             .env("HOME", self.user.path())
+            .env("TMP", self.temp())
+            .env("TEMP", self.temp())
             .env("BNTO_TELEMETRY_DISABLED", "1")
             .env("BNTO_NO_UPDATE_CHECK", "1")
             .args(["run", "keep-awake", "--yes"]);
@@ -91,6 +101,9 @@ impl Drop for Sandbox {
             let _ = Command::new("taskkill")
                 .args(["/PID", &pid.to_string(), "/F"])
                 .output();
+            // taskkill returns before the session is gone, and Windows can't
+            // remove the sandbox's folders while it still holds files there.
+            eventually(|| !alive(pid));
         }
     }
 }

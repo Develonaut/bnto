@@ -454,6 +454,22 @@ mod tests {
         .to_string()
     }
 
+    /// The TUI's own temp output folder for `slug`, where a recipe with no
+    /// folder writes. Removed on drop, pass or fail.
+    struct TuiTempFolder(PathBuf);
+
+    impl TuiTempFolder {
+        fn new(slug: &str) -> Self {
+            Self(std::env::temp_dir().join(format!("bnto-tui-{slug}")))
+        }
+    }
+
+    impl Drop for TuiTempFolder {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
     /// Run `definition_json` on one input `photo.txt` (holding "new") the way
     /// the TUI does, returning the finished run.
     fn run_on_photo(slug: &str, definition_json: String) -> RunDone {
@@ -865,7 +881,8 @@ mod tests {
     fn a_recipe_without_a_folder_gets_an_emptied_bnto_temp_folder() {
         // Only bnto's own temp folder is cleared, so it holds one run.
         let slug = format!("iss21-temp-{}", std::process::id());
-        let temp = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
+        let folder = TuiTempFolder::new(&slug);
+        let temp = folder.0.clone();
         fs::create_dir_all(&temp).unwrap();
         fs::write(temp.join("stale.txt"), b"last run").unwrap();
         let done = run_on_photo(&slug, rename_recipe_json(None));
@@ -875,7 +892,6 @@ mod tests {
             "the last run's file stayed"
         );
         assert!(temp.join("renamed-photo.txt").exists());
-        let _ = fs::remove_dir_all(&temp);
     }
 
     #[test]
@@ -1133,6 +1149,7 @@ mod tests {
         // SAFETY: set_var races any concurrent getenv in this test binary;
         // like the repo's other env tests, it uses a name nothing else reads.
         unsafe { std::env::set_var("BNTO_VAR_ISS78PREFIX", "filled") };
+        let _folder = TuiTempFolder::new("vars");
         let done = run_on_photo("vars", vars_prefix_recipe_json("Iss78Prefix"));
         assert_eq!(listed(&done), ["filled-photo.txt"]);
     }

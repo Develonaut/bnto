@@ -315,21 +315,8 @@ fn resolve_input_mode_for_slug(slug: &str) -> bnto_core::InputMode {
 mod tests {
     use super::*;
     use crate::tui::screens::size_change::SizeChange;
+    use crate::tui::test_home::test_paths;
     use bnto_core::InputMode;
-
-    /// Build test paths in a unique temp directory.
-    fn test_paths() -> BntoPaths {
-        // Kept on disk, as before: the model holds only the path.
-        let root = tempfile::Builder::new()
-            .prefix("bnto-test-")
-            .tempdir()
-            .unwrap()
-            .keep();
-        let paths = BntoPaths { home: root };
-        let _ = paths.ensure_dirs();
-        let _ = TomlConfig::default().save(&paths);
-        paths
-    }
 
     fn default_model() -> AppModel {
         AppModel::with_paths(ThemeVariant::LosAngeles, None, false, test_paths())

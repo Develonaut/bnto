@@ -6,3 +6,17 @@
 [alias]
 fmt-check = "fmt -- --check"
 lint = "clippy --workspace --all-targets -- -D warnings"
+
+# Temp files from every process cargo runs (tests, the `bnto` binaries they
+# spawn, `cargo run`, build scripts, rustc and the linker) go in `engine/.tmp`,
+# not the user's temp folder. Windows walks %TEMP% at every sign-in, and leaked
+# test folders there once slowed logon to minutes. The folder is committed
+# (its own .gitignore keeps its contents out of git) because it must exist:
+# MSVC's link.exe writes to %TMP% and fails when it's missing. The Rust test
+# tasks empty it before a run and fail naming anything a run left in it
+# (`scripts/check-test-tmp.sh`). TMP and TEMP are Windows's, TMPDIR is Unix's;
+# `force` because Windows always sets TMP and TEMP.
+[env]
+TMP = { value = ".tmp", relative = true, force = true }
+TEMP = { value = ".tmp", relative = true, force = true }
+TMPDIR = { value = ".tmp", relative = true, force = true }
