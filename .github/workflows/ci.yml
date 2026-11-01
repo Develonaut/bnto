@@ -94,9 +94,9 @@ jobs:
           sudo install "$RUNNER_TEMP/shellcheck-$SHELLCHECK_VERSION/shellcheck" /usr/local/bin/shellcheck
           shellcheck --version | grep -q "version: ${SHELLCHECK_VERSION#v}"
 
-      # Every process cargo runs keeps its temp files in target/tmp
+      # Every process cargo runs keeps its temp files in engine/.tmp
       # (engine/.cargo/config.toml). Start it empty, so the check after the
-      # tests names only what this run left (rust-cache may restore target/).
+      # tests names only what the tests left, not the builds before them.
       - name: Empty the tests' temp folder
         run: sh ../scripts/check-test-tmp.sh reset
 
