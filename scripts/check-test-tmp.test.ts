@@ -80,6 +80,16 @@ describe("check-test-tmp.sh", () => {
     assert.match(result.stderr, /bnto-abc-output/);
   });
 
+  it("check describes each leftover, a folder with what's in it", () => {
+    run("reset");
+    mkdirSync(join(testTmp, "el2zohhu"));
+    writeFileSync(join(testTmp, "el2zohhu", "made-by.dll"), "");
+    const result = run("check");
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /el2zohhu \(folder\):/);
+    assert.match(result.stderr, /made-by\.dll/);
+  });
+
   it("check warns when the system temp folder gained bnto entries", () => {
     mkdirSync(join(systemTmp, "bnto-old"));
     run("reset");

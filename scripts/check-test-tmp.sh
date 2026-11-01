@@ -26,6 +26,16 @@ run_entries() {
   find "$tmp" -mindepth 1 -maxdepth 1 ! -name .gitignore ! -name .system-tmp-baseline 2>/dev/null | sort
 }
 
+# One leftover, and enough of what's in it to tell which test or tool made it.
+describe() {
+  if [ -d "$1" ]; then
+    echo "$1 (folder):"
+    find "$1" -mindepth 1 -maxdepth 2 2>/dev/null | head -n 5 | sed 's/^/    /'
+  else
+    echo "$1 (file, $(wc -c <"$1" | tr -d ' ') bytes)"
+  fi
+}
+
 reset() {
   mkdir -p "$tmp"
   run_entries | while IFS= read -r entry; do rm -rf "$entry"; done
@@ -37,7 +47,7 @@ check() {
   if [ -n "$left" ]; then
     count=$(printf '%s\n' "$left" | wc -l | tr -d ' ')
     echo "The tests left $count entries in $tmp:" >&2
-    printf '%s\n' "$left" | head -n 20 >&2
+    printf '%s\n' "$left" | head -n 20 | while IFS= read -r entry; do describe "$entry"; done >&2
     echo "Every temp file or folder a test makes must be removed when it ends (a TempDir guard, not .keep())." >&2
     exit 1
   fi

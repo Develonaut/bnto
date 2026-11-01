@@ -67,8 +67,8 @@ pub struct Tui {
     child: Box<dyn Child + Send + Sync>,
     writer: Box<dyn Write + Send>,
     screen: Arc<Mutex<vt100::Parser>>,
-    // Kept alive for the session; the pty closes when it drops.
-    _master: Box<dyn MasterPty + Send>,
+    // Kept alive for the session; closed first when the session ends.
+    master: Option<Box<dyn MasterPty + Send>>,
     _homes: (TempDir, TempDir),
 }
 
@@ -158,7 +158,7 @@ impl Tui {
             child,
             writer,
             screen,
-            _master: pair.master,
+            master: Some(pair.master),
             _homes: homes,
         }
     }
@@ -263,6 +263,25 @@ impl Drop for Tui {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
+        // Close the pty before removing the session's folders: on Windows
+        // its console host can still hold files in them open.
+        drop(self.master.take());
+        remove_with_retries(self._homes.0.path());
+        remove_with_retries(self._homes.1.path());
+    }
+}
+
+/// Remove `dir`, retrying for a few seconds. Windows can't delete a folder
+/// while a process that just exited, or an antivirus scan, still holds a
+/// file in it, and `TempDir` tries once and gives up, leaving it in the
+/// tests' temp folder.
+fn remove_with_retries(dir: &std::path::Path) {
+    for _ in 0..50 {
+        match std::fs::remove_dir_all(dir) {
+            Ok(()) => return,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return,
+            Err(_) => thread::sleep(Duration::from_millis(100)),
+        }
     }
 }
 
