@@ -1,7 +1,8 @@
 // Drive the real `bnto tui` in a pseudo-terminal, like Playwright drives a
 // browser: press keys, wait for text, read the screen a user would see.
-// Each session gets its own HOME and BNTO_HOME, so it never sees or touches
-// a real ~/.bnto (.claude/strategy/tui-testing.md).
+// Each session gets its own HOME, BNTO_HOME and temp folder, so it never
+// sees or touches a real ~/.bnto (.claude/strategy/tui-testing.md) and
+// leaves nothing behind.
 
 use std::io::{Read, Write};
 use std::num::NonZeroU16;
