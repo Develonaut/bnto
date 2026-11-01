@@ -75,7 +75,7 @@ Goal: the TUI gets the same two layers the web has. Agents can then validate a T
   - **TJ3:** run Compress Images on a fixture through the picker and reach the results screen
 
 **RED tests:** TJ1–TJ3. TJ2 fails against the code before #680.
-**Verification:** `cargo test -p bnto --test tui` on Linux and macOS. On Windows it runs in CI over ConPTY, gated `#[ignore]` there until it's stable.
+**Verification:** `cargo test -p bnto --test tui` on Linux, macOS and Windows (CI's `rust-windows` job, over ConPTY).
 **Count changes:** none.
 
 ## PR 3: Write the TUI journey matrix and the agent workflow
@@ -112,7 +112,7 @@ Lessons from wiring it up:
 - **Start in an empty `work/` folder, not HOME.** On macOS bnto writes config under `$HOME/Library`, which a file list would show first.
 - **Keys:** pause briefly between keys, so a lone Esc isn't merged into the next escape sequence.
 
-Runs in about 1.5s for three journeys and was 10/10 stable locally. Linux CI runs them in `cargo test --package bnto`. Windows is `#[ignore]`d: under ConPTY the journeys never draw ([ISS-112](../ISSUES.md#iss-112-on-windows-the-tui-journeys-never-draw-under-conpty)).
+Runs in about 1.5s for three journeys and was 10/10 stable locally. Linux and Windows CI run them in `cargo test`. On Windows they used to time out on a blank screen: ConPTY, as `portable-pty` creates it (`PSEUDOCONSOLE_INHERIT_CURSOR`), asks the terminal where the cursor is (`ESC[6n`) and draws nothing until it hears back, and the harness never answered. It does now (`harness.rs`, `pump`), ISS-112. Every journey runs on Windows; TJ5 and TJ6 use PowerShell twins of their `sh` fixtures (`*-windows.bnto.json`). A journey may skip Windows only when it's listed in `tui_journeys.rs`'s `WINDOWS_SKIPS` with its reason; `only_the_listed_journeys_skip_windows` fails otherwise. Today it lists TJ5 and TJ6: on Windows their PowerShell steps are slow to exit, by about 25 s, so TJ5 times out and TJ6 sits near its wait budget (ISS-118), a bug the journeys found the first time they ran there. The guard reads the file's source, so it catches the usual spellings (any `ignore` token, any `#[cfg(`, on a test, a module or the whole file) but not every one: an early `return` or a macro is left to review, and the per-OS CI workflows compare each OS's list of tests (ISS-119).
 
 Found while writing TJ3, **fixed in #685**: when an output file was _larger_ than its input, the results screen said "Savings: 5 KB → 10 KB (0% smaller)". It now says "Size: 5 KB → 10 KB (100% larger)".
 
