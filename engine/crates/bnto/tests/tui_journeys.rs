@@ -43,7 +43,7 @@ fn select(tui: &mut Tui, name: &str) {
 const WINDOWS_SKIPS: &[(&str, &str)] = &[
     (
         "tj5_",
-        "a PowerShell step streaming to stderr never exits (ISS-118)",
+        "a PowerShell step is slow to exit and times out (ISS-118)",
     ),
     (
         "tj6_",
@@ -66,46 +66,102 @@ fn only_the_listed_journeys_skip_windows() {
 
 /// Every test in `source` that an attribute may skip or leave out, with
 /// the name's prefix up to its first `_` and the reason. Any attribute
-/// mentioning `ignore` (plain or under any `cfg_attr`) or starting `#[cfg(`
-/// counts, however it's spelled or wrapped. An early `return` in a test's
-/// body can't be seen here; review catches those.
+/// with an `ignore` token (plain or under any `cfg_attr`) or starting
+/// `#[cfg(` counts, wrapped or followed by a comment; so does one on the
+/// whole file (`#![…]`, prefix `*`) or on a `mod` (the module's name). It
+/// catches the usual spellings, not every one: an early `return` in a
+/// test's body, or a macro, is left to review, and the per-OS CI workflows
+/// compare each OS's list of tests (PLAN.md).
 fn skipped_tests(source: &str) -> Vec<(String, String)> {
-    let (mut skips, mut attrs, mut is_test) = (Vec::new(), Vec::<String>::new(), false);
-    let mut open = String::new();
-    for line in source.lines().map(str::trim) {
-        let code = line.split("//").next().unwrap_or_default().trim();
-        if !open.is_empty() || code.starts_with("#[") {
-            open.push_str(code);
-            if code.ends_with(']') && open.matches('[').count() == open.matches(']').count() {
-                is_test |= open == "#[test]";
-                attrs.push(std::mem::take(&mut open));
+    let (mut skips, mut attrs, mut open) = (Vec::new(), Vec::<String>::new(), String::new());
+    for code in source.lines().map(code_of) {
+        if !open.is_empty() || code.starts_with("#[") || code.starts_with("#![") {
+            open.push_str(&code);
+            if balanced(&open) {
+                let attr = std::mem::take(&mut open);
+                if attr.starts_with("#![") {
+                    skips.extend(skip_reason(&attr).map(|r| ("*".to_string(), r)));
+                } else {
+                    attrs.push(attr);
+                }
             }
-        } else if let Some(name) = code.split("fn ").nth(1).filter(|_| is_test) {
-            let prefix = format!("{}_", name.split('_').next().unwrap_or_default());
-            skips.extend(
-                attrs
-                    .iter()
-                    .filter_map(|a| skip_reason(a))
-                    .map(|r| (prefix.clone(), r)),
-            );
-            (attrs, is_test) = (Vec::new(), false);
+        } else if let Some(name) = item_name(&code) {
+            let is_test = attrs.iter().any(|a| a == "#[test]") || code.contains("mod ");
+            if is_test {
+                let prefix = format!("{}_", name.split('_').next().unwrap_or_default());
+                let reasons = attrs.iter().filter_map(|a| skip_reason(a));
+                skips.extend(reasons.map(|r| (prefix.clone(), r)));
+            }
+            attrs.clear();
         } else if !code.is_empty() {
-            (attrs, is_test) = (Vec::new(), false);
+            attrs.clear();
         }
     }
     skips
 }
 
+/// A line without its `//` comment, trimmed. A `//` inside a string (a URL
+/// in a reason) is kept.
+fn code_of(line: &str) -> String {
+    let mut in_string = false;
+    let chars: Vec<char> = line.chars().collect();
+    for i in 0..chars.len() {
+        match chars[i] {
+            '"' if i == 0 || chars[i - 1] != '\\' => in_string = !in_string,
+            '/' if !in_string && chars.get(i + 1) == Some(&'/') => {
+                return chars[..i].iter().collect::<String>().trim().to_string();
+            }
+            _ => {}
+        }
+    }
+    line.trim().to_string()
+}
+
+/// Whether an attribute's brackets all close, outside its strings.
+fn balanced(attr: &str) -> bool {
+    let (mut depth, mut in_string, mut prev) = (0i32, false, ' ');
+    for c in attr.chars() {
+        match c {
+            '"' if prev != '\\' => in_string = !in_string,
+            '[' if !in_string => depth += 1,
+            ']' if !in_string => depth -= 1,
+            _ => {}
+        }
+        prev = c;
+    }
+    depth <= 0 && attr.ends_with(']')
+}
+
+/// The name a `fn` or `mod` line declares.
+fn item_name(code: &str) -> Option<&str> {
+    let rest = code
+        .split("fn ")
+        .nth(1)
+        .or_else(|| code.split("mod ").nth(1))?;
+    rest.split(|c: char| !(c.is_alphanumeric() || c == '_'))
+        .next()
+}
+
 /// Why `attr` may skip a test: its `ignore = "…"` reason, or the attribute
-/// itself when it ignores without one or compiles the test out.
+/// itself when it ignores without one or compiles the item out.
 fn skip_reason(attr: &str) -> Option<String> {
-    if !attr.contains("ignore") && !attr.starts_with("#[cfg(") {
+    let cfg = attr.starts_with("#[cfg(") || attr.starts_with("#![cfg(");
+    if !cfg && !has_ignore_token(attr) {
         return None;
     }
     let reason = attr
         .split_once("ignore = \"")
         .and_then(|(_, r)| r.split_once('"'));
     Some(reason.map_or(attr.to_string(), |(r, _)| r.to_string()))
+}
+
+/// Whether `attr` holds `ignore` as a word of its own (not `ignored_…`), outside strings.
+fn has_ignore_token(attr: &str) -> bool {
+    let code: String = attr.split('"').step_by(2).collect::<Vec<_>>().join(" ");
+    let word = |c: Option<char>| c.is_some_and(|c| c.is_alphanumeric() || c == '_');
+    code.match_indices("ignore").any(|(i, _)| {
+        !word(code[..i].chars().last()) && !word(code[i + "ignore".len()..].chars().next())
+    })
 }
 
 #[test]
@@ -118,8 +174,11 @@ fn every_way_of_skipping_a_test_is_seen() {
         "#[cfg_attr(not(unix), ignore)] // a comment",
         "#[cfg(not(windows))]",
         "#[cfg_attr(\n    macos,\n    ignore = \"x\"\n)]",
+        "#[cfg_attr(windows, ignore = \"see https://example.com/a // b\")]",
+        "#[cfg_attr(windows, ignore = \"see [ISS-1\")]",
     ] {
-        let source = format!("{case}\n#[test]\npub fn tjx_case() {{}}\n");
+        let source =
+            format!("{case}\n#[test]\npub fn tjx_case() {{}}\n#[test]\nfn tjy_after() {{}}\n");
         let skips = skipped_tests(&source);
         assert_eq!(skips.len(), 1, "missed {case:?}: {skips:?}");
         let source = format!("#[test]\n{case}\nfn tjx_case() {{}}\n");
@@ -129,7 +188,26 @@ fn every_way_of_skipping_a_test_is_seen() {
             "missed {case:?} after #[test]"
         );
     }
-    assert!(skipped_tests("#[test]\n#[allow(dead_code)]\nfn tjx_case() {}\n").is_empty());
+    let whole_file = skipped_tests("#![cfg(not(windows))]\n#[test]\nfn tjx_case() {}\n");
+    assert_eq!(whole_file[0].0, "*");
+    let module = skipped_tests("#[cfg(unix)]\nmod unix_only {\n#[test]\nfn tjx_case() {}\n}\n");
+    assert_eq!(module.len(), 1, "{module:?}");
+}
+
+#[test]
+fn harmless_attributes_are_not_skips() {
+    for case in [
+        "#[allow(dead_code)]",
+        "#[allow(clippy::ignored_unit_patterns)]",
+        "#[should_panic(expected = \"ignore this\")]",
+        "/// a doc comment that says ignore",
+    ] {
+        let source = format!("#[test]\n{case}\nfn tjx_case() {{}}\n");
+        assert!(skipped_tests(&source).is_empty(), "flagged {case:?}");
+    }
+    assert!(
+        skipped_tests("#[cfg(test)]\nconst X: u8 = 1;\n#[test]\nfn tjx_case() {}\n").is_empty()
+    );
 }
 
 #[test]
@@ -275,7 +353,7 @@ fn tj14_a_run_keeps_what_is_already_in_the_recipes_folder() {
 #[test]
 #[cfg_attr(
     windows,
-    ignore = "a PowerShell step streaming to stderr never exits (ISS-118)"
+    ignore = "a PowerShell step is slow to exit and times out (ISS-118)"
 )]
 fn tj5_shell_output_streams_live_and_stays_after_the_run() {
     // Windows has no `sh`, so its twin runs the same loop in PowerShell.

@@ -21,7 +21,7 @@ Batches group issues that share code and verification, so each runs while its bu
 | #   | Batch                      | Issues, in PR order                                         | Why                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --- | -------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 5b  | shell-run token checks     | ISS-115, ISS-116                                            | Security: SEC-27's count misses a shell-run token after a stray `{`, so a value can be filled twice (ISS-115); a URL holding `{{input}}` is filled twice (ISS-116). Found reviewing ISS-111; both on `main`. `bnto-core`'s `reserved_tokens.rs` and `bnto-shell`                                                                                                                                                                 |
-| 5c  | Windows shell and pty runs | ISS-118, ISS-117, ISS-119                                   | On Windows a PowerShell step streaming to stderr never exits in the TUI (ISS-118, found by the journeys #829 turned on); `update_notice`'s pty tests still skip Windows (ISS-117). After the per-OS CI workflows ([PLAN.md](PLAN.md)), which make a Windows run a branch run                                                                                                                                                     |
+| 5c  | Windows shell and pty runs | ISS-118, ISS-117, ISS-119                                   | On Windows a PowerShell step is slow to exit in the TUI, by about 25 s (ISS-118, found by the journeys #829 turned on); `update_notice`'s pty tests still skip Windows (ISS-117); many other tests run only on some OSes with no record of why (ISS-119). After the per-OS CI workflows ([PLAN.md](PLAN.md)), which make a Windows run a branch run                                                                              |
 | 6   | Template unification       | ISS-35                                                      | `file-rename` and `file-decode` move onto the shared one-pass fill. These are the first PRs of the template-filters plan ([PLAN.md backlog](PLAN.md#backlog)), which must unify the interpolators before adding filters; write that plan first                                                                                                                                                                                   |
 | 7   | TUI and CLI behavior       | ISS-103, ISS-104, ISS-113, ISS-114, ISS-45                  | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a terminal left in raw mode when setup fails (ISS-113); tonkotsu acting on key releases (ISS-114); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                         |
 | 8   | Web performance            | ISS-99, then ISS-37                                         | Public pages render per request, which costs compute that static pages don't (ISS-99), then the homepage's ~500 KB of JS (mobile LCP 4.9 s, ISS-37). Moved up from last: first of the web batches. Its own plan, profiling first; ISS-99 first because it changes what ISS-37 measures                                                                                                                                           |
@@ -75,7 +75,7 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-116 | shell-run fills a URL holding `{{input}}` a second time                                                                                      | engine security | Open                                             |
 | ISS-117 | The `update_notice` pty tests are ignored on Windows: unanswered ConPTY cursor query, and no `USERPROFILE`                                   | cli test        | Open                                             |
 | ISS-118 | On Windows a PowerShell step is slow to exit in the TUI (~25 s): one streaming to stderr times out                                           | cli tui         | Open                                             |
-| ISS-119 | Four tests skip Windows untracked: three telemetry config tests and one PowerShell script-mode test                                          | cli test        | Open                                             |
+| ISS-119 | Many CLI tests run only on some OSes, with no list saying which are on purpose                                                               | cli test        | Open                                             |
 
 ---
 
@@ -397,7 +397,7 @@ Reproduced by the reviewer with the CLI (temp `HOME` and `BNTO_HOME`): a URL-mod
 - **Fix:** answer the cursor query as the TUI harness does (share its reader, or a small helper both use), set `USERPROFILE` and `APPDATA` as the harness does, and drop the Windows `ignore`s. ISS-67 (the same file's parallel `openpty` with no lock) fits the same PR.
 - **Regression test:** the four tests pass on the `rust-windows` CI job.
 
-### ISS-118: On Windows a PowerShell step that streams to stderr never exits in the TUI
+### ISS-118: On Windows a PowerShell step is slow to exit in the TUI
 
 **Found:** November 1, 2026 (turning the TUI journeys on for Windows, ISS-112, #829).
 
@@ -406,14 +406,18 @@ TJ5 on Windows runs `tests/fixtures/tui/slow-shell-windows.bnto.json`: a `shell-
 - **Fix:** reproduce with `bnto run` and in the TUI on Windows (the per-OS workflow makes this a branch run), find what holds the process open, fix it, and drop TJ5 and TJ6 from `tui_journeys.rs`'s `WINDOWS_SKIPS`.
 - **Regression test:** TJ5 and TJ6 pass on the `rust-windows` job in a few seconds each, and a CLI test runs TJ5's PowerShell script through `bnto run` and finishes well inside its timeout.
 
-### ISS-119: Four tests skip Windows untracked
+### ISS-119: Many CLI tests run only on some OSes, with no list saying which are on purpose
 
-**Found:** November 1, 2026 (cold review of the ISS-112 fix, #829).
+**Found:** November 1, 2026 (cold reviews of the ISS-112 fix, #829). Ryan wants every test running on every OS where it can.
 
-Ryan wants every test running on every OS. These skip Windows with no issue and no guard:
+`grep -rnE '#!?\[cfg(_attr)?\((not\()?(windows|unix|target_os)' engine/crates/bnto/tests` finds:
 
-- `engine/crates/bnto/tests/telemetry_notice.rs:35` and `telemetry_setting.rs:46` and `:60`: `#[cfg_attr(windows, ignore = "config dir can't be redirected on Windows")]`. bnto reads its config dir from the platform's location, which these tests can't point at a sandbox on Windows.
-- `engine/crates/bnto/tests/shell_security/powershell_mode.rs:136`: `#[cfg(not(windows))]` compiles a test out.
+- **Whole files that never compile on Windows** (`#![cfg(unix)]` or similar): `dogfood_recipes.rs`, and `shell_security/argv_values.rs`, `env_policy.rs`, `input_modes.rs`, `script_mode.rs` and `template_values.rs`.
+- **Single tests left out on Windows:** `#[cfg(unix)]` in `upgrade.rs`, `output_suffix.rs`, `write_into_source_folder.rs`, `dry_run_quoting.rs`, `dry_run_path.rs` and `shell_security/command_policy.rs`; `#[cfg(not(windows))]` in `shell_security/powershell_mode.rs:136`; and `write_into_source_folder.rs:341` runs only on macOS.
+- **Tests ignored on Windows:** `telemetry_notice.rs:35` and `telemetry_setting.rs:46`, `:60` ("config dir can't be redirected on Windows"); `update_notice.rs` is ISS-117.
+- **OS-specific by design, with counterparts:** `keep_awake.rs`, `keep_awake_linux.rs`, `keep_awake_windows.rs`, `shell_security/windows_batch.rs`, and the `#[cfg(windows)]` / `#[cfg(unix)]` pairs in `cli_commands.rs`.
 
-- **Fix:** make each run on Windows (a config dir override the tests can set, or `APPDATA` like the TUI harness sets), or list it with its reason in a guard like `tui_journeys.rs`'s `WINDOWS_SKIPS`. The per-OS CI workflows (PLAN.md) should compare each OS's test list (`cargo test -- --list` and `--list --ignored`) against Linux's, so no test can leave Windows or macOS unnoticed.
-- **Regression test:** the four tests run on the `rust-windows` job.
+Some are right to be OS-specific (a POSIX shell feature, macOS case-insensitivity). Others may only lack a Windows fixture or a way to sandbox, as the TUI journeys did (ISS-112). Nothing records which is which, and nothing fails when a test quietly stops running on an OS.
+
+- **Fix:** sort each gate into "by design" (with its reason) or "should run everywhere" (fix it, as #829 did for the journeys). Then have the per-OS CI workflows (PLAN.md) compare each OS's `cargo test -- --list` and `-- --list --ignored` against Linux's, with the by-design gates as the allowlist, so a test can't leave an OS unnoticed.
+- **Regression test:** the per-OS comparison fails on a test that runs on Linux but not on Windows or macOS without an allowlist entry.
