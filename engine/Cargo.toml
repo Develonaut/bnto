@@ -94,6 +94,18 @@ vt100 = "0.18"
 
 # --- Build Profiles ---
 
+[profile.dev]
+# Dev and test builds (tests inherit this profile, and so do wasm-pack's
+# debug builds) keep only file-and-line debug info for the workspace's own
+# crates, enough for backtraces. Full debug info roughly tripled every test
+# binary, each of which links the whole engine (ISS-120). For a debugger
+# session, build once with `CARGO_PROFILE_DEV_DEBUG=full`.
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+# Dependencies carry no debug info at all.
+debug = false
+
 [profile.release]
 # Optimize for binary size — WASM files are downloaded by the browser.
 opt-level = "s"
