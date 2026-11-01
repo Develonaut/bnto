@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-114**.
+- **IDs never get reused.** The next one is **ISS-115**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
@@ -22,7 +22,7 @@ Batches group issues that share code and verification, so each runs while its bu
 | --- | ------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 5   | Loop semantics           | ISS-111                                                          | `shell-run` reads only the loop's item inside a loop, `each` groups included (ISS-111). In `bnto-core`'s executor and `bnto-shell`                                                                                                                                                                                                                                                                                               |
 | 6   | Template unification     | ISS-35                                                           | `file-rename` and `file-decode` move onto the shared one-pass fill. These are the first PRs of the template-filters plan ([PLAN.md backlog](PLAN.md#backlog)), which must unify the interpolators before adding filters; write that plan first                                                                                                                                                                                   |
-| 7   | TUI and CLI behavior     | ISS-103, ISS-104, ISS-113, ISS-45                                | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a terminal left in raw mode when setup fails (ISS-113); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                                                                    |
+| 7   | TUI and CLI behavior     | ISS-103, ISS-104, ISS-113, ISS-114, ISS-45                       | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a terminal left in raw mode when setup fails (ISS-113); tonkotsu acting on key releases (ISS-114); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                         |
 | 8   | Web performance          | ISS-99, then ISS-37                                              | Public pages render per request, which costs compute that static pages don't (ISS-99), then the homepage's ~500 KB of JS (mobile LCP 4.9 s, ISS-37). Moved up from last: first of the web batches. Its own plan, profiling first; ISS-99 first because it changes what ISS-37 measures                                                                                                                                           |
 | 9   | Web cleanups             | ISS-86, ISS-91, ISS-88, ISS-90, ISS-84, then ISS-85, ISS-44      | Prettier first, so later PRs don't fight the formatter (ISS-86); `React.*` types (ISS-91); dot-notation names (ISS-88); dead `@bnto/form` exports (ISS-90); the E2E heading check, then the helpers split in the same file (ISS-84, ISS-85); old params in the browser, which also moves the migrations out of the CLI crate (ISS-44). `ui:lint`, `task e2e`, `seo:audit`; ISS-44 also needs the engine's tests and a WASM build |
 | 10  | Telemetry and analytics  | ISS-12, then ISS-7 (same release), ISS-57, ISS-29, ISS-70        | Released CLIs send nothing (ISS-12) and the notice links a 404 (ISS-7); a wrong `out_of_memory` category (ISS-57); exception capture off (ISS-29); recipe-page downloads not recorded (ISS-70)                                                                                                                                                                                                                                   |
@@ -71,6 +71,7 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-111 | Inside a loop, `shell-run` reads `{{item.*}}` from the loop's item alone, in `each` groups too                          | engine      | Open                                             |
 | ISS-112 | On Windows the TUI journeys never draw under ConPTY: each times out on a blank screen                                   | tui test    | Open                                             |
 | ISS-113 | If the TUI's terminal setup fails partway, raw mode and the alternate screen stay on                                    | tui         | Open                                             |
+| ISS-114 | tonkotsu's `map_key_event` acts on key releases, so on Windows its demo applies every key twice                         | tui         | Open                                             |
 
 ---
 
@@ -366,7 +367,8 @@ ISS-110's step rule left `shell-run` out because applying it here would refuse t
 `tui_journeys` is `#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]`, which reads as flaky. Run with `--ignored` on Windows (`cargo test -p bnto --test tui_journeys tj1_ -- --ignored`), `tj1_home_shows_the_catalog_and_version` times out after 30 s with an empty screen (`harness.rs:240`), and every other journey times out too, with and without #826's fix. Each failing run then takes minutes more to end (`tj1` alone finishes in about 3 to 5 minutes), likely in `Drop for Tui`'s `kill`/`wait` (`harness.rs:261-265`) or the ConPTY reader. Since #826 the TUI does start in a real Windows console (`test_tui_starts_in_a_windows_console`), so the blank screen is in the harness: `portable-pty`'s ConPTY, the `vt100` parser reading it, or the TUI rendering to stderr, which the harness may not attach.
 
 - **Fix:** find where the frame is lost (dump the raw bytes the harness reads), make the journeys draw, then drop the Windows `ignore`. Update the lines in `journeys/tui.md` and `strategy/tui-testing.md` that link here.
-- **Regression test:** `tj1` passes on the Windows CI job.
+- **Why it matters:** with every journey ignored on Windows, no CI test types into the real TUI there. Two Windows-only TUI bugs shipped through green CI: the TUI failing to start in any console (#826), and every key acting twice because Windows reports key releases (`fix/tui-key-release`).
+- **Regression test:** `tj1` passes on the Windows CI job, and a journey presses Down once on Home and sees the cursor move one row. Check that ConPTY delivers key-up records for the keys a journey writes; if it doesn't, that journey can't catch release bugs, and the TUI needs a Windows test that writes key events into a real console (`WriteConsoleInput`).
 
 ### ISS-113: If the TUI's terminal setup fails partway, raw mode and the alternate screen stay on
 
@@ -376,3 +378,12 @@ ISS-110's step rule left `shell-run` out because applying it here would refuse t
 
 - **Fix:** undo what `setup()` already did when a later step fails, e.g. a guard that disables raw mode and leaves the alternate screen unless setup completes.
 - **Regression test:** a unit test with an injected failing step after raw mode, asserting the undo ran (or a pty test on unix that the terminal is back in cooked mode).
+
+### ISS-114: tonkotsu's `map_key_event` acts on key releases, so on Windows its demo applies every key twice
+
+**Found:** November 1, 2026 (fixing the TUI's arrow keys moving two rows on Windows, `fix/tui-key-release`).
+
+On Windows crossterm reports a `KeyEventKind::Release` after every press. `tonkotsu::map_key_event` (`engine/crates/tonkotsu/src/keys.rs:13`) never reads `key.kind`, and the demo (`task form:demo`) passes every key event straight to it (`src/bin/demo/main.rs:110`, `handle_demo_key` in `src/bin/demo/model.rs`), so each arrow moves two fields and each typed character is entered twice. bnto's TUI drops releases in `keys::handle_key` before they reach tonkotsu, so only the demo and other consumers of the published crate are affected.
+
+- **Fix:** return `None` for `KeyEventKind::Release` at the top of `map_key_event` (and in `handle_demo_key`), and bump tonkotsu's version (`check:crates`).
+- **Regression test:** `map_key_event` with a released Down key returns `None`; a pressed or repeated one still moves focus.

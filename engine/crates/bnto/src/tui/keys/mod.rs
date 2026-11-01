@@ -10,7 +10,7 @@ mod run_screens;
 mod settings;
 mod wizard;
 
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyEventKind};
 
 use super::app::{AppMessage, AppModel, Screen};
 use super::event;
@@ -36,6 +36,11 @@ type KeyHandler = fn(&AppModel, KeyEvent) -> Option<AppMessage>;
 /// When the browser is in search mode, screen-specific keys take priority
 /// so that Esc exits search and character keys type into the query.
 pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    // Windows reports a release after every press (and a held key as more
+    // presses), so acting on releases would apply every key twice.
+    if key.kind == KeyEventKind::Release {
+        return None;
+    }
     if let Some(handler) = capturing_handler(model) {
         return handler(model, key);
     }
@@ -109,5 +114,59 @@ fn screen_handler(screen: &Screen) -> KeyHandler {
         Screen::Preview { .. } => handle_preview_key,
         Screen::Editor { .. } => handle_editor_key,
         Screen::Wizard { .. } => handle_wizard_key,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crossterm::event::KeyModifiers;
+
+    use super::*;
+    use crate::storage::paths::BntoPaths;
+    use crate::tui::screens::home::HomeMessage;
+    use crate::tui::theme::ThemeVariant;
+
+    fn home() -> (tempfile::TempDir, AppModel) {
+        let dir = tempfile::tempdir().unwrap();
+        let paths = BntoPaths {
+            home: dir.path().to_path_buf(),
+        };
+        let model = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+        (dir, model)
+    }
+
+    fn key(code: KeyCode, kind: KeyEventKind) -> KeyEvent {
+        KeyEvent::new_with_kind(code, KeyModifiers::NONE, kind)
+    }
+
+    #[test]
+    fn a_key_press_moves_the_cursor() {
+        let (_dir, model) = home();
+        let msg = handle_key(&model, key(KeyCode::Down, KeyEventKind::Press));
+        assert_eq!(msg, Some(AppMessage::Home(HomeMessage::CursorDown)));
+    }
+
+    // Windows reports a release after every press; acting on both moved the
+    // cursor two rows per arrow key.
+    #[test]
+    fn a_key_release_does_nothing() {
+        let (_dir, model) = home();
+        for code in [
+            KeyCode::Down,
+            KeyCode::Enter,
+            KeyCode::Esc,
+            KeyCode::Char('q'),
+        ] {
+            assert_eq!(handle_key(&model, key(code, KeyEventKind::Release)), None);
+        }
+    }
+
+    // Windows reports a held key as repeated presses; elsewhere a terminal may
+    // report repeats, which should keep moving the cursor too.
+    #[test]
+    fn a_held_key_repeats() {
+        let (_dir, model) = home();
+        let msg = handle_key(&model, key(KeyCode::Down, KeyEventKind::Repeat));
+        assert_eq!(msg, Some(AppMessage::Home(HomeMessage::CursorDown)));
     }
 }
