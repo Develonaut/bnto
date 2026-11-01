@@ -37,11 +37,19 @@ struct Sandbox {
 impl Sandbox {
     fn new() -> Self {
         let turn = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
-        Self {
+        let sandbox = Self {
             bnto: temp_output_dir(),
             user: temp_output_dir(),
             _turn: turn,
-        }
+        };
+        std::fs::create_dir(sandbox.temp()).unwrap();
+        sandbox
+    }
+
+    /// The session's temp folder. Its PowerShell is force-killed, so what it
+    /// keeps there is removed with the sandbox, not left in the tests' own.
+    fn temp(&self) -> PathBuf {
+        self.user.path().join("tmp")
     }
 
     /// Run keep-awake with `params`, which must succeed.
@@ -56,6 +64,8 @@ impl Sandbox {
         let mut cmd = Command::new(bnto_bin());
         cmd.env("BNTO_HOME", self.bnto.path())
             .env("HOME", self.user.path())
+            .env("TMP", self.temp())
+            .env("TEMP", self.temp())
             .env("BNTO_TELEMETRY_DISABLED", "1")
             .env("BNTO_NO_UPDATE_CHECK", "1")
             .args(["run", "keep-awake", "--yes"]);

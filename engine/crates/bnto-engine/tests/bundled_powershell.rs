@@ -55,12 +55,13 @@ fn powershell() -> Option<PathBuf> {
 }
 
 fn analyze(powershell: &Path, script: &str) -> Outcome {
-    // PowerShell and the analyzer leave randomly named folders in the temp
-    // folder on Windows, so each run gets its own, removed after it.
+    // Whatever PowerShell and the analyzer keep in their temp folder goes in
+    // one of the run's own, removed after it.
     let temp = tempfile::tempdir().unwrap();
     let output = Command::new(powershell)
         .env("TMP", temp.path())
         .env("TEMP", temp.path())
+        .env("TMPDIR", temp.path())
         .args([
             "-NoLogo",
             "-NoProfile",
