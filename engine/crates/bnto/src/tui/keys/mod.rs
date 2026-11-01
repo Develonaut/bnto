@@ -38,9 +38,9 @@ type KeyHandler = fn(&AppModel, KeyEvent) -> Option<AppMessage>;
 pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     // Windows reports a release after every press (and a held key as more
     // presses), so acting on releases would apply every key twice.
-    if key.kind == KeyEventKind::Release {
-        return None;
-    }
+    // EXPERIMENT (do not merge): #827's release filter removed, to see
+    // whether TJ16 fails on Windows without it.
+    let _ = KeyEventKind::Release;
     if let Some(handler) = capturing_handler(model) {
         return handler(model, key);
     }
