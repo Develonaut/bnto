@@ -1520,6 +1520,22 @@ fn test_tui_creates_session_log() {
     );
 }
 
+#[cfg(windows)]
+#[test]
+fn test_tui_without_console_says_how_to_start_it() {
+    // `output()` hands the child a null stdin, which is no console, the same
+    // as Git Bash's mintty piping its input.
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("tui").output().unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("winpty bnto tui") && stderr.contains("PowerShell"),
+        "Should say how to start the TUI, got: {stderr}"
+    );
+}
+
 // --- Install ---
 
 #[test]

@@ -21,8 +21,14 @@ pub(super) fn install_panic_hook() {
     }));
 }
 
+/// Why the TUI can't start without a Windows console, and how to get one.
+const NO_CONSOLE: &str = "this terminal gives bnto no Windows console to read keys from \
+(Git Bash's MINGW64 window pipes them). Run `winpty bnto tui`, or start it from \
+PowerShell or Windows Terminal.";
+
 /// Enter raw mode, switch to alternate screen, create terminal.
 pub(super) fn setup() -> io::Result<TuiTerminal> {
+    require_console(stdin_is_console())?;
     terminal::enable_raw_mode()?;
     let mut stderr = io::stderr();
     execute!(stderr, EnterAlternateScreen)?;
@@ -36,4 +42,50 @@ pub(super) fn restore(terminal: &mut TuiTerminal) -> io::Result<()> {
     terminal::disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()
+}
+
+/// Refuse to start before touching the terminal when keys can't reach it.
+/// Without this, crossterm fails mid-setup with a bare "Initial console modes
+/// not set" and leaves the alternate screen on.
+fn require_console(stdin_is_console: bool) -> io::Result<()> {
+    if stdin_is_console {
+        return Ok(());
+    }
+    Err(io::Error::other(NO_CONSOLE))
+}
+
+/// Whether stdin is a Windows console. A pipe (mintty), file or NUL isn't,
+/// even when the window around it looks like a terminal.
+#[cfg(windows)]
+fn stdin_is_console() -> bool {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::System::Console::GetConsoleMode;
+
+    let mut mode = 0;
+    // SAFETY: stdin's handle lives as long as the process, and
+    // `GetConsoleMode` only writes `mode`; it returns 0 for a non-console.
+    unsafe { GetConsoleMode(io::stdin().as_raw_handle(), &mut mode) != 0 }
+}
+
+/// Off Windows crossterm reads keys from `/dev/tty` when stdin isn't one.
+#[cfg(not(windows))]
+fn stdin_is_console() -> bool {
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn console_stdin_starts() {
+        assert!(require_console(true).is_ok());
+    }
+
+    #[test]
+    fn no_console_says_how_to_start() {
+        let message = require_console(false).unwrap_err().to_string();
+        assert!(message.contains("winpty bnto tui"), "{message}");
+        assert!(message.contains("PowerShell"), "{message}");
+    }
 }
