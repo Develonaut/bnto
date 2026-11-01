@@ -172,8 +172,9 @@ fn require_filled_items(
 /// Resolve a node's params once, against the enclosing loop's item. A node
 /// that fills its params itself (`resolves_loop_items`) gets them unfilled,
 /// and fills every token in one pass (ISS-58, ISS-35). One that fills only
-/// `{{item.*}}` per file gets those as written outside a loop. Any other
-/// reads, inside a loop, the item `files` agree on (`step_item`, ISS-110).
+/// `{{item.*}}` per file gets those as written outside a loop, and inside one
+/// only in the values it marks (`held_groups`, ISS-111). Any other reads,
+/// inside a loop, the item `files` agree on (`step_item`, ISS-110).
 fn resolve_node_params<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
@@ -188,7 +189,7 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
     let resolved = if processor.resolves_items() && ctx.loop_item.is_none() {
         resolve_templates(ctx, node, &field_values, &None)
     } else if processor.resolves_items() {
-        resolve_with(ctx, node, &field_values, &ctx.loop_item, None)?
+        super::held_groups::resolve(ctx, node, processor, files, &field_values)?
     } else {
         let item = super::step_item::for_step(&ctx.loop_item, files, &node.params)
             .map_err(|why| BntoError::InvalidInput(format!("Node '{}': {why}", node.id)))?;

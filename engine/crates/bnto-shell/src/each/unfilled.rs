@@ -1,6 +1,7 @@
-// `{{item.*}}` outside an `each` group. shell-run fills item values
-// itself, inside groups, so outside a loop the executor hands it every
-// `{{item.KEY}}` as written; one anywhere else has nothing to fill it.
+// `{{item.*}}` outside an `each` group. shell-run fills item values itself,
+// inside groups, so the executor hands it a group's `{{item.KEY}}` as written
+// (outside a loop, every one). Outside a loop, one anywhere else has nothing
+// to fill it; inside one the executor fills those from the step's item.
 
 use serde_json::{Map, Value};
 

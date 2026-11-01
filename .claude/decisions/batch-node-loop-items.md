@@ -16,7 +16,7 @@ Five batch nodes fill `{{item.*}}` (and `{{file}}`) themselves, once per file: `
 - **Two scopes.**
   - **Per file:** anything a node fills once per file. It reads the file's metadata with the loop's item on top (`placeholder::file_item`). That's the same merge and the same precedence as a per-file node. The loop's item won a shared key until ISS-109; now the file's metadata wins ([loop-item-current.md](loop-item-current.md)).
   - **Once:** templates written once per node call (`file-render`'s `header`, `footer` and `filename`; `report`'s `each` and its entry lines) read the loop's item only, as the executor used to fill them. `{{file}}` there is still refused, and so is `{{item.*}}` outside a loop.
-- **`shell-run` opts out** (`resolves_loop_items` returns false). It fills items only inside `each` groups; elsewhere the executor still fills the loop's item, and SEC-27's `reserved_tokens` still refuses a value that carries one.
+- **`shell-run` opts out** (`resolves_loop_items` returns false). It fills items only inside `each` groups; elsewhere the executor fills them (since ISS-110 and ISS-111, from the item the step's files agree on), and SEC-27's `reserved_tokens` still refuses a value that carries one.
 - **A dry run fills too.** `report` prints each filled line and `assert` each filled check, so a missing key fails a dry run as it used to inside a loop. A `report` whose `each` isn't a list yet (its upstream step didn't run) prints the message as written.
 
 ## What changes for a recipe
@@ -37,4 +37,4 @@ Five batch nodes fill `{{item.*}}` (and `{{file}}`) themselves, once per file: `
 
 - `file-rename` and `file-decode` still get params the executor filled, then fill their own tokens over them: a `{{item.x}}` in a pattern whose value holds `{{name}}` is filled again (ISS-35). They could opt into the same handoff.
 - Inside an iteration the loop's item still won over a value a step set (ISS-109). Since fixed: the file wins, and `{{loop.*}}` reads the row ([loop-item-current.md](loop-item-current.md)).
-- `when` guards read only the loop's item (`executor/guard.rs`), so they couldn't see a key added during the iteration (ISS-110). Since fixed: a guard reads the item the step's files agree on ([loop-item-current.md](loop-item-current.md)); `shell-run` still reads the loop's item (ISS-111).
+- `when` guards read only the loop's item (`executor/guard.rs`), so they couldn't see a key added during the iteration (ISS-110). Since fixed: a guard reads the item the step's files agree on ([loop-item-current.md](loop-item-current.md)); `shell-run`'s `each` groups read each file over the loop's item since ISS-111.
