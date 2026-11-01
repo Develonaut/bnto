@@ -221,9 +221,14 @@ pub(crate) mod tests {
         // The hidden ping is a grandchild that only dies if the tree is killed.
         let script = "$p = Start-Process ping -ArgumentList '-n','30','127.0.0.1' \
                       -PassThru -WindowStyle Hidden; $p.Id; $p.WaitForExit()";
+        // The killed PowerShell can't clean up its temp files, so they go in
+        // a folder of the test's own.
+        let temp = tempfile::tempdir().unwrap();
         let mut command = Command::new("powershell");
         command
             .args(["-NoProfile", "-Command", script])
+            .env("TMP", temp.path())
+            .env("TEMP", temp.path())
             .stdout(Stdio::piped());
         let (mut child, job) = crate::job_object::spawn_in_job(&mut command).unwrap();
         let mut line = String::new();
