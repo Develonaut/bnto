@@ -43,8 +43,8 @@ pub(super) fn resolve<F: Fn() -> u64 + Copy>(
     Ok(resolved)
 }
 
-/// SEC-27 within each marked value: filling it may not add a token the
-/// node fills itself.
+/// SEC-27 within each marked value, and each value the fill made into one or
+/// changed the kind of: filling it may not add a token the node fills itself.
 fn check_each_held(
     processor: &dyn NodeProcessor,
     node: PipelineNodeRef,
@@ -63,8 +63,10 @@ fn check_each_held(
     Ok(())
 }
 
-/// Every marked value under `raw`, with its filled copy from `filled` (the
-/// same shape: filling keeps arrays and maps as they are).
+/// Every value under `raw` to count alone, with its filled copy from
+/// `filled`: one marked before or after filling (a whole-value placeholder
+/// keeps its JSON type, so a fill can make a group the recipe didn't have),
+/// and one whose kind the fill changed (text that became a list or a map).
 fn held_pairs(
     raw: &Value,
     filled: &Value,
@@ -72,7 +74,7 @@ fn held_pairs(
     raws: &mut Vec<Value>,
     filleds: &mut Vec<Value>,
 ) {
-    if holds(raw) {
+    if holds(raw) || holds(filled) || !same_kind(raw, filled) {
         raws.push(raw.clone());
         filleds.push(filled.clone());
         return;
@@ -92,6 +94,16 @@ fn held_pairs(
         }
         _ => {}
     }
+}
+
+/// Both lists, both maps, or both neither.
+fn same_kind(a: &Value, b: &Value) -> bool {
+    let kind = |v: &Value| match v {
+        Value::Array(_) => 0,
+        Value::Object(_) => 1,
+        _ => 2,
+    };
+    kind(a) == kind(b)
 }
 
 fn template<'a, F: Fn() -> u64 + Copy>(
@@ -186,6 +198,22 @@ mod tests {
         let out = without_held(&p, &is_group);
         let expected = json!({ "args": ["{{item.a}}", ["x"]], "env": { "L": "{{item.d}}" } });
         assert_eq!(Value::Object(out), expected);
+    }
+
+    #[test]
+    fn test_held_pairs_also_finds_values_the_fill_made_a_group_or_reshaped() {
+        let raw = json!({ "a": "{{loop.g}}", "b": { "each": "{{loop.h}}" }, "c": "x" });
+        let filled = json!({ "a": ["y", { "each": ["{{item.s}}"] }], "b": { "each": ["z"] },
+            "c": "X" });
+        let (mut raws, mut filleds) = (Vec::new(), Vec::new());
+        held_pairs(&raw, &filled, &is_group_list, &mut raws, &mut filleds);
+        assert_eq!(raws, [json!("{{loop.g}}"), json!({ "each": "{{loop.h}}" })]);
+        assert_eq!(filleds[0], json!(["y", { "each": ["{{item.s}}"] }]));
+    }
+
+    /// A group as shell-run reads one: `each` holding a list.
+    fn is_group_list(v: &Value) -> bool {
+        v.get("each").is_some_and(Value::is_array)
     }
 
     #[test]

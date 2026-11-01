@@ -180,3 +180,63 @@ fn outside_a_group_a_key_a_step_changed_reads_the_new_value() {
     assert!(output.status.success(), "{}", stderr(&output));
     assert!(text.contains("'new' 'old' 'each-new'"), "{text}");
 }
+
+/// `bnto run` of `nodes` on a `rows.json` holding `rows`; returns the output.
+fn run_json(dir: &Path, nodes: Value, rows: Value) -> Output {
+    let recipe = dir.join("loop.bnto.json");
+    std::fs::write(
+        &recipe,
+        json!({ "name": "Shell Loop", "nodes": nodes }).to_string(),
+    )
+    .unwrap();
+    let table = dir.join("rows.json");
+    std::fs::write(&table, rows.to_string()).unwrap();
+    Sandbox::new()
+        .command()
+        .arg("run")
+        .arg(&recipe)
+        .arg(&table)
+        .arg("-o")
+        .arg(dir.join("out"))
+        .arg("--yes")
+        .output()
+        .unwrap()
+}
+
+fn per_row_tool(params: Value) -> Value {
+    per_row(json!({ "id": "tool", "type": "shell-run", "parameters": params }))
+}
+
+#[test]
+fn a_value_that_fills_a_whole_args_list_cant_bring_in_a_group() {
+    // SEC-27: a whole-value placeholder keeps its JSON type, so the fill can
+    // make a group the raw params never had; it's counted alone too.
+    let dir = temp_output_dir();
+    let params =
+        json!({ "command": "git", "args": "{{loop.g}}", "env": { "X": "{{item.secret}}" } });
+    let rows = json!([{ "g": ["rev-parse", "--sq-quote", { "each": ["{{item.secret}}"] }],
+        "secret": "S3CRET" }]);
+    let output = run_json(dir.path(), per_row_tool(params), rows);
+    assert!(!output.status.success(), "{}", stderr(&output));
+    assert!(
+        stderr(&output).contains("contains '{{item.secret}}'"),
+        "{}",
+        stderr(&output)
+    );
+}
+
+#[test]
+fn a_value_that_completes_a_group_cant_bring_in_a_token() {
+    // `{"each": "{{loop.g}}"}` isn't a group until the fill makes it one.
+    let dir = temp_output_dir();
+    let args = json!(["rev-parse", "--sq-quote", "{{item.secret}}", { "each": "{{loop.g}}" }]);
+    let params = json!({ "command": "git", "args": args });
+    let rows = json!([{ "g": ["leak={{item.secret}}"], "secret": "S3CRET" }]);
+    let output = run_json(dir.path(), per_row_tool(params), rows);
+    assert!(!output.status.success(), "{}", stderr(&output));
+    assert!(
+        stderr(&output).contains("contains '{{item.secret}}'"),
+        "{}",
+        stderr(&output)
+    );
+}
