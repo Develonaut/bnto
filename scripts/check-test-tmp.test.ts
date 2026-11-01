@@ -77,7 +77,7 @@ describe("check-test-tmp.sh", () => {
     assert.equal(result.status, 1);
     assert.match(result.stderr, /left 2 entries/);
     assert.match(result.stderr, /bnto-test-xyz/);
-    assert.match(result.stderr, /bnto-abc-output/);
+    assert.match(result.stderr, /bnto-abc-output \(file, 0 bytes\)/);
   });
 
   it("check describes each leftover, a folder with what's in it", () => {
