@@ -1520,6 +1520,47 @@ fn test_tui_creates_session_log() {
     );
 }
 
+#[cfg(windows)]
+#[test]
+fn test_tui_without_console_says_how_to_start_it() {
+    // `output()` hands the child a null stdin, which is no console, the same
+    // as Git Bash's mintty piping its input.
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("tui").output().unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("winpty bnto tui") && stderr.contains("PowerShell"),
+        "Should say how to start the TUI, got: {stderr}"
+    );
+}
+
+#[cfg(windows)]
+#[test]
+fn test_tui_starts_in_a_windows_console() {
+    // A new console window, as PowerShell or Windows Terminal give it. A TUI
+    // that failed setup exits at once; one that started waits for keys.
+    let sandbox = Sandbox::new();
+    let script = "$p = Start-Process -FilePath $env:BNTO -ArgumentList tui \
+                  -WindowStyle Hidden -PassThru; \
+                  if ($p.WaitForExit(3000)) { \"exited $($p.ExitCode)\" } \
+                  else { Stop-Process -Id $p.Id -Force; 'running' }";
+    let output = sandbox
+        .powershell(script)
+        .env("BNTO_NO_UPDATE_CHECK", "1")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(
+        stdout.trim(),
+        "running",
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
 // --- Install ---
 
 #[test]

@@ -43,6 +43,11 @@ bnto tui
 bnto tui --theme tokyo       # dark theme
 bnto tui --theme monaco      # sunset theme
 
+# On Windows the TUI reads keys from a console. Git Bash's MINGW64 window pipes
+# its input instead, so start it there through winpty (PowerShell and Windows
+# Terminal need nothing)
+winpty bnto tui
+
 # Run a recipe against input files
 bnto run compress-images photo.jpg logo.png
 

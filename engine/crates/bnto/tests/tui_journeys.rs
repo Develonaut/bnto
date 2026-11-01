@@ -39,7 +39,7 @@ fn select(tui: &mut Tui, name: &str) {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj1_home_shows_the_catalog_and_version() {
     // Wait for the whole frame, not its first row: a read can land mid-draw.
     let tui = Tui::launch(120, 36);
@@ -52,7 +52,7 @@ fn tj1_home_shows_the_catalog_and_version() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj2_scroll_to_keep_awake_and_open_it() {
     // Keep Awake sits below the fold at 120x36; the pane must scroll to it.
     let mut tui = Tui::launch(120, 36);
@@ -68,7 +68,7 @@ fn tj2_scroll_to_keep_awake_and_open_it() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj12_a_library_copy_never_hides_the_built_in() {
     // A library recipe named like a built-in used to drop the built-in from
     // the Recipes pane (and its count) and open the copy instead.
@@ -94,7 +94,7 @@ fn tj12_a_library_copy_never_hides_the_built_in() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj13_a_shell_recipe_without_fields_offers_just_run() {
     // Its command, args and limits are the program, not options (R4).
     let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -111,7 +111,7 @@ fn tj13_a_shell_recipe_without_fields_offers_just_run() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj3_compress_an_image_and_see_the_result() {
     let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../../test-fixtures/images/gradient.jpg");
@@ -141,7 +141,7 @@ fn tj3_compress_an_image_and_see_the_result() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj14_a_run_keeps_what_is_already_in_the_recipes_folder() {
     // ISS-21: the TUI emptied a recipe's output folder before each run.
     let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -185,7 +185,7 @@ fn tj14_a_run_keeps_what_is_already_in_the_recipes_folder() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj5_shell_output_streams_live_and_stays_after_the_run() {
     let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/tui/slow-shell.bnto.json");
@@ -244,7 +244,7 @@ fn tj6_a_message_recipe_shows_its_message() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj11_tab_walks_every_field_to_run_on_a_short_terminal() {
     // Five declared fields whose descriptions wrap: at 80x24 the later
     // fields sit below the fold, so each Tab must scroll the newly focused
@@ -266,14 +266,14 @@ fn tj11_tab_walks_every_field_to_run_on_a_short_terminal() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj10_a_newer_release_shows_in_the_status_line() {
     let tui = Tui::launch_with_update(120, 36, "99.0.0");
     tui.wait_for("bnto 99.0.0 available, U to upgrade");
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+#[cfg_attr(windows, ignore = "ConPTY journeys never draw (ISS-112)")]
 fn tj15_u_closes_the_tui_and_upgrades() {
     let mut tui = Tui::launch_with_update(120, 36, "99.0.0");
     tui.wait_for("U to upgrade");
