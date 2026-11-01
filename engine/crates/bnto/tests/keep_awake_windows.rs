@@ -101,6 +101,9 @@ impl Drop for Sandbox {
             let _ = Command::new("taskkill")
                 .args(["/PID", &pid.to_string(), "/F"])
                 .output();
+            // taskkill returns before the session is gone, and Windows can't
+            // remove the sandbox's folders while it still holds files there.
+            eventually(|| !alive(pid));
         }
     }
 }
