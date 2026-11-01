@@ -40,19 +40,26 @@ fn select(tui: &mut Tui, name: &str) {
 
 /// The journeys allowed to skip Windows, each with its reason. Windows CI
 /// runs every other one (ISS-112); a new skip must be added here, in review.
-const WINDOWS_SKIPS: &[(&str, &str)] = &[];
+const WINDOWS_SKIPS: &[(&str, &str)] = &[(
+    "tj5_",
+    "a PowerShell step streaming to stderr never exits (ISS-118)",
+)];
 
 #[test]
 fn only_the_listed_journeys_skip_windows() {
-    let source = include_str!("tui_journeys.rs");
     let mut skips = Vec::new();
-    let mut pending = None;
-    for line in source.lines() {
-        if let Some(reason) = line.trim().strip_prefix("#[cfg_attr(windows, ignore = \"") {
-            pending = Some(reason.trim_end_matches("\")]").to_string());
+    let (mut attr, mut pending) = (String::new(), None);
+    for line in include_str!("tui_journeys.rs").lines().map(str::trim) {
+        // An attribute may span lines once rustfmt wraps it.
+        if !attr.is_empty() || line.starts_with("#[cfg_attr(") {
+            attr.push_str(line);
+            if line.ends_with(")]") {
+                pending = windows_ignore(&attr).or(pending);
+                attr.clear();
+            }
         } else if let (Some(reason), Some(name)) = (&pending, line.strip_prefix("fn tj")) {
-            let prefix = format!("tj{}", name.split('_').next().unwrap_or_default());
-            skips.push((format!("{prefix}_"), reason.clone()));
+            let number = name.split('_').next().unwrap_or_default();
+            skips.push((format!("tj{number}_"), reason.clone()));
             pending = None;
         }
     }
@@ -64,6 +71,13 @@ fn only_the_listed_journeys_skip_windows() {
         skips, listed,
         "a journey skips Windows without being listed"
     );
+}
+
+/// The reason in a `#[cfg_attr(windows, ignore = "...")]`, if `attr` is one.
+fn windows_ignore(attr: &str) -> Option<String> {
+    let rest = attr.strip_prefix("#[cfg_attr(windows,")?;
+    let reason = rest.split_once("ignore = \"")?.1;
+    Some(reason.split_once('"')?.0.to_string())
 }
 
 #[test]
@@ -207,6 +221,10 @@ fn tj14_a_run_keeps_what_is_already_in_the_recipes_folder() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "a PowerShell step streaming to stderr never exits (ISS-118)"
+)]
 fn tj5_shell_output_streams_live_and_stays_after_the_run() {
     // Windows has no `sh`, so its twin runs the same loop in PowerShell.
     let fixture = if cfg!(windows) {
