@@ -62,10 +62,14 @@ impl Key {
     }
 }
 
+/// What the TUI's terminal is written through: the harness's key presses,
+/// and its answers to the terminal's cursor queries (see [`pump`]).
+type Writer = Arc<Mutex<Box<dyn Write + Send>>>;
+
 /// A running `bnto tui` and the screen it has drawn so far.
 pub struct Tui {
     child: Box<dyn Child + Send + Sync>,
-    writer: Box<dyn Write + Send>,
+    writer: Writer,
     screen: Arc<Mutex<vt100::Parser>>,
     // Kept alive for the session; the pty closes when it drops.
     _master: Box<dyn MasterPty + Send>,
@@ -151,8 +155,9 @@ impl Tui {
         let [rows_nz, cols_nz] =
             [rows, cols].map(|n| NonZeroU16::new(n).expect("a non-empty terminal"));
         let screen = Arc::new(Mutex::new(vt100::Parser::new(rows_nz, cols_nz, 0)));
-        pump(pair.master.try_clone_reader().unwrap(), Arc::clone(&screen));
-        let writer = pair.master.take_writer().unwrap();
+        let writer: Writer = Arc::new(Mutex::new(pair.master.take_writer().unwrap()));
+        let reader = pair.master.try_clone_reader().unwrap();
+        pump(reader, Arc::clone(&screen), Arc::clone(&writer));
         Self {
             child,
             writer,
@@ -167,8 +172,10 @@ impl Tui {
     /// by timing).
     pub fn press(&mut self, keys: &[Key]) -> &mut Self {
         for key in keys {
-            self.writer.write_all(&key.bytes()).unwrap();
-            self.writer.flush().unwrap();
+            let mut writer = self.writer.lock().unwrap();
+            writer.write_all(&key.bytes()).unwrap();
+            writer.flush().unwrap();
+            drop(writer);
             thread::sleep(Duration::from_millis(30));
         }
         self
@@ -331,15 +338,61 @@ fn work_dir(homes: &(TempDir, TempDir)) -> std::path::PathBuf {
     homes.0.path().join("work")
 }
 
-/// Feed everything the TUI writes into the VT100 screen, on a thread.
-fn pump(mut reader: Box<dyn Read + Send>, screen: Arc<Mutex<vt100::Parser>>) {
+/// The terminal's "where is the cursor?" query (DSR 6).
+const CURSOR_QUERY: &[u8] = b"\x1b[6n";
+
+/// Feed everything the TUI writes into the VT100 screen, on a thread, and
+/// answer each cursor query the way a terminal would. Windows' ConPTY, as
+/// `portable-pty` creates it (`PSEUDOCONSOLE_INHERIT_CURSOR`), asks once at
+/// start and draws nothing until it hears back, so unanswered, every journey
+/// saw a blank screen there (ISS-112).
+fn pump(mut reader: Box<dyn Read + Send>, screen: Arc<Mutex<vt100::Parser>>, writer: Writer) {
     thread::spawn(move || {
         let mut buf = [0u8; 8192];
+        let mut carry = Vec::new();
         while let Ok(n) = reader.read(&mut buf) {
             if n == 0 {
                 break;
             }
-            screen.lock().unwrap().process(&buf[..n]);
+            let mut parser = screen.lock().unwrap();
+            parser.process(&buf[..n]);
+            carry.extend_from_slice(&buf[..n]);
+            let (row, col) = parser.screen().cursor_position();
+            drop(parser);
+            for _ in 0..take_queries(&mut carry) {
+                let answer = format!("\x1b[{};{}R", row + 1, col + 1);
+                let mut writer = writer.lock().unwrap();
+                let _ = writer
+                    .write_all(answer.as_bytes())
+                    .and_then(|()| writer.flush());
+            }
         }
     });
+}
+
+/// How many cursor queries `carry` holds; keeps only a tail that could be
+/// the start of one split across reads.
+fn take_queries(carry: &mut Vec<u8>) -> usize {
+    let mut count = 0;
+    let mut end = 0;
+    while let Some(at) = carry[end..]
+        .windows(CURSOR_QUERY.len())
+        .position(|w| w == CURSOR_QUERY)
+    {
+        count += 1;
+        end += at + CURSOR_QUERY.len();
+    }
+    let keep = (CURSOR_QUERY.len() - 1).min(carry.len() - end);
+    carry.drain(..carry.len() - keep);
+    count
+}
+
+#[test]
+fn take_queries_counts_whole_queries_and_keeps_a_split_one() {
+    let mut carry = b"a\x1b[6nb\x1b[6n\x1b[".to_vec();
+    assert_eq!(take_queries(&mut carry), 2);
+    assert_eq!(carry, b"\x1b[");
+    carry.extend_from_slice(b"6nrest");
+    assert_eq!(take_queries(&mut carry), 1);
+    assert_eq!(carry, b"est");
 }

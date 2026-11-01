@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-117**.
+- **IDs never get reused.** The next one is **ISS-118**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
@@ -27,7 +27,7 @@ Batches group issues that share code and verification, so each runs while its bu
 | 9   | Web cleanups             | ISS-86, ISS-91, ISS-88, ISS-90, ISS-84, then ISS-85, ISS-44      | Prettier first, so later PRs don't fight the formatter (ISS-86); `React.*` types (ISS-91); dot-notation names (ISS-88); dead `@bnto/form` exports (ISS-90); the E2E heading check, then the helpers split in the same file (ISS-84, ISS-85); old params in the browser, which also moves the migrations out of the CLI crate (ISS-44). `ui:lint`, `task e2e`, `seo:audit`; ISS-44 also needs the engine's tests and a WASM build |
 | 10  | Telemetry and analytics  | ISS-12, then ISS-7 (same release), ISS-57, ISS-29, ISS-70        | Released CLIs send nothing (ISS-12) and the notice links a 404 (ISS-7); a wrong `out_of_memory` category (ISS-57); exception capture off (ISS-29); recipe-page downloads not recorded (ISS-70)                                                                                                                                                                                                                                   |
 | 11  | Codegen and catalog      | ISS-105 + ISS-94 (one PR), ISS-93, ISS-106                       | Codegen leaving stale files behind (ISS-105, ISS-94); a stale `@bnto/nodes` README (ISS-93); `platforms` leaving out `cli` (ISS-106). `task nodes:generate`                                                                                                                                                                                                                                                                      |
-| 12  | Tooling and test hygiene | ISS-92, ISS-95, ISS-89, ISS-67, ISS-18, ISS-112, ISS-8 (two PRs) | `scripts/` never type-checked (ISS-92); a misleading crate check (ISS-95); a `seo:audit` hint (ISS-89); a pty lock (ISS-67); a slow Windows test (ISS-18); TUI journeys that never draw on Windows (ISS-112); CLI tests touching the real `~/.bnto` ([open-issues-plan.md](strategy/open-issues-plan.md) PRs 5–6, ISS-8)                                                                                                         |
+| 12  | Tooling and test hygiene | ISS-92, ISS-95, ISS-89, ISS-67, ISS-18, ISS-117, ISS-8 (two PRs) | `scripts/` never type-checked (ISS-92); a misleading crate check (ISS-95); a `seo:audit` hint (ISS-89); a pty lock (ISS-67); a slow Windows test (ISS-18); TUI journeys that never draw on Windows (ISS-112); CLI tests touching the real `~/.bnto` ([open-issues-plan.md](strategy/open-issues-plan.md) PRs 5–6, ISS-8)                                                                                                         |
 
 After batch 6, the rest of the template-filters plan (the filters themselves, a feature rather than a defect) can run straight on or after batch 12; Ryan decides when.
 
@@ -68,11 +68,11 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-104 | The TUI's recipe form shows a file param (Watermark Images' overlay) as a text box, not a file picker                                        | tui             | Open                                             |
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over                                  | codegen         | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser"                      | engine          | Open                                             |
-| ISS-112 | On Windows the TUI journeys never draw under ConPTY: each times out on a blank screen                                                        | tui test        | Open                                             |
 | ISS-113 | If the TUI's terminal setup fails partway, raw mode and the alternate screen stay on                                                         | tui             | Open                                             |
 | ISS-114 | tonkotsu's `map_key_event` acts on key releases, so on Windows its demo applies every key twice                                              | tui             | Open                                             |
 | ISS-115 | SEC-27's token count misses `{{url}}`, `{{input}}` and `{{output_dir}}` after a stray `{`, so a value can bring one in for shell-run to fill | engine security | Open                                             |
 | ISS-116 | shell-run fills a URL holding `{{input}}` a second time                                                                                      | engine security | Open                                             |
+| ISS-117 | The `update_notice` pty tests are ignored on Windows: unanswered ConPTY cursor query, and no `USERPROFILE`                                   | cli test        | Open                                             |
 
 ---
 
@@ -347,16 +347,6 @@ Every processor runs in the CLI, which registers them all (`compress-images` run
 - **Fix:** decide what `platforms` means (everywhere a node runs, or only whether it runs in the browser, which is what `metadata.rs`'s browser filter reads), then make every processor's list say it, and the docs with it. Default (October 30, 2026): everywhere a node runs.
 - **Regression test:** a catalog test that every processor lists `cli` (or whatever the agreed values are), and no value outside the agreed set.
 
-### ISS-112: On Windows the TUI journeys never draw under ConPTY
-
-**Found:** November 1, 2026 (fixing `bnto tui` failing in every Windows console, #826).
-
-`tui_journeys` is `#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]`, which reads as flaky. Run with `--ignored` on Windows (`cargo test -p bnto --test tui_journeys tj1_ -- --ignored`), `tj1_home_shows_the_catalog_and_version` times out after 30 s with an empty screen (`harness.rs:240`), and every other journey times out too, with and without #826's fix. Each failing run then takes minutes more to end (`tj1` alone finishes in about 3 to 5 minutes), likely in `Drop for Tui`'s `kill`/`wait` (`harness.rs:261-265`) or the ConPTY reader. Since #826 the TUI does start in a real Windows console (`test_tui_starts_in_a_windows_console`), so the blank screen is in the harness: `portable-pty`'s ConPTY, the `vt100` parser reading it, or the TUI rendering to stderr, which the harness may not attach.
-
-- **Fix:** find where the frame is lost (dump the raw bytes the harness reads), make the journeys draw, then drop the Windows `ignore`. Update the lines in `journeys/tui.md` and `strategy/tui-testing.md` that link here.
-- **Why it matters:** with every journey ignored on Windows, no CI test types into the real TUI there. Two Windows-only TUI bugs shipped through green CI: the TUI failing to start in any console (#826), and every key acting twice because Windows reports key releases (#827).
-- **Regression test:** `tj1` passes on the Windows CI job, and a journey presses Down once on Home and sees the cursor move one row. Check that ConPTY delivers key-up records for the keys a journey writes; if it doesn't, that journey can't catch release bugs, and the TUI needs a Windows test that writes key events into a real console (`WriteConsoleInput`).
-
 ### ISS-113: If the TUI's terminal setup fails partway, raw mode and the alternate screen stay on
 
 **Found:** November 1, 2026 (second cold review of #826).
@@ -394,3 +384,12 @@ Reproduced by the reviewer with the CLI (temp `HOME` and `BNTO_HOME`): a URL-mod
 
 - **Fix:** fill `{{url}}` and `{{input}}` in one pass over each arg (`bnto_core::control::placeholder::fill_tokens`).
 - **Regression test:** a URL holding `{{input}}` comes out as written.
+
+### ISS-117: The `update_notice` pty tests are ignored on Windows
+
+**Found:** November 1, 2026 (fixing ISS-112, the TUI journeys on Windows).
+
+`engine/crates/bnto/tests/update_notice.rs` runs `bnto list` in its own pseudo-terminal (`run_in_terminal`) and its four pty tests are `#[cfg_attr(windows, ignore = "ConPTY runs not yet stable in CI")]`. They have the TUI journeys' problem that ISS-112 fixed in `tests/tui/harness.rs`: `portable-pty` creates ConPTY with `PSEUDOCONSOLE_INHERIT_CURSOR`, so ConPTY asks for the cursor position (`ESC[6n`) and prints nothing until it's answered, and `run_in_terminal` only reads. It also sets `HOME` but not `USERPROFILE`, which is where bnto looks on Windows, so the cached update check it seeds may not be found. Read from the code; not run on Windows.
+
+- **Fix:** answer the cursor query as the TUI harness does (share its reader, or a small helper both use), set `USERPROFILE` and `APPDATA` as the harness does, and drop the Windows `ignore`s. ISS-67 (the same file's parallel `openpty` with no lock) fits the same PR.
+- **Regression test:** the four tests pass on the `rust-windows` CI job.
