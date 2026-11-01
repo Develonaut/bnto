@@ -215,6 +215,14 @@ pub trait NodeProcessor {
         self.resolves_items()
     }
 
+    /// Whether `value`, one of this node's params or a part of one, holds
+    /// templates the node fills once per file itself (shell-run's `each`
+    /// groups). Inside a loop the executor leaves their `{{item.*}}` as
+    /// written for the node to fill, over the loop's item (ISS-111).
+    fn holds_item_templates(&self, _value: &serde_json::Value) -> bool {
+        false
+    }
+
     /// Process a batch of files together, producing combined output.
     ///
     /// Override this for processors with `InputCardinality::Batch` (merge, zip,

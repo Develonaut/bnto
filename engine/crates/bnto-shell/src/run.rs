@@ -167,6 +167,11 @@ impl NodeProcessor for ShellRun {
         false
     }
 
+    /// An `each` group keeps its `{{item.*}}` for shell-run, inside a loop too.
+    fn holds_item_templates(&self, value: &serde_json::Value) -> bool {
+        crate::each::is_group(value)
+    }
+
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
             node_type: crate::NODE_TYPE.to_string(),

@@ -47,7 +47,7 @@ pub fn resolve_templates(
 }
 
 /// Resolve a single JSON value, recursing into arrays and objects.
-fn resolve_value(value: &Value, ctx: &TemplateContext) -> Value {
+pub(crate) fn resolve_value(value: &Value, ctx: &TemplateContext) -> Value {
     match value {
         Value::String(s) => resolve_string(s, ctx),
         Value::Array(arr) => Value::Array(arr.iter().map(|v| resolve_value(v, ctx)).collect()),

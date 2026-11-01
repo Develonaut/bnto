@@ -192,7 +192,7 @@ A loop runs its steps once per incoming file, and that file's metadata (a CSV ro
 - **`{{loop.KEY}}`** reads the loop's item as the iteration began, whatever later steps set. A nested loop's is its own. Outside a loop, or for a key the loop's item lacks, the step fails before it runs.
 - **Templates written once per call read the loop's item alone, by design:** `file-render`'s `header`, `footer` and `filename`, and `report`'s `each` and entry lines aren't filled for any one file, so their `{{item.*}}` is the loop's item as the iteration began, like `{{loop.*}}`.
 - **Steps decided once for all their files:** a `when` guard, and a batch step the engine fills (`summarize`, `file-join`, `file-sort`, `file-list`, `file-move`, `file-delete`, `spreadsheet-merge`, `spreadsheet-export`), read the item the step's files agree on: one file's item, the loop's item when no files arrive, and with several files the value they all give a key. Files that give a key two values fail the step, pointing at `{{loop.KEY}}` or `file-filter`.
-- **Not yet for `shell-run`:** inside a loop it still reads `{{item.*}}` from the loop's item alone, in `each` groups too (ISS-111).
+- **`shell-run`:** outside its `each` groups it reads `{{item.*}}` like the batch steps above. Inside a group, `{{item.*}}` is each file's metadata over the loop's item, filled per file by `shell-run` itself, so a group reaches the rows a step fanned out (ISS-111).
 - Until October 31, 2026 the loop's item won a key both had (ISS-109, [loop-item-current.md](../decisions/loop-item-current.md)).
 
 ### Per-Entry References

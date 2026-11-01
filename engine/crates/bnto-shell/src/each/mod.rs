@@ -9,9 +9,10 @@
 
 use std::path::{Path, PathBuf};
 
+use bnto_core::control::placeholder;
 use bnto_core::processor::{BatchFile, FileData};
 use bnto_core::{BntoError, ProcessContext};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 mod unfilled;
 
@@ -43,10 +44,11 @@ pub(crate) fn expand_each(
     ctx: &dyn ProcessContext,
 ) -> Result<Vec<Value>, BntoError> {
     let paths = disk_paths(args, files, ctx)?;
+    let loop_item = ctx.loop_item();
     let mut out = Vec::with_capacity(args.len());
     for arg in args {
         match read_group(arg).map_err(BntoError::InvalidInput)? {
-            Some(group) => out.extend(fill_group(group, files, &paths)?),
+            Some(group) => out.extend(fill_group(group, files, &paths, loop_item.as_ref())?),
             None => out.push(arg.clone()),
         }
     }
@@ -59,6 +61,12 @@ pub(crate) fn check_groups(args: Option<&Value>) -> Result<(), String> {
         return Ok(());
     };
     args.iter().try_for_each(|arg| read_group(arg).map(|_| ()))
+}
+
+/// Whether `arg` is an `each` group, whose `{{item.*}}` shell-run fills per
+/// file itself, inside a loop too (`NodeProcessor::holds_item_templates`).
+pub(crate) fn is_group(arg: &Value) -> bool {
+    matches!(read_group(arg), Ok(Some(_)))
 }
 
 /// An `each` group's templates, `None` for any other entry, or why an
@@ -75,21 +83,26 @@ fn read_group(arg: &Value) -> Result<Option<Vec<&str>>, String> {
     templates.map(Some).ok_or_else(refused)
 }
 
-/// The group's templates filled for each file in turn.
+/// The group's templates filled for each file in turn, its `{{item.*}}`
+/// from the file's metadata over the enclosing loop's item (ISS-109).
 fn fill_group(
     group: Vec<&str>,
     files: &[BatchFile],
     paths: &[PathBuf],
+    loop_item: Option<&Map<String, Value>>,
 ) -> Result<Vec<Value>, BntoError> {
     let mut out = Vec::with_capacity(group.len() * files.len());
     for (i, file) in files.iter().enumerate() {
         let path = paths.get(i).map(|p| p.to_string_lossy().into_owned());
+        let item = placeholder::file_item(&file.metadata, loop_item);
         for template in &group {
             let text =
-                fill(template, file, path.as_deref().unwrap_or("")).map_err(|e| match e {
-                    FillError::Missing(key) => missing(&key, file),
-                    FillError::Reserved(token) => reserved(&token, file),
-                })?;
+                fill(template, file, &item, path.as_deref().unwrap_or("")).map_err(
+                    |e| match e {
+                        FillError::Missing(key) => missing(&key, file, &item),
+                        FillError::Reserved(token) => reserved(&token, file),
+                    },
+                )?;
             out.push(Value::String(text));
         }
     }
@@ -99,12 +112,17 @@ fn fill_group(
 /// `template` filled for one file, or the first `{{item.KEY}}` key it lacks.
 /// Only the template is scanned, so a value that reads like a token is
 /// written as it is.
-fn fill(template: &str, file: &BatchFile, path: &str) -> Result<String, FillError> {
+fn fill(
+    template: &str,
+    file: &BatchFile,
+    item: &Map<String, Value>,
+    path: &str,
+) -> Result<String, FillError> {
     let mut out = String::with_capacity(template.len());
     let mut rest = template;
     while let Some(start) = rest.find("{{") {
         out.push_str(&rest[..start]);
-        let (piece, after) = token(&rest[start..], file, path)?;
+        let (piece, after) = token(&rest[start..], file, item, path)?;
         out.push_str(&piece);
         rest = after;
     }
@@ -114,7 +132,12 @@ fn fill(template: &str, file: &BatchFile, path: &str) -> Result<String, FillErro
 
 /// The text for the token `at` starts with, and what follows it. A `{{`
 /// that isn't one of the group's tokens is kept as written.
-fn token<'a>(at: &'a str, file: &BatchFile, path: &str) -> Result<(String, &'a str), FillError> {
+fn token<'a>(
+    at: &'a str,
+    file: &BatchFile,
+    values: &Map<String, Value>,
+    path: &str,
+) -> Result<(String, &'a str), FillError> {
     if let Some(after) = at.strip_prefix(PATH_TOKEN) {
         return Ok((checked(path.to_string())?, after));
     }
@@ -127,8 +150,7 @@ fn token<'a>(at: &'a str, file: &BatchFile, path: &str) -> Result<(String, &'a s
     let Some((key, after)) = item else {
         return Ok((at[..2].to_string(), &at[2..]));
     };
-    let value = file
-        .metadata
+    let value = values
         .get(key)
         .ok_or_else(|| FillError::Missing(key.to_string()))?;
     Ok((checked(text(value))?, after))
@@ -163,11 +185,11 @@ fn reserved(token: &str, file: &BatchFile) -> BntoError {
 
 /// A group reads `{{item.KEY}}` a file lacks: name the key, the file and
 /// the keys it has.
-fn missing(key: &str, file: &BatchFile) -> BntoError {
-    let has = if file.metadata.is_empty() {
+fn missing(key: &str, file: &BatchFile, item: &Map<String, Value>) -> BntoError {
+    let has = if item.is_empty() {
         "it has no metadata".to_string()
     } else {
-        let keys: Vec<&str> = file.metadata.keys().map(String::as_str).collect();
+        let keys: Vec<&str> = item.keys().map(String::as_str).collect();
         format!("it has: {}", keys.join(", "))
     };
     BntoError::InvalidInput(format!(

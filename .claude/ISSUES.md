@@ -14,13 +14,12 @@
 
 Agreed with Ryan on October 30, 2026, replacing the October 27 order's batches 5–9. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Done, October 30, 2026: ISS-58, and ISS-35 for five nodes (#821). Done, October 31, 2026: ISS-109 (#823), ISS-110 (#824), ISS-108 (#825). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Done, October 30, 2026: ISS-58, and ISS-35 for five nodes (#821). Done, October 31, 2026: ISS-109 (#823), ISS-110 (#824), ISS-108 (#825). Done, November 1, 2026: ISS-111 (#826), closing batch 5, loop semantics. Batches keep their numbers.
 
 Batches group issues that share code and verification, so each runs while its build and test setup is warm: the engine batches (5–7) first, then the web batches (8–10; batch 10's ISS-12 is the CLI's telemetry), then codegen and tooling. Within that, silent wrong results come first and hygiene last.
 
 | #   | Batch                    | Issues, in PR order                                              | Why                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --- | ------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 5   | Loop semantics           | ISS-111                                                          | `shell-run` reads only the loop's item inside a loop, `each` groups included (ISS-111). In `bnto-core`'s executor and `bnto-shell`                                                                                                                                                                                                                                                                                               |
 | 6   | Template unification     | ISS-35                                                           | `file-rename` and `file-decode` move onto the shared one-pass fill. These are the first PRs of the template-filters plan ([PLAN.md backlog](PLAN.md#backlog)), which must unify the interpolators before adding filters; write that plan first                                                                                                                                                                                   |
 | 7   | TUI and CLI behavior     | ISS-103, ISS-104, ISS-113, ISS-114, ISS-45                       | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a terminal left in raw mode when setup fails (ISS-113); tonkotsu acting on key releases (ISS-114); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                         |
 | 8   | Web performance          | ISS-99, then ISS-37                                              | Public pages render per request, which costs compute that static pages don't (ISS-99), then the homepage's ~500 KB of JS (mobile LCP 4.9 s, ISS-37). Moved up from last: first of the web batches. Its own plan, profiling first; ISS-99 first because it changes what ISS-37 measures                                                                                                                                           |
@@ -68,7 +67,6 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-104 | The TUI's recipe form shows a file param (Watermark Images' overlay) as a text box, not a file picker                   | tui         | Open                                             |
 | ISS-105 | Node codegen never deletes a removed node's doc: `packages/@bnto/nodes/docs/video-download.md` is left over             | codegen     | Open                                             |
 | ISS-106 | The catalog's `platforms` leaves out `cli` for 13 nodes the CLI runs, and their generated docs say "Platforms: browser" | engine      | Open                                             |
-| ISS-111 | Inside a loop, `shell-run` reads `{{item.*}}` from the loop's item alone, in `each` groups too                          | engine      | Open                                             |
 | ISS-112 | On Windows the TUI journeys never draw under ConPTY: each times out on a blank screen                                   | tui test    | Open                                             |
 | ISS-113 | If the TUI's terminal setup fails partway, raw mode and the alternate screen stay on                                    | tui         | Open                                             |
 | ISS-114 | tonkotsu's `map_key_event` acts on key releases, so on Windows its demo applies every key twice                         | tui         | Open                                             |
@@ -345,20 +343,6 @@ Every processor runs in the CLI, which registers them all (`compress-images` run
 
 - **Fix:** decide what `platforms` means (everywhere a node runs, or only whether it runs in the browser, which is what `metadata.rs`'s browser filter reads), then make every processor's list say it, and the docs with it. Default (October 30, 2026): everywhere a node runs.
 - **Regression test:** a catalog test that every processor lists `cli` (or whatever the agreed values are), and no value outside the agreed set.
-
-### ISS-111: Inside a loop, `shell-run` reads `{{item.*}}` from the loop's item alone, in `each` groups too
-
-**Found:** October 31, 2026 (fixing ISS-110).
-
-`shell-run` declares `resolves_items` (it fills `{{item.*}}` inside `each` groups itself) but not `resolves_loop_items`, so inside a loop the executor fills every `{{item.*}}` in its params from the loop's item before it runs (`resolve_node_params`, `executor/primitive.rs`), `each` groups included (`bnto-shell/src/each/unfilled.rs` says the executor hands them over as written only outside a loop). So inside a loop:
-
-- an `each` group reads the loop's item, not each file's own metadata. Reproduced with the CLI (temp `HOME` and `BNTO_HOME`): a loop over a CSV file whose steps are `spreadsheet-read` (fanning it out into rows) then `shell-run` `echo` with `{ "each": ["{{item.name}}"] }` fails with `Node 'sh': {{item.name}} has no value (it has: inputSize)`: the loop's item is the CSV file, so the group can't reach the rows at all;
-- outside `each`, it misses a key a step inside the iteration changed, which every other step reads since ISS-109 and ISS-110.
-
-ISS-110's step rule left `shell-run` out because applying it here would refuse that fan-out instead of filling each file.
-
-- **Fix:** have the executor leave `{{item.*}}` inside `each` groups as written in a loop too, so `shell-run` fills them per file over the loop's item (`placeholder::file_item`), and fill the rest with ISS-110's step rule (`step_item`).
-- **Regression test:** in a loop, `spreadsheet-read` fanning a CSV out, then `shell-run` with an `each` group over `{{item.name}}`, gets each row's name; and outside `each`, a key `edit-fields` changed reads the new value.
 
 ### ISS-112: On Windows the TUI journeys never draw under ConPTY
 
