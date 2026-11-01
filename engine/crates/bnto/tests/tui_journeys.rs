@@ -40,44 +40,96 @@ fn select(tui: &mut Tui, name: &str) {
 
 /// The journeys allowed to skip Windows, each with its reason. Windows CI
 /// runs every other one (ISS-112); a new skip must be added here, in review.
-const WINDOWS_SKIPS: &[(&str, &str)] = &[(
-    "tj5_",
-    "a PowerShell step streaming to stderr never exits (ISS-118)",
-)];
+const WINDOWS_SKIPS: &[(&str, &str)] = &[
+    (
+        "tj5_",
+        "a PowerShell step streaming to stderr never exits (ISS-118)",
+    ),
+    (
+        "tj6_",
+        "a PowerShell step takes most of the wait budget to exit (ISS-118)",
+    ),
+];
 
 #[test]
 fn only_the_listed_journeys_skip_windows() {
-    let mut skips = Vec::new();
-    let (mut attr, mut pending) = (String::new(), None);
-    for line in include_str!("tui_journeys.rs").lines().map(str::trim) {
-        // An attribute may span lines once rustfmt wraps it.
-        if !attr.is_empty() || line.starts_with("#[cfg_attr(") {
-            attr.push_str(line);
-            if line.ends_with(")]") {
-                pending = windows_ignore(&attr).or(pending);
-                attr.clear();
-            }
-        } else if let (Some(reason), Some(name)) = (&pending, line.strip_prefix("fn tj")) {
-            let number = name.split('_').next().unwrap_or_default();
-            skips.push((format!("tj{number}_"), reason.clone()));
-            pending = None;
-        }
-    }
+    let skips = skipped_tests(include_str!("tui_journeys.rs"));
     let listed: Vec<(String, String)> = WINDOWS_SKIPS
         .iter()
         .map(|(n, r)| (n.to_string(), r.to_string()))
         .collect();
     assert_eq!(
         skips, listed,
-        "a journey skips Windows without being listed"
+        "a test is skipped or compiled out without being listed"
     );
 }
 
-/// The reason in a `#[cfg_attr(windows, ignore = "...")]`, if `attr` is one.
-fn windows_ignore(attr: &str) -> Option<String> {
-    let rest = attr.strip_prefix("#[cfg_attr(windows,")?;
-    let reason = rest.split_once("ignore = \"")?.1;
-    Some(reason.split_once('"')?.0.to_string())
+/// Every test in `source` that an attribute may skip or leave out, with
+/// the name's prefix up to its first `_` and the reason. Any attribute
+/// mentioning `ignore` (plain or under any `cfg_attr`) or starting `#[cfg(`
+/// counts, however it's spelled or wrapped. An early `return` in a test's
+/// body can't be seen here; review catches those.
+fn skipped_tests(source: &str) -> Vec<(String, String)> {
+    let (mut skips, mut attrs, mut is_test) = (Vec::new(), Vec::<String>::new(), false);
+    let mut open = String::new();
+    for line in source.lines().map(str::trim) {
+        let code = line.split("//").next().unwrap_or_default().trim();
+        if !open.is_empty() || code.starts_with("#[") {
+            open.push_str(code);
+            if code.ends_with(']') && open.matches('[').count() == open.matches(']').count() {
+                is_test |= open == "#[test]";
+                attrs.push(std::mem::take(&mut open));
+            }
+        } else if let Some(name) = code.split("fn ").nth(1).filter(|_| is_test) {
+            let prefix = format!("{}_", name.split('_').next().unwrap_or_default());
+            skips.extend(
+                attrs
+                    .iter()
+                    .filter_map(|a| skip_reason(a))
+                    .map(|r| (prefix.clone(), r)),
+            );
+            (attrs, is_test) = (Vec::new(), false);
+        } else if !code.is_empty() {
+            (attrs, is_test) = (Vec::new(), false);
+        }
+    }
+    skips
+}
+
+/// Why `attr` may skip a test: its `ignore = "…"` reason, or the attribute
+/// itself when it ignores without one or compiles the test out.
+fn skip_reason(attr: &str) -> Option<String> {
+    if !attr.contains("ignore") && !attr.starts_with("#[cfg(") {
+        return None;
+    }
+    let reason = attr
+        .split_once("ignore = \"")
+        .and_then(|(_, r)| r.split_once('"'));
+    Some(reason.map_or(attr.to_string(), |(r, _)| r.to_string()))
+}
+
+#[test]
+fn every_way_of_skipping_a_test_is_seen() {
+    for case in [
+        "#[cfg_attr(windows, ignore)]",
+        "#[ignore = \"x\"]",
+        "#[ignore]",
+        "#[cfg_attr(target_os = \"windows\", ignore = \"x\")]",
+        "#[cfg_attr(not(unix), ignore)] // a comment",
+        "#[cfg(not(windows))]",
+        "#[cfg_attr(\n    macos,\n    ignore = \"x\"\n)]",
+    ] {
+        let source = format!("{case}\n#[test]\npub fn tjx_case() {{}}\n");
+        let skips = skipped_tests(&source);
+        assert_eq!(skips.len(), 1, "missed {case:?}: {skips:?}");
+        let source = format!("#[test]\n{case}\nfn tjx_case() {{}}\n");
+        assert_eq!(
+            skipped_tests(&source).len(),
+            1,
+            "missed {case:?} after #[test]"
+        );
+    }
+    assert!(skipped_tests("#[test]\n#[allow(dead_code)]\nfn tjx_case() {}\n").is_empty());
 }
 
 #[test]
@@ -261,6 +313,10 @@ fn tj5_shell_output_streams_live_and_stays_after_the_run() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "a PowerShell step takes most of the wait budget to exit (ISS-118)"
+)]
 fn tj6_a_message_recipe_shows_its_message() {
     // A recipe whose output is a message (keep-awake's session log) shows
     // it on the results screen under the output's label. Windows has no
