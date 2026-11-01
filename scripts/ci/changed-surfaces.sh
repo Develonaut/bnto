@@ -17,9 +17,9 @@ SELF='^(\.github/workflows/ci\.yml|scripts/ci/changed-surfaces\.sh)$'
 # How every file checks out (line endings on Windows), for both surfaces.
 CHECKOUT='^\.gitattributes$'
 
-# The Rust jobs: the engine, the dogfood recipes its tests run, and the
-# shared fixtures its tests read.
-ENGINE='^(engine|recipes|test-fixtures)/'
+# The Rust jobs: the engine, the dogfood recipes its tests run, the shared
+# fixtures its tests read, and the check that its tests leave no temp files.
+ENGINE='^((engine|recipes|test-fixtures)/|scripts/check-test-tmp\.sh$)'
 
 # The TypeScript job: the packages, the workspace and its task graph, and the
 # root files Turbo tasks read (`$TURBO_ROOT$` inputs). @bnto/core's

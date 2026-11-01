@@ -34,6 +34,8 @@ mod screen_snapshots;
 pub mod screens;
 mod strip_ansi;
 mod terminal;
+#[cfg(test)]
+mod test_home;
 pub mod theme;
 pub mod widgets;
 mod wrap_lines;
@@ -154,21 +156,13 @@ mod tests {
         assert_eq!(*order.borrow(), ["restore", "report"]);
     }
 
-    fn test_paths() -> crate::storage::BntoPaths {
-        // Kept on disk, as before: the model holds only the path.
-        let root = tempfile::Builder::new()
-            .prefix("bnto-mod-test-")
-            .tempdir()
-            .unwrap()
-            .keep();
-        let p = crate::storage::BntoPaths { home: root };
-        let _ = p.ensure_dirs();
-        let _ = crate::storage::config::TomlConfig::default().save(&p);
-        p
-    }
-
     fn default_model() -> AppModel {
-        AppModel::with_paths(ThemeVariant::LosAngeles, None, false, test_paths())
+        AppModel::with_paths(
+            ThemeVariant::LosAngeles,
+            None,
+            false,
+            super::test_home::test_paths(),
+        )
     }
 
     fn browser_model() -> AppModel {

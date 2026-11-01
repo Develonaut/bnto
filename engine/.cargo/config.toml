@@ -6,3 +6,15 @@
 [alias]
 fmt-check = "fmt -- --check"
 lint = "clippy --workspace --all-targets -- -D warnings"
+
+# Temp files from every process cargo runs (tests, the `bnto` binaries they
+# spawn, build scripts) go in `target/tmp`, which cargo creates itself, not
+# the user's temp folder. A test that leaks a folder (a killed process, a
+# kept `TempDir`) leaves it here, where `task` wipes it before each run and
+# `scripts/check-test-tmp.sh` names it after, instead of piling up in
+# %TEMP%, which Windows walks at every sign-in. TMP and TEMP are Windows's,
+# TMPDIR is Unix's; `force` because Windows always sets TMP and TEMP.
+[env]
+TMP = { value = "target/tmp", relative = true, force = true }
+TEMP = { value = "target/tmp", relative = true, force = true }
+TMPDIR = { value = "target/tmp", relative = true, force = true }
