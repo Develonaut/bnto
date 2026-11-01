@@ -367,7 +367,7 @@ ISS-110's step rule left `shell-run` out because applying it here would refuse t
 `tui_journeys` is `#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]`, which reads as flaky. Run with `--ignored` on Windows (`cargo test -p bnto --test tui_journeys tj1_ -- --ignored`), `tj1_home_shows_the_catalog_and_version` times out after 30 s with an empty screen (`harness.rs:240`), and every other journey times out too, with and without #826's fix. Each failing run then takes minutes more to end (`tj1` alone finishes in about 3 to 5 minutes), likely in `Drop for Tui`'s `kill`/`wait` (`harness.rs:261-265`) or the ConPTY reader. Since #826 the TUI does start in a real Windows console (`test_tui_starts_in_a_windows_console`), so the blank screen is in the harness: `portable-pty`'s ConPTY, the `vt100` parser reading it, or the TUI rendering to stderr, which the harness may not attach.
 
 - **Fix:** find where the frame is lost (dump the raw bytes the harness reads), make the journeys draw, then drop the Windows `ignore`. Update the lines in `journeys/tui.md` and `strategy/tui-testing.md` that link here.
-- **Why it matters:** with every journey ignored on Windows, no CI test types into the real TUI there. Two Windows-only TUI bugs shipped through green CI: the TUI failing to start in any console (#826), and every key acting twice because Windows reports key releases (`fix/tui-key-release`).
+- **Why it matters:** with every journey ignored on Windows, no CI test types into the real TUI there. Two Windows-only TUI bugs shipped through green CI: the TUI failing to start in any console (#826), and every key acting twice because Windows reports key releases (#827).
 - **Regression test:** `tj1` passes on the Windows CI job, and a journey presses Down once on Home and sees the cursor move one row. Check that ConPTY delivers key-up records for the keys a journey writes; if it doesn't, that journey can't catch release bugs, and the TUI needs a Windows test that writes key events into a real console (`WriteConsoleInput`).
 
 ### ISS-113: If the TUI's terminal setup fails partway, raw mode and the alternate screen stay on
@@ -381,7 +381,7 @@ ISS-110's step rule left `shell-run` out because applying it here would refuse t
 
 ### ISS-114: tonkotsu's `map_key_event` acts on key releases, so on Windows its demo applies every key twice
 
-**Found:** November 1, 2026 (fixing the TUI's arrow keys moving two rows on Windows, `fix/tui-key-release`).
+**Found:** November 1, 2026 (fixing the TUI's arrow keys moving two rows on Windows, #827).
 
 On Windows crossterm reports a `KeyEventKind::Release` after every press. `tonkotsu::map_key_event` (`engine/crates/tonkotsu/src/keys.rs:13`) never reads `key.kind`, and the demo (`task form:demo`) passes every key event straight to it (`src/bin/demo/main.rs:110`, `handle_demo_key` in `src/bin/demo/model.rs`), so each arrow moves two fields and each typed character is entered twice. bnto's TUI drops releases in `keys::handle_key` before they reach tonkotsu, so only the demo and other consumers of the published crate are affected.
 
