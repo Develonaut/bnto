@@ -126,6 +126,7 @@ impl Tui {
         let homes = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
         let work = work_dir(&homes);
         std::fs::create_dir_all(&work).unwrap();
+        std::fs::create_dir_all(temp_dir(&homes)).unwrap();
         for file in files {
             std::fs::copy(file, work.join(file.file_name().unwrap())).unwrap();
         }
@@ -280,6 +281,11 @@ fn command(homes: &(TempDir, TempDir)) -> CommandBuilder {
     // Off unless a journey asks for it: no journey may reach the network.
     cmd.env("BNTO_NO_UPDATE_CHECK", "1");
     cmd.env("TERM", "xterm-256color");
+    // The TUI's run scratch and `bnto-tui-<slug>` output go in the sandbox
+    // too, removed with it, not left in the tests' shared temp folder.
+    for var in ["TMP", "TEMP", "TMPDIR"] {
+        cmd.env(var, temp_dir(homes));
+    }
     cmd
 }
 
@@ -323,6 +329,11 @@ fn allow_update_check(cmd: &mut CommandBuilder) {
     ] {
         cmd.env_remove(var);
     }
+}
+
+/// The TUI's own temp folder, inside the sandbox.
+fn temp_dir(homes: &(TempDir, TempDir)) -> std::path::PathBuf {
+    homes.0.path().join("tmp")
 }
 
 /// The empty folder the TUI starts in. Not HOME itself, where bnto keeps
