@@ -59,4 +59,4 @@ Every journey runs with temp `HOME`, `BNTO_HOME` and config dirs, and never touc
 
 ## Known gaps
 
-See the run output audit in [tui-testing.md](../strategy/tui-testing.md#run-output-audit-october-21-2026) (R1–R9). Journeys TJ5 and TJ6 covered R2 and R1 (fixed); TJ4 is the RED test for R5–R8. Windows journeys are `#[ignore]`d until ConPTY runs prove stable; the snapshots already run on Windows.
+See the run output audit in [tui-testing.md](../strategy/tui-testing.md#run-output-audit-october-21-2026) (R1–R9). Journeys TJ5 and TJ6 covered R2 and R1 (fixed); TJ4 is the RED test for R5–R8. Windows journeys are `#[ignore]`d: under ConPTY they never draw ([ISS-112](../ISSUES.md#iss-112-on-windows-the-tui-journeys-never-draw-under-conpty)); the snapshots already run on Windows.

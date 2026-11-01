@@ -112,7 +112,7 @@ Lessons from wiring it up:
 - **Start in an empty `work/` folder, not HOME.** On macOS bnto writes config under `$HOME/Library`, which a file list would show first.
 - **Keys:** pause briefly between keys, so a lone Esc isn't merged into the next escape sequence.
 
-Runs in about 1.5s for three journeys and was 10/10 stable locally. Linux CI runs them in `cargo test --package bnto`. Windows is `#[ignore]`d until ConPTY runs prove stable.
+Runs in about 1.5s for three journeys and was 10/10 stable locally. Linux CI runs them in `cargo test --package bnto`. Windows is `#[ignore]`d: under ConPTY the journeys never draw ([ISS-112](../ISSUES.md#iss-112-on-windows-the-tui-journeys-never-draw-under-conpty)).
 
 Found while writing TJ3, **fixed in #685**: when an output file was _larger_ than its input, the results screen said "Savings: 5 KB → 10 KB (0% smaller)". It now says "Size: 5 KB → 10 KB (100% larger)".
 

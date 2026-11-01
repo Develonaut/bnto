@@ -36,6 +36,16 @@ impl Sandbox {
         self.sandboxed(cmd)
     }
 
+    /// PowerShell running `script` inside the sandbox, with `$env:BNTO` the
+    /// bnto binary. Its `Start-Process` gives bnto a console of its own.
+    #[cfg(windows)]
+    pub fn powershell(&self, script: &str) -> Command {
+        let mut cmd = Command::new("powershell");
+        cmd.args(["-NoProfile", "-NonInteractive", "-Command", script])
+            .env("BNTO", bnto_bin());
+        self.sandboxed(cmd)
+    }
+
     fn sandboxed(&self, mut cmd: Command) -> Command {
         cmd.current_dir(self.work.path())
             .env("HOME", self.home.path())

@@ -22,8 +22,8 @@ pub(super) fn install_panic_hook() {
 }
 
 /// Why the TUI can't start without a Windows console, and how to get one.
-const NO_CONSOLE: &str = "this terminal gives bnto no Windows console to read keys from \
-(Git Bash's MINGW64 window pipes them). Run `winpty bnto tui`, or start it from \
+const NO_CONSOLE: &str = "the TUI's input isn't a Windows console (Git Bash's MINGW64 \
+window pipes it, and so does redirecting it). Run `winpty bnto tui`, or start it from \
 PowerShell or Windows Terminal.";
 
 /// Enter raw mode, switch to alternate screen, create terminal.
@@ -49,8 +49,8 @@ pub(super) fn restore(terminal: &mut TuiTerminal) -> io::Result<()> {
 }
 
 /// Refuse to start before touching the terminal when keys can't reach it.
-/// Without this, crossterm fails mid-setup with a bare "Initial console modes
-/// not set" and leaves the alternate screen on.
+/// Without this, mintty sends keys down the stdin pipe while crossterm waits
+/// on the console, so the TUI could be neither used nor quit.
 fn require_console(stdin_is_console: bool) -> io::Result<()> {
     if stdin_is_console {
         return Ok(());
@@ -59,7 +59,10 @@ fn require_console(stdin_is_console: bool) -> io::Result<()> {
 }
 
 /// Whether stdin is a Windows console. A pipe (mintty), file or NUL isn't,
-/// even when the window around it looks like a terminal.
+/// even when the window around it looks like a terminal. crossterm reads keys
+/// from `CONIN$`, not stdin, so a real console with redirected input could
+/// work, but stdin is the one check that tells mintty, whose native programs
+/// get a hidden console, apart from a terminal that has one.
 #[cfg(windows)]
 fn stdin_is_console() -> bool {
     use std::os::windows::io::AsRawHandle;
