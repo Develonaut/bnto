@@ -257,6 +257,10 @@ CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-w
 
 The Rust test tasks (`task wasm:test`, `cli:test`, `tui:test`, …) and CI's Rust jobs run `scripts/check-test-tmp.sh reset` before the tests and `check` after: it fails naming anything a run left in `engine/.tmp`, and warns when the system temp folder gained `bnto*` entries meanwhile. A plain `cargo test` uses the folder too, but nothing empties or checks it. Any other cargo process in `engine/` shares the folder: `task cli:tui` (`cargo run`) writes its run scratch and `bnto-tui-<slug>` output there, which the next test task's reset deletes, and rustc and the linker write their temp files there. So a build, rust-analyzer's `cargo check` or a second test task running alongside a test task can make `check` name files the tests didn't leave; rerun it on its own.
 
+## `task check` Prunes `engine/target`
+
+Cargo never deletes old builds, so `engine/target` once reached 63 GB. `task check` starts with `task clean:stale`, which deletes every build unit and incremental cache that no build used for 7 days. So the first build after a week away recompiles whatever you haven't built since (about 1.5 minutes for every test on a Mac). A cargo build in another terminal that fails on a missing file while the prune runs just needs a rerun. `task check:test-build-size`, also in `task check` and in CI's Windows engine job, fails when one build of the engine's tests outgrows its OS's budget in `scripts/target/testBuildBudget.ts`. If it fails, find what grew (a new test binary? more debug info?) before raising the budget. See [build-footprint.md](../decisions/build-footprint.md).
+
 ## No Object.assign Compound Components (RSC Incompatible)
 
 `Object.assign` dot-notation (`<Dialog.Content>`, `<Card.Header>`) does NOT work in React Server Components. Server components get "client reference" objects — sub-properties assigned via `Object.assign` are undefined at render time.
