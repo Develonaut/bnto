@@ -72,12 +72,12 @@ describe("check-test-tmp.sh", () => {
   it("check fails naming what a run left", () => {
     run("reset");
     mkdirSync(join(testTmp, "bnto-test-xyz"));
-    writeFileSync(join(testTmp, "bnto-abc-output"), "");
+    writeFileSync(join(testTmp, "bnto-abc-output"), "abc");
     const result = run("check");
     assert.equal(result.status, 1);
     assert.match(result.stderr, /left 2 entries/);
     assert.match(result.stderr, /bnto-test-xyz/);
-    assert.match(result.stderr, /bnto-abc-output/);
+    assert.match(result.stderr, /bnto-abc-output \(file, 3 bytes\)/);
   });
 
   it("check describes each leftover, a folder with what's in it", () => {
