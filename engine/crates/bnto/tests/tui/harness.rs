@@ -284,7 +284,8 @@ impl Drop for Tui {
 /// deleted while anything still holds a file in it open, and something
 /// briefly did after a journey (a just-killed process's handles or a scan,
 /// most likely): `TempDir` tries once and gives up, leaving the folder in
-/// the tests' temp folder. Giving up prints why, for the leak check's log.
+/// the tests' temp folder. Giving up prints why, so the test step's log
+/// explains a later leak-check failure.
 fn remove_with_retries(dir: &std::path::Path) {
     let mut last = None;
     for _ in 0..50 {
