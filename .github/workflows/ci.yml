@@ -225,7 +225,7 @@ jobs:
         run: sh ../scripts/check-test-tmp.sh check
 
   # keep-awake's macOS branch drives caffeinate and osascript, so its round
-  # trips (bnto/tests/keep_awake.rs) only run on a Mac. Free on a public repo.
+  # trips (bnto/tests/cli/keep_awake.rs) only run on a Mac. Free on a public repo.
   rust-macos-keep-awake:
     name: "keep-awake (macOS)"
     runs-on: macos-latest
@@ -245,7 +245,7 @@ jobs:
           workspaces: engine
 
       - name: keep-awake round trips
-        run: cargo test --package bnto --test keep_awake
+        run: cargo test --package bnto --test cli "keep_awake::"
 
   # The web's assets, checked by dogfood recipes: the size budget and the
   # unused-asset check. A web change can add an asset and an engine change

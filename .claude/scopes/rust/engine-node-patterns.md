@@ -101,7 +101,7 @@ Every processor needs at least one recipe that exercises it. See [Checklist: Add
 - [ ] **Add to `builtin_recipes()`** — add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`
 - [ ] **Script-mode steps pass ShellCheck** — a bundled `script` must pass `bnto-engine/tests/bundled_scripts.rs` (SEC-31), and a `# shellcheck disable=` may name only codes in its `ALLOWED_DISABLES`
 - [ ] **Dependencies install wherever they're needed** — every `requires` entry needs an `installHints` entry for each OS that needs it (`every_bundled_dependency_installs_on_every_os_that_needs_it` in `recipes.rs`), because `bnto doctor` checks a dependency on every OS that needs it. A tool that exists on one OS only goes in the `requires` of that OS's platform-guarded group, not at the root ([conditional-steps.md](../../decisions/conditional-steps.md#dependencies-in-scope-pr-8))
-- [ ] **Bump the hard-coded recipe counts** — `recipes.rs` (`test_builtin_recipes_count`, and the category list if the category is new), `bnto-wasm/src/catalog.rs`, `bnto/src/catalog.rs` (bundled and bundled + library cases), `bnto/src/doctor.rs`, `bnto/src/tui/screens/browser.rs`, `BUNDLED_RECIPES` in `bnto/tests/check_edges.rs` and `check_folders.rs`, `packages/@bnto/registry/src/recipesCatalog.test.ts`, and the "N recipes ship today" lines in `.claude/CLAUDE.md`, `PLAN.md` and `ROADMAP.md`
+- [ ] **Bump the hard-coded recipe counts** — `recipes.rs` (`test_builtin_recipes_count`, and the category list if the category is new), `bnto-wasm/src/catalog.rs`, `bnto/src/catalog.rs` (bundled and bundled + library cases), `bnto/src/doctor.rs`, `bnto/src/tui/screens/browser.rs`, `BUNDLED_RECIPES` in `bnto/tests/cli/check_edges.rs` and `check_folders.rs`, `packages/@bnto/registry/src/recipesCatalog.test.ts`, and the "N recipes ship today" lines in `.claude/CLAUDE.md`, `PLAN.md` and `ROADMAP.md`
 - [ ] **Regenerate TypeScript** — `task wasm:codegen` (snapshot → generate TS from engine catalog)
 - [ ] **Add engine integration test** — `test_generated_{slug}_recipe()` in `bnto-engine/src/lib.rs`
 - [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include the new recipe's `include_str!()`
@@ -110,7 +110,7 @@ Every processor needs at least one recipe that exercises it. See [Checklist: Add
 
 Golden tests prove deterministic output and catch silent regressions.
 
-- [ ] **Add golden test** — `engine/crates/bnto/tests/golden_tests.rs`:
+- [ ] **Add golden test** — `engine/crates/bnto/tests/cli/golden_tests.rs`:
   ```rust
   #[test]
   fn golden_{slug_underscored}() {
@@ -176,14 +176,14 @@ Recipes are defined as `.bnto.json` files in `engine/crates/bnto-engine/recipes/
 
 ### Step 4: Golden Tests
 
-- [ ] **Add golden test** — `golden_{slug_underscored}()` in `engine/crates/bnto/tests/golden_tests.rs`
+- [ ] **Add golden test** — `golden_{slug_underscored}()` in `engine/crates/bnto/tests/cli/golden_tests.rs`
 - [ ] **Add explicit equivalence test** — `golden_{slug_underscored}_explicit()` in the same file
 - [ ] **Create explicit fixture** — `engine/crates/bnto/tests/fixtures/explicit/{slug}.bnto.json`
 - [ ] **Bless golden files** — `task cli:golden:bless`
 - [ ] **Verify golden files** — `task cli:golden`
 - [ ] **Commit golden files** — `engine/crates/bnto/tests/golden/{slug}/`
 
-A recipe with only side effects and no output files (`download-video`, `keep-awake`) has no golden test. Cover it with CLI tests instead, sandboxed in a temp `BNTO_HOME` and `HOME` (see `bnto/tests/keep_awake.rs`).
+A recipe with only side effects and no output files (`download-video`, `keep-awake`) has no golden test. Cover it with CLI tests instead, sandboxed in a temp `BNTO_HOME` and `HOME` (see `bnto/tests/cli/keep_awake.rs`).
 
 ### Step 5: Verify Recipe Appears in All Surfaces
 
@@ -240,16 +240,16 @@ When adding a processor or recipe, these exact-count assertions MUST be updated.
 
 ### Rust (engine)
 
-| File                                       | Test function                                 | What it counts                              |
-| ------------------------------------------ | --------------------------------------------- | ------------------------------------------- |
-| `engine/crates/bnto-engine/src/lib.rs`     | `test_browser_registry_has_all_processors()`  | Browser processor count + expected key list |
-| `engine/crates/bnto-engine/src/lib.rs`     | `test_all_generated_recipes_parse()`          | Recipe fixture `include_str!()` list        |
-| `engine/crates/bnto-core/src/metadata.rs`  | `test_all_node_types_returns_N_entries()`     | Total node types (processors + planned)     |
-| `engine/crates/bnto-core/src/metadata.rs`  | `test_all_node_types_unique_names()`          | Same count (uniqueness check)               |
-| `engine/crates/bnto-wasm/src/catalog.rs`   | `test_catalog_has_all_N_processors()`         | Processor count in WASM catalog             |
-| `engine/crates/bnto-wasm/src/catalog.rs`   | `test_catalog_serializes_to_valid_json()`     | Both processor and node type counts         |
-| `engine/crates/bnto-wasm/src/catalog.rs`   | `test_catalog_contains_expected_node_types()` | Expected type key list                      |
-| `engine/crates/bnto/tests/golden_tests.rs` | Individual golden test functions              | One per recipe (auto + explicit)            |
+| File                                           | Test function                                 | What it counts                              |
+| ---------------------------------------------- | --------------------------------------------- | ------------------------------------------- |
+| `engine/crates/bnto-engine/src/lib.rs`         | `test_browser_registry_has_all_processors()`  | Browser processor count + expected key list |
+| `engine/crates/bnto-engine/src/lib.rs`         | `test_all_generated_recipes_parse()`          | Recipe fixture `include_str!()` list        |
+| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_returns_N_entries()`     | Total node types (processors + planned)     |
+| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_unique_names()`          | Same count (uniqueness check)               |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_has_all_N_processors()`         | Processor count in WASM catalog             |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_serializes_to_valid_json()`     | Both processor and node type counts         |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_contains_expected_node_types()` | Expected type key list                      |
+| `engine/crates/bnto/tests/cli/golden_tests.rs` | Individual golden test functions              | One per recipe (auto + explicit)            |
 
 ### TypeScript (packages)
 

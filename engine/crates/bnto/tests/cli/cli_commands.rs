@@ -1,0 +1,2304 @@
+// CLI command tests — help, list, error handling, batch processing.
+
+use crate::helpers;
+
+use std::process::Command;
+
+use helpers::{
+    Sandbox, bundled_slugs, custom_recipe_path, fixture_image, fixture_json, output_files,
+    recipe_path, run_custom_recipe_ok, run_explicit_recipe_ok, temp_output_dir,
+};
+
+// --- Help & List ---
+
+#[test]
+fn test_help_flag() {
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("--help").output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("Run .bnto.json recipes"));
+}
+
+#[test]
+fn test_no_subcommand_launches_tui() {
+    let sandbox = Sandbox::new();
+    // `bnto` with no args now launches the TUI (equivalent to `bnto tui`).
+    // Without a terminal, the TUI fails with a crossterm/ratatui error.
+    let output = sandbox.command().output().unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        !output.status.success(),
+        "TUI should fail without a terminal"
+    );
+    assert!(
+        stderr.contains("TUI error"),
+        "Expected TUI error on stderr, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_list_command() {
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("list").output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Recipe slugs grouped under category headers, and only the bundled ones:
+    // a library recipe in the developer's own ~/.bnto must not show up.
+    assert_eq!(listed_slugs(&stdout), bundled_slugs(), "got: {stdout}");
+    assert!(
+        stdout.contains("  image:"),
+        "Should have image category, got: {stdout}"
+    );
+}
+
+/// The slugs `bnto list` prints, one per indented recipe line, sorted.
+fn listed_slugs(stdout: &str) -> Vec<String> {
+    let mut slugs: Vec<String> = stdout
+        .lines()
+        .filter(|line| line.starts_with("    "))
+        .filter_map(|line| line.split_whitespace().next())
+        .map(str::to_string)
+        .collect();
+    slugs.sort();
+    slugs
+}
+
+#[test]
+fn test_info_command() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["info", "compress-images"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Compress Images"),
+        "Should show recipe name, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("image"),
+        "Should show category, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("image-compress"),
+        "Should show processor node type, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_info_unknown_recipe() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["info", "nonexistent-recipe"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Unknown recipe"),
+        "Should show unknown recipe error, got: {stderr}"
+    );
+}
+
+// --- Dry-Run ---
+
+#[test]
+fn test_dry_run_shell_command_recipe() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["dry-run", "download-video"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Download Video"),
+        "Should show recipe name, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("yt-dlp"),
+        "Should show resolved command, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("mp4"),
+        "Should show resolved default format, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_dry_run_no_shell_commands() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["dry-run", "compress-images"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("No shell commands"),
+        "Should indicate no shell commands, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_dry_run_unknown_recipe() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["dry-run", "nonexistent-recipe"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Unknown recipe"),
+        "Should show unknown recipe error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_dry_run_with_param_override() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["dry-run", "download-video", "--param", "format=webm"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("webm"),
+        "Should show overridden format, got: {stdout}"
+    );
+    assert!(
+        !stdout.contains("mp4"),
+        "Should not show default mp4 when overridden, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_doctor_command() {
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("doctor").output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Doctor should run without crashing. It may pass or fail depending
+    // on whether external tools (yt-dlp, ffmpeg) are installed.
+    assert!(
+        stdout.contains("ok") || stdout.contains("MISSING") || stdout.contains("self-contained"),
+        "Doctor should report dependency status, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_doctor_checks_recipe_level_dependencies() {
+    let sandbox = Sandbox::new();
+    // yt-dlp is declared only in download-video's recipe-level `requires`
+    // (shell-run declares no deps), so it must come from recipe scanning.
+    let output = sandbox.command().arg("doctor").output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("yt-dlp"),
+        "Doctor should check download-video's yt-dlp dependency, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_doctor_warns_about_unparsable_recipe() {
+    let sandbox = Sandbox::new();
+    // Valid JSON loads into the catalog, but isn't a valid definition.
+    let home = tempfile::tempdir().unwrap();
+    let recipes = home.path().join("recipes");
+    std::fs::create_dir_all(&recipes).unwrap();
+    std::fs::write(recipes.join("broken.bnto.json"), r#"{"nodes":"x"}"#).unwrap();
+
+    let output = sandbox
+        .command()
+        .arg("doctor")
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Could not parse recipe") && stdout.contains("broken"),
+        "Doctor should name the unparsable recipe, got: {stdout}"
+    );
+    assert!(!stdout.contains("All checks passed"), "got: {stdout}");
+    assert!(!output.status.success());
+}
+
+// --- Error Cases ---
+
+#[test]
+fn test_missing_recipe_file() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["run", "nonexistent.bnto.json", "file.jpg"])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("Error reading recipe"));
+}
+
+#[test]
+fn test_missing_input_file() {
+    let sandbox = Sandbox::new();
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("compress-images")])
+        .arg("nonexistent.jpg")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("no valid input files"));
+}
+
+// --- No-Input Mode ---
+
+#[test]
+fn test_none_mode_shell_source_feeds_next_node() {
+    let sandbox = Sandbox::new();
+    // Guards: a `none` recipe whose Source first node runs once and feeds the next node.
+    // The fixture runs `git` because it is on every CI runner (`echo` is a cmd builtin on Windows).
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("no-input-shell-source"), "--yes"])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+
+    let files = output_files(&out);
+    assert_eq!(files.len(), 1, "Expected one output file, got: {files:?}");
+    assert_eq!(files[0].file_name().to_string_lossy(), "checked-git-output");
+    let content = std::fs::read_to_string(files[0].path()).unwrap();
+    assert!(
+        content.starts_with("git version"),
+        "Unexpected content: {content}"
+    );
+    // Each run is its own chain, but steps count against the whole pipeline.
+    assert!(stderr.contains("[1/2] shell-run"), "stderr: {stderr}");
+    assert!(stderr.contains("[2/2] file-rename"), "stderr: {stderr}");
+    assert!(!stderr.contains("[1/1]"), "stderr: {stderr}");
+}
+
+// --- Progress Layout ---
+
+#[test]
+fn test_container_children_indent_under_their_container() {
+    // Guards: loop children are indented under the loop with loop-relative numbers.
+    let (_out, stderr) = run_explicit_recipe_ok("compress-and-rename", &fixture_image("small.jpg"));
+    let expected = "  [1/1] loop
+      [1/2] image-compress
+";
+    assert!(stderr.contains(expected), "stderr: {stderr}");
+    assert!(
+        stderr.contains(
+            "
+      [2/2] file-rename
+"
+        ),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
+fn test_none_mode_rejects_positional_args() {
+    let sandbox = Sandbox::new();
+    // Guards: a `none` recipe must not silently ignore positional args.
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args([
+            "run",
+            &custom_recipe_path("no-input-shell-source"),
+            "foo.txt",
+        ])
+        .args(["--yes", "-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("This recipe takes no input; got 1 argument(s)"),
+        "Expected no-input error, got: {stderr}"
+    );
+    assert!(
+        output_files(&out).is_empty(),
+        "No outputs should be written"
+    );
+}
+
+// --- Run vars ---
+
+/// A source dir holding `report.txt`, and a `--vars` file setting `Out`.
+fn vars_fixture(out: &std::path::Path) -> (tempfile::TempDir, tempfile::TempDir) {
+    let src_dir = temp_output_dir();
+    std::fs::write(src_dir.path().join("report.txt"), "from source").unwrap();
+    let vars_dir = temp_output_dir();
+    let body = serde_json::json!({ "Out": out.to_str().unwrap() }).to_string();
+    std::fs::write(vars_dir.path().join("vars.json"), body).unwrap();
+    (src_dir, vars_dir)
+}
+
+fn run_vars_recipe(
+    src: &std::path::Path,
+    extra: &[&str],
+    env: &[(&str, &str)],
+) -> std::process::Output {
+    let sandbox = Sandbox::new();
+    let out = temp_output_dir();
+    let mut cmd = sandbox.command();
+    cmd.args(["run", &custom_recipe_path("file-copy-vars")])
+        .arg(src)
+        .args(["--yes", "-o", out.path().to_str().unwrap()])
+        .args(extra);
+    for (k, v) in env {
+        cmd.env(k, v);
+    }
+    cmd.output().unwrap()
+}
+
+#[test]
+fn test_run_vars_file_resolves_a_destination() {
+    let dest = temp_output_dir();
+    let (src, vars) = vars_fixture(dest.path());
+    let vars_file = vars.path().join("vars.json");
+    let output = run_vars_recipe(src.path(), &["--vars", vars_file.to_str().unwrap()], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let copied = dest.path().join("Art").join("report.txt");
+    assert_eq!(std::fs::read_to_string(copied).unwrap(), "from source");
+}
+
+#[test]
+fn test_run_vars_environment_wins_over_the_file() {
+    let file_dest = temp_output_dir();
+    let env_dest = temp_output_dir();
+    let (src, vars) = vars_fixture(file_dest.path());
+    let vars_file = vars.path().join("vars.json");
+    let env_out = env_dest.path().to_str().unwrap();
+    let args = ["--vars", vars_file.to_str().unwrap()];
+    let output = run_vars_recipe(src.path(), &args, &[("BNTO_VAR_OUT", env_out)]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(env_dest.path().join("Art").join("report.txt").exists());
+    assert!(
+        !file_dest.path().join("Art").exists(),
+        "the file's value was used"
+    );
+}
+
+#[test]
+fn test_run_dry_run_takes_vars() {
+    let dest = temp_output_dir();
+    let (src, vars) = vars_fixture(dest.path());
+    let vars_file = vars.path().join("vars.json");
+    let args = ["--dry-run", "--vars", vars_file.to_str().unwrap()];
+    let output = run_vars_recipe(src.path(), &args, &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!dest.path().join("Art").exists(), "a dry run wrote");
+}
+
+#[test]
+fn test_run_unset_var_fails_before_any_node_runs() {
+    let (src, _vars) = vars_fixture(std::path::Path::new("unused"));
+    let output = run_vars_recipe(src.path(), &[], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
+    assert!(
+        last.contains(
+            "Pipeline failed: unresolved {{vars.Out}} (no --vars file or BNTO_VAR_OUT sets it)"
+        ),
+        "last line: {last}"
+    );
+    assert!(!stderr.contains("file-collect"), "a node ran: {stderr}");
+}
+
+// --- File List ---
+
+#[test]
+fn test_shell_list_feeds_file_list_then_copy_keeps_folders() {
+    let sandbox = Sandbox::new();
+    // Guards: a tool's NUL-separated path list (git ls-files -z) becomes the
+    // files themselves, and file-copy keeps their folders.
+    let repo = temp_output_dir();
+    let git = |args: &[&str]| {
+        let status = Command::new("git")
+            .args(args)
+            .current_dir(repo.path())
+            .status()
+            .unwrap();
+        assert!(status.success(), "git {args:?}");
+    };
+    std::fs::create_dir_all(repo.path().join("sub")).unwrap();
+    std::fs::write(repo.path().join("a.txt"), "top").unwrap();
+    std::fs::write(repo.path().join("sub").join("b.txt"), "nested").unwrap();
+    std::fs::write(repo.path().join("untracked.txt"), "skip").unwrap();
+    git(&["init", "-q"]);
+    git(&["add", "a.txt", "sub/b.txt"]);
+
+    let dest = temp_output_dir();
+    let out = temp_output_dir();
+    let dest_param = format!("copy:destination={}", dest.path().to_str().unwrap());
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("shell-list-copy"), "--yes"])
+        .args(["-p", &dest_param, "-o", out.path().to_str().unwrap()])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let nested = dest.path().join("sub").join("b.txt");
+    assert_eq!(std::fs::read_to_string(nested).unwrap(), "nested");
+    assert_eq!(
+        std::fs::read_to_string(dest.path().join("a.txt")).unwrap(),
+        "top"
+    );
+    assert!(!dest.path().join("untracked.txt").exists());
+}
+
+/// Run `file-list-collect-copy` with `Root` from a `--vars` file and the
+/// copy destination from a param override.
+fn run_list_collect_copy(root: &std::path::Path, dest: &std::path::Path) -> std::process::Output {
+    let sandbox = Sandbox::new();
+    let vars_dir = temp_output_dir();
+    let vars_file = vars_dir.path().join("vars.json");
+    let body = serde_json::json!({ "Root": root.to_str().unwrap() }).to_string();
+    std::fs::write(&vars_file, body).unwrap();
+    let out = temp_output_dir();
+    let dest_param = format!("copy:destination={}", dest.to_str().unwrap());
+    let recipe = custom_recipe_path("file-list-collect-copy");
+    sandbox
+        .command()
+        .args(["run", &recipe, "--yes"])
+        .args(["--vars", vars_file.to_str().unwrap(), "-p", &dest_param])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn test_file_list_folder_feeds_collect_then_copy_keeps_relative_names() {
+    // Guards: file-collect walks the folder file-list references, so a
+    // no-input recipe copies everything under a folder its vars name.
+    let root = temp_output_dir();
+    let folder = root.path().join("docs").join("drafts");
+    std::fs::create_dir_all(folder.join("nested")).unwrap();
+    std::fs::write(folder.join("a.txt"), "top").unwrap();
+    std::fs::write(folder.join("nested").join("b.txt"), "deep").unwrap();
+    std::fs::write(root.path().join("outside.txt"), "skip").unwrap();
+
+    let dest = temp_output_dir();
+    let output = run_list_collect_copy(root.path(), dest.path());
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let read = |rel: &[&str]| {
+        let path = rel.iter().fold(dest.path().to_path_buf(), |p, s| p.join(s));
+        std::fs::read_to_string(path).unwrap()
+    };
+    assert_eq!(read(&["a.txt"]), "top");
+    assert_eq!(read(&["nested", "b.txt"]), "deep");
+    assert!(!dest.path().join("outside.txt").exists());
+}
+
+#[test]
+fn test_file_list_missing_folder_copies_nothing_and_passes() {
+    // Guards: a folder missing on this machine is skipped by file-list, so
+    // file-collect never runs and the run still passes.
+    let root = temp_output_dir();
+    let dest = temp_output_dir();
+    let output = run_list_collect_copy(root.path(), dest.path());
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("1 missing"), "stderr: {stderr}");
+    let copied = std::fs::read_dir(dest.path()).unwrap().count();
+    assert_eq!(copied, 0, "nothing should be copied");
+}
+
+// --- Assert ---
+
+/// Run the assert-references fixture against a root holding `present`.
+fn run_assert_references(present: &[&str]) -> std::process::Output {
+    let sandbox = Sandbox::new();
+    let root = temp_output_dir();
+    for name in present {
+        let path = root.path().join(name);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, "ref").unwrap();
+    }
+    let vars = root.path().join("vars.json");
+    let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
+    std::fs::write(&vars, body).unwrap();
+    sandbox
+        .command()
+        .args(["run", &custom_recipe_path("assert-references"), "--yes"])
+        .args(["--vars", vars.to_str().unwrap()])
+        .output()
+        .unwrap()
+}
+
+fn last_line(stderr: &str) -> &str {
+    stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap()
+}
+
+#[test]
+fn test_assert_holds_and_the_run_ends_done() {
+    let output = run_assert_references(&["a.txt", "sub/b.txt", "c.txt"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(last_line(&stderr).contains("Done."), "stderr: {stderr}");
+}
+
+#[test]
+fn test_assert_fails_the_run_naming_every_missing_path() {
+    let output = run_assert_references(&["a.txt"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_line(&stderr);
+    assert!(last.contains("Pipeline failed:"), "last line: {last}");
+    assert!(last.contains("Missing references:"), "last line: {last}");
+    assert!(
+        last.contains("sub/b.txt") && last.contains("c.txt"),
+        "last line: {last}"
+    );
+}
+
+// --- Report ---
+
+/// Run the `fixture` recipe against a root holding `a.txt` and `sub/b.txt`
+/// (not `gone.txt`), and the root as text with `/` separators.
+fn run_report_fixture(fixture: &str) -> (std::process::Output, String) {
+    let sandbox = Sandbox::new();
+    let root = temp_output_dir();
+    for name in ["a.txt", "sub/b.txt"] {
+        let path = root.path().join(name);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, "ref").unwrap();
+    }
+    let vars = root.path().join("vars.json");
+    let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
+    std::fs::write(&vars, body).unwrap();
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path(fixture), "--yes"])
+        .args(["--vars", vars.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let slashed = root.path().to_str().unwrap().replace('\\', "/");
+    (output, slashed)
+}
+
+/// The index of the first stderr line that contains `text`.
+fn line_index(stderr: &str, text: &str) -> usize {
+    stderr
+        .lines()
+        .position(|l| l.contains(text))
+        .unwrap_or_else(|| panic!("no line contains {text:?} in:\n{stderr}"))
+}
+
+#[test]
+fn test_report_prints_every_listed_path_in_order_and_ends_done() {
+    let (output, root) = run_report_fixture("report-entries");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let lines = [
+        format!("found: {root}/a.txt"),
+        format!("missing: {root}/gone.txt"),
+        format!("found: {root}/sub/b.txt"),
+    ];
+    let at: Vec<usize> = lines.iter().map(|l| line_index(&stderr, l)).collect();
+    assert!(at[0] < at[1] && at[1] < at[2], "out of order: {stderr}");
+    assert!(last_line(&stderr).contains("Done."), "stderr: {stderr}");
+}
+
+#[test]
+fn test_report_prints_a_line_per_incoming_file() {
+    let (output, root) = run_report_fixture("report-files");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let first = line_index(&stderr, &format!("found {root}/a.txt (1 missing)"));
+    let second = line_index(&stderr, &format!("found {root}/sub/b.txt (1 missing)"));
+    assert!(first < second, "out of order: {stderr}");
+    assert!(!stderr.contains("gone.txt"), "stderr: {stderr}");
+    assert!(last_line(&stderr).contains("Done."), "stderr: {stderr}");
+}
+
+// --- File render ---
+
+/// Run the csv-render-markdown fixture on a small CSV, writing to `out`.
+fn run_csv_render(out: &std::path::Path, dry_run: bool) -> std::process::Output {
+    let sandbox = Sandbox::new();
+    let src = temp_output_dir();
+    let csv = src.path().join("tools.csv");
+    std::fs::write(&csv, "name,note\nhammer,nails\nsaw,cuts | rips\nlevel,\n").unwrap();
+    let mut cmd = sandbox.command();
+    cmd.args(["run", &custom_recipe_path("csv-render-markdown"), "--yes"])
+        .arg(&csv)
+        .args(["-o", out.to_str().unwrap()]);
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+    cmd.output().unwrap()
+}
+
+#[test]
+fn test_file_render_writes_one_markdown_table_from_csv_rows() {
+    let out = temp_output_dir();
+    let output = run_csv_render(out.path(), false);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let names: Vec<_> = output_files(&out).iter().map(|e| e.file_name()).collect();
+    assert_eq!(names, vec!["report.md"]);
+    assert_eq!(
+        std::fs::read_to_string(out.path().join("report.md")).unwrap(),
+        "# Tools\n\n| Name | Note |\n| --- | --- |\n\
+         | hammer | nails |\n\
+         | saw | cuts \\| rips |\n\
+         | level |  |\n\
+         \n3 tools\n"
+    );
+}
+
+#[test]
+fn test_file_render_dry_run_writes_nothing() {
+    let out_root = temp_output_dir();
+    let out = out_root.path().join("out");
+    let output = run_csv_render(&out, true);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!out.exists(), "output dir was created");
+    assert!(last_line(&stderr).contains("(dry run)"), "stderr: {stderr}");
+}
+
+// --- File Sort ---
+
+#[test]
+fn test_file_sort_orders_csv_rows_by_two_keys_with_blanks_last() {
+    let sandbox = Sandbox::new();
+    // spreadsheet-read → file-sort (`source, -year`) → report, which prints
+    // a line per row in the order the rows reach it.
+    let dir = temp_output_dir();
+    let csv = dir.path().join("titles.csv");
+    let rows = "title,source,year\n\
+                Gamma,web,2019\n\
+                Alpha,app,2020\n\
+                Delta,,2021\n\
+                Beta,web,2024\n\
+                Epsilon,app,2018\n";
+    std::fs::write(&csv, rows).unwrap();
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("file-sort-report"), "--yes"])
+        .arg(&csv)
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let lines = [
+        "row: Alpha (app 2020)",
+        "row: Epsilon (app 2018)",
+        "row: Beta (web 2024)",
+        "row: Gamma (web 2019)",
+        "row: Delta ( 2021)",
+    ];
+    let at: Vec<usize> = lines.iter().map(|l| line_index(&stderr, l)).collect();
+    assert!(at.windows(2).all(|w| w[0] < w[1]), "out of order: {stderr}");
+}
+
+// --- Summarize ---
+
+#[test]
+fn test_summarize_prints_each_folders_count_and_total_size_in_first_seen_order() {
+    let sandbox = Sandbox::new();
+    // spreadsheet-read → summarize (`groupBy: folder`, `sum: size`) → report,
+    // which prints a line per group. CSV sizes are text and still add up.
+    let dir = temp_output_dir();
+    let csv = dir.path().join("files.csv");
+    let rows = "name,folder,size\n\
+                a.md,docs,100\n\
+                b.png,img,1000\n\
+                c.md,docs,250\n\
+                d.png,img,24\n\
+                e.txt,docs,50\n";
+    std::fs::write(&csv, rows).unwrap();
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("summarize-report"), "--yes"])
+        .arg(&csv)
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let docs = line_index(&stderr, "folder docs: 3 files, 400 bytes");
+    let img = line_index(&stderr, "folder img: 2 files, 1024 bytes");
+    assert!(docs < img, "out of order: {stderr}");
+    assert_eq!(
+        stderr.matches(" bytes").count(),
+        2,
+        "one line per group: {stderr}"
+    );
+}
+
+#[test]
+fn test_summarize_fails_on_a_size_that_is_not_a_number() {
+    let sandbox = Sandbox::new();
+    let dir = temp_output_dir();
+    let csv = dir.path().join("files.csv");
+    std::fs::write(&csv, "name,folder,size\na.md,docs,100\nb.md,docs,12 KB\n").unwrap();
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("summarize-report"), "--yes"])
+        .arg(&csv)
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("12 KB"), "stderr: {stderr}");
+    assert!(!stderr.contains("folder docs:"), "stderr: {stderr}");
+}
+
+// --- Shell searchPath ---
+
+/// A tools folder holding a `greet` program that prints "greeted", and a
+/// `--vars` file pointing `Tools` at it.
+fn greet_tools(with_greet: bool) -> tempfile::TempDir {
+    let tools = temp_output_dir();
+    if with_greet {
+        write_greet(tools.path());
+    }
+    let vars = serde_json::json!({ "Tools": tools.path().to_str().unwrap() }).to_string();
+    std::fs::write(tools.path().join("vars.json"), vars).unwrap();
+    tools
+}
+
+#[cfg(windows)]
+fn write_greet(dir: &std::path::Path) {
+    std::fs::write(
+        dir.join("greet.bat"),
+        "@echo greeted
+",
+    )
+    .unwrap();
+}
+
+#[cfg(unix)]
+fn write_greet(dir: &std::path::Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let path = dir.join("greet");
+    std::fs::write(
+        &path,
+        "#!/bin/sh
+echo greeted
+",
+    )
+    .unwrap();
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+}
+
+fn run_greet(tools: &tempfile::TempDir, out: &tempfile::TempDir) -> std::process::Output {
+    let sandbox = Sandbox::new();
+    let vars = tools.path().join("vars.json");
+    sandbox
+        .command()
+        .args(["run", &custom_recipe_path("shell-search-path"), "--yes"])
+        .args([
+            "--vars",
+            vars.to_str().unwrap(),
+            "-o",
+            out.path().to_str().unwrap(),
+        ])
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn test_shell_command_runs_a_tool_found_in_search_path() {
+    let (tools, out) = (greet_tools(true), temp_output_dir());
+    let output = run_greet(&tools, &out);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let files = output_files(&out);
+    assert_eq!(files.len(), 1, "stderr: {stderr}");
+    let content = std::fs::read_to_string(files[0].path()).unwrap();
+    assert_eq!(content.trim(), "greeted");
+}
+
+#[test]
+fn test_shell_command_fails_when_search_path_lacks_the_tool() {
+    let (tools, out) = (greet_tools(false), temp_output_dir());
+    let output = run_greet(&tools, &out);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    assert!(
+        stderr.contains("'greet' was not found in searchPath"),
+        "stderr: {stderr}"
+    );
+}
+
+// --- Closing steps (`always`) ---
+
+/// The last non-empty stderr line of a run.
+fn last_stderr_line(output: &std::process::Output) -> String {
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty());
+    last.unwrap_or_default().to_string()
+}
+
+#[test]
+fn test_always_step_keeps_a_failed_commands_stdout() {
+    let sandbox = Sandbox::new();
+    // Guards: a command that exits non-zero hands its stdout to the closing
+    // step, which copies it, and the run still fails naming the command.
+    let work = temp_output_dir();
+    std::fs::write(work.path().join("before.txt"), "one\n").unwrap();
+    std::fs::write(work.path().join("after.txt"), "two\n").unwrap();
+    let (dest, out) = (temp_output_dir(), temp_output_dir());
+    let dest_param = format!("keep:destination={}", dest.path().to_str().unwrap());
+    let output = sandbox
+        .command()
+        .args([
+            "run",
+            &custom_recipe_path("shell-fails-keep-stdout"),
+            "--yes",
+        ])
+        .args(["-p", &dest_param, "-o", out.path().to_str().unwrap()])
+        .current_dir(work.path())
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_stderr_line(&output);
+    assert!(last.starts_with("Pipeline failed: "), "last line: {last}");
+    assert!(
+        last.contains("Command 'git' failed (exit 1)"),
+        "last line: {last}"
+    );
+    let kept = std::fs::read_to_string(dest.path().join("git-output")).unwrap();
+    assert!(
+        kept.contains("-one") && kept.contains("+two"),
+        "kept: {kept}"
+    );
+    assert!(
+        !work.path().join("git-output").exists(),
+        "publish was skipped"
+    );
+}
+
+#[test]
+fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
+    let sandbox = Sandbox::new();
+    // Guards: a tool missing from searchPath fails the step before anything
+    // runs; the closing steps still run, starting from no files.
+    let tools = temp_output_dir();
+    let root = temp_output_dir();
+    std::fs::write(root.path().join("leftover.txt"), "left behind").unwrap();
+    let vars = serde_json::json!({
+        "Tools": tools.path().to_str().unwrap(),
+        "Root": root.path().to_str().unwrap(),
+    });
+    let vars_file = root.path().join("vars.json");
+    std::fs::write(&vars_file, vars.to_string()).unwrap();
+    let (dest, out) = (temp_output_dir(), temp_output_dir());
+    let dest_param = format!("copy:destination={}", dest.path().to_str().unwrap());
+    let output = sandbox
+        .command()
+        .args([
+            "run",
+            &custom_recipe_path("shell-missing-tool-cleanup"),
+            "--yes",
+        ])
+        .args(["--vars", vars_file.to_str().unwrap(), "-p", &dest_param])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_stderr_line(&output);
+    assert!(last.starts_with("Pipeline failed: "), "last line: {last}");
+    assert!(
+        last.contains("'tool' was not found in searchPath"),
+        "last line: {last}"
+    );
+    let copied = std::fs::read_to_string(dest.path().join("leftover.txt")).unwrap();
+    assert_eq!(copied, "left behind");
+}
+
+// --- File Decode ---
+
+/// Run the file-decode-json fixture on one file named `name` holding `text`.
+fn run_decode_json(name: &str, text: &str) -> std::process::Output {
+    let sandbox = Sandbox::new();
+    let dir = temp_output_dir();
+    let file = dir.path().join(name);
+    std::fs::write(&file, text).unwrap();
+    sandbox
+        .command()
+        .args(["run", &custom_recipe_path("file-decode-json"), "--yes"])
+        .arg(&file)
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn test_file_decode_hands_its_decoded_json_to_spreadsheet_read() {
+    // `[{"name":"alpha","meta":{"size":1}},{"name":"beta","meta":{"size":2}}]`
+    // in base64, wrapped over two lines. Decoded as items.json, so
+    // spreadsheet-read's auto format reads it as a JSON array.
+    let encoded = "W3sibmFtZSI6ImFscGhhIiwibWV0YSI6eyJzaXpl\r\n\
+                   IjoxfX0seyJuYW1lIjoiYmV0YSIsIm1ldGEiOnsic2l6ZSI6Mn19XQ==\n";
+    let output = run_decode_json("items.b64", encoded);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(
+        stderr.contains("2 file(s): alpha-1.txt, beta-2.txt"),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
+fn test_file_decode_fails_the_run_naming_a_file_that_isnt_base64() {
+    let output = run_decode_json("broken.b64", r#"[{"name": "alpha"}]"#);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_line(&stderr);
+    assert!(last.contains("Pipeline failed:"), "last line: {last}");
+    assert!(
+        last.contains("broken.b64") && last.contains("not valid base64"),
+        "last line: {last}"
+    );
+}
+
+// --- File Copy: newer ---
+
+#[test]
+fn test_file_copy_newer_warns_about_newer_destination_file() {
+    let sandbox = Sandbox::new();
+    // Guards: a destination file newer than the source is left and named on stderr.
+    // A directory source goes through file-collect so the copy sees a path, not bytes.
+    let src_dir = temp_output_dir();
+    let dest_dir = temp_output_dir();
+    let out = temp_output_dir();
+    let src = src_dir.path().join("report.txt");
+    let kept = dest_dir.path().join("report.txt");
+    std::fs::write(&src, "from source").unwrap();
+    std::fs::write(&kept, "kept at destination").unwrap();
+    let now = filetime::FileTime::now();
+    let newer = filetime::FileTime::from_unix_time(now.unix_seconds() + 10, 0);
+    filetime::set_file_mtime(&kept, newer).unwrap();
+
+    let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("file-copy-newer")])
+        .arg(src_dir.path())
+        .args(["--yes", "-p", &dest_param])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(&kept).unwrap(),
+        "kept at destination"
+    );
+    assert!(
+        stderr.contains("newer at the destination, left"),
+        "stderr: {stderr}"
+    );
+    assert!(stderr.contains("report.txt"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_run_dry_run_writes_nothing() {
+    let sandbox = Sandbox::new();
+    // Guards: --dry-run runs the recipe but creates no destination or output
+    // directory, and the summary says what would have been written.
+    let src_dir = temp_output_dir();
+    let dest_root = temp_output_dir();
+    let out_root = temp_output_dir();
+    let src = src_dir.path().join("report.txt");
+    std::fs::write(&src, "from source").unwrap();
+    let dest = dest_root.path().join("not-yet");
+    let out = out_root.path().join("not-yet");
+
+    let dest_param = format!("copy:destination={}", dest.to_str().unwrap());
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("file-copy-newer")])
+        .arg(src_dir.path())
+        .args(["--yes", "--dry-run", "-p", &dest_param])
+        .args(["-o", out.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!dest.exists(), "destination was created");
+    assert!(!out.exists(), "output dir was created");
+    assert_eq!(std::fs::read_to_string(&src).unwrap(), "from source");
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
+    assert!(last.contains("(dry run)"), "last line: {last}");
+    assert!(last.contains("would be written"), "last line: {last}");
+    assert!(stderr.contains("1 would be copied"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_run_dry_run_keeps_warning_before_the_summary() {
+    let sandbox = Sandbox::new();
+    // Guards: a newer destination file is warned about, and the (dry run)
+    // summary is still the last line.
+    let src_dir = temp_output_dir();
+    let dest_dir = temp_output_dir();
+    let out_root = temp_output_dir();
+    std::fs::write(src_dir.path().join("report.txt"), "from source").unwrap();
+    let kept = dest_dir.path().join("report.txt");
+    std::fs::write(&kept, "kept at destination").unwrap();
+    let now = filetime::FileTime::now();
+    let newer = filetime::FileTime::from_unix_time(now.unix_seconds() + 10, 0);
+    filetime::set_file_mtime(&kept, newer).unwrap();
+
+    let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
+    let out = out_root.path().join("not-yet");
+    let output = sandbox
+        .command()
+        .args(["run", &custom_recipe_path("file-copy-newer")])
+        .arg(src_dir.path())
+        .args(["--yes", "--dry-run", "-p", &dest_param])
+        .args(["-o", out.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(
+        stderr.contains("newer at the destination, left"),
+        "stderr: {stderr}"
+    );
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
+    assert!(last.contains("(dry run)"), "last line: {last}");
+}
+
+#[test]
+fn test_dry_run_subcommand_copies_nothing() {
+    let sandbox = Sandbox::new();
+    // Guards: `bnto dry-run` runs file-copy as a dry run, so an older
+    // destination file keeps its bytes and mtime.
+    let src_dir = temp_output_dir();
+    let dest_dir = temp_output_dir();
+    std::fs::write(src_dir.path().join("report.txt"), "from source").unwrap();
+    let old = dest_dir.path().join("report.txt");
+    std::fs::write(&old, "old at destination").unwrap();
+    let past = filetime::FileTime::from_unix_time(1_000_000_000, 0);
+    filetime::set_file_mtime(&old, past).unwrap();
+
+    // The fixture goes into a library and runs by slug (paths: dry_run_path.rs).
+    let home = temp_output_dir();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    std::fs::copy(
+        custom_recipe_path("file-copy-newer"),
+        library.join("file-copy-newer.bnto.json"),
+    )
+    .unwrap();
+
+    let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
+    let output = sandbox
+        .command()
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "file-copy-newer"])
+        .arg(src_dir.path())
+        .args(["-p", &dest_param])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "stderr: {stderr}");
+    // The preview must have run, or an untouched destination proves nothing.
+    assert!(!stderr.contains("preview failed"), "stderr: {stderr}");
+    assert!(stdout.contains("report.txt"), "stdout: {stdout}");
+    assert_eq!(std::fs::read_to_string(&old).unwrap(), "old at destination");
+    let mtime = filetime::FileTime::from_last_modification_time(&std::fs::metadata(&old).unwrap());
+    assert_eq!(mtime, past, "destination mtime changed");
+}
+
+/// Put the shell-run fixture into a fresh library, to dry-run it by slug.
+fn library_with_shell_recipe() -> tempfile::TempDir {
+    let home = temp_output_dir();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    std::fs::copy(
+        custom_recipe_path("shell-file-input"),
+        library.join("shell-file-input.bnto.json"),
+    )
+    .unwrap();
+    home
+}
+
+#[test]
+fn test_dry_run_with_inputs_requires_consent_for_shell_recipe() {
+    let sandbox = Sandbox::new();
+    // Guards: a dry run with inputs executes the pipeline, so an untrusted
+    // shell-run recipe needs the same consent as `bnto run`.
+    let home = library_with_shell_recipe();
+    let output = sandbox
+        .command()
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "shell-file-input", &fixture_image("small.jpg")])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("Execution cancelled"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("bnto dry-run shell-file-input"),
+        "stderr: {stderr}"
+    );
+    assert!(stderr.contains("without input files"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_dry_run_with_inputs_and_yes_skips_consent() {
+    let sandbox = Sandbox::new();
+    let home = library_with_shell_recipe();
+    let output = sandbox
+        .command()
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "shell-file-input", "--yes"])
+        .arg(fixture_image("small.jpg"))
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!stderr.contains("Allow execution"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_dry_run_without_inputs_never_prompts() {
+    let sandbox = Sandbox::new();
+    // Static analysis runs nothing, so it stays the safe way to inspect commands.
+    let home = library_with_shell_recipe();
+    let output = sandbox
+        .command()
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "shell-file-input"])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!stderr.contains("Allow execution"), "stderr: {stderr}");
+    assert!(stdout.contains("git"), "stdout: {stdout}");
+}
+
+// --- URL Mode ---
+
+#[test]
+fn test_url_mode_no_input_shows_error() {
+    let sandbox = Sandbox::new();
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("download-video"), "--yes"])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("requires a URL"),
+        "Expected URL-specific error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_url_mode_non_url_input_shows_error() {
+    let sandbox = Sandbox::new();
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("download-video"), "--yes"])
+        .arg("not-a-url.mp4")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Expected a URL"),
+        "Expected URL validation error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_youtube_download() {
+    let sandbox = Sandbox::new();
+    // End-to-end download: YouTube → yt-dlp → output file.
+    // "Me at the Zoo" (jNQXAC9IVRw) — first YouTube video, always available, ~465KB.
+    // Requires yt-dlp + ffmpeg installed. Skips gracefully if missing.
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("download-video"), "--yes"])
+        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Must route through URL mode
+    assert!(
+        stderr.contains("URL input"),
+        "Expected 'URL input' status message, got: {stderr}"
+    );
+
+    if output.status.success() {
+        // Download succeeded — verify output file exists with content
+        let files = output_files(&out);
+        assert!(!files.is_empty(), "Expected at least one output file");
+        let size = files[0].metadata().unwrap().len();
+        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
+    } else {
+        // yt-dlp not installed — error must come from processor, not routing
+        assert!(
+            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
+            "Should fail due to yt-dlp, not routing: {stderr}"
+        );
+    }
+}
+
+#[test]
+fn test_youtube_download_with_param_override() {
+    let sandbox = Sandbox::new();
+    // Param override: timeout=600 changes the shell-run timeout.
+    // Verifies param injection works alongside URL input.
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("download-video"), "--yes"])
+        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
+        .args(["--param", "timeout=600"])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(
+        stderr.contains("URL input"),
+        "Expected 'URL input' status message, got: {stderr}"
+    );
+    assert!(
+        !stderr.contains("Invalid --param"),
+        "Param override should be valid"
+    );
+
+    if output.status.success() {
+        let files = output_files(&out);
+        assert!(!files.is_empty(), "Expected at least one output file");
+        let size = files[0].metadata().unwrap().len();
+        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
+    } else {
+        assert!(
+            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
+            "Should fail due to yt-dlp, not routing: {stderr}"
+        );
+    }
+}
+
+// --- m3u8 / HLS URL ---
+
+#[test]
+fn test_m3u8_url_routes_correctly() {
+    let sandbox = Sandbox::new();
+    // Verifies m3u8 (HLS) URLs route through URL mode without
+    // validation errors. Routing is fast — no download needed.
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("download-video"), "--yes"])
+        .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(
+        stderr.contains("URL input"),
+        "m3u8 URL should route through URL mode, got: {stderr}"
+    );
+    assert!(
+        !stderr.contains("Expected a URL"),
+        "m3u8 URL should pass validation"
+    );
+}
+
+#[test]
+#[ignore] // HLS streams are large (~466MB). Run manually: cargo test -p bnto -- --ignored
+fn test_m3u8_download() {
+    let sandbox = Sandbox::new();
+    // End-to-end download: m3u8 (HLS) → yt-dlp → output file.
+    // Big Buck Bunny via Mux test stream. Requires yt-dlp + ffmpeg.
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("download-video"), "--yes"])
+        .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "m3u8 download failed: {stderr}");
+
+    let files = output_files(&out);
+    assert!(!files.is_empty(), "Expected at least one output file");
+    let size = files[0].metadata().unwrap().len();
+    assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
+}
+
+// --- `shell-run` recipe end-to-end (download-video) ---
+// These tests verify the shell-run processor's file output mode
+// with yt-dlp. They require yt-dlp and ffmpeg installed; they skip
+// gracefully if the tool is missing.
+
+// --- Multiple Files ---
+
+#[test]
+fn test_multiple_input_files() {
+    let sandbox = Sandbox::new();
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("compress-images")])
+        .arg(fixture_image("small.jpg"))
+        .arg(fixture_image("small.png"))
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("2 files"));
+    assert_eq!(output_files(&out).len(), 2, "Expected 2 output files");
+}
+
+// --- Logging ---
+
+/// Helper: read the first session log file from a BNTO_HOME temp dir.
+fn read_session_log(home: &tempfile::TempDir) -> String {
+    let logs_dir = home.path().join("state").join("logs");
+    assert!(
+        logs_dir.is_dir(),
+        "logs/ dir should exist at {}",
+        logs_dir.display()
+    );
+
+    let log_files: Vec<_> = std::fs::read_dir(&logs_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_name().to_string_lossy().starts_with("session-"))
+        .collect();
+    assert!(
+        !log_files.is_empty(),
+        "Expected at least one session log in {}",
+        logs_dir.display()
+    );
+
+    std::fs::read_to_string(log_files[0].path()).unwrap()
+}
+
+#[test]
+fn test_run_creates_session_log() {
+    let sandbox = Sandbox::new();
+    // A normal `bnto run` should produce a session log file.
+    let home = temp_output_dir();
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args(["run", &recipe_path("compress-images")])
+        .arg(fixture_image("small.jpg"))
+        .args(["-o", out.path().to_str().unwrap()])
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+
+    let log = read_session_log(&home);
+    assert!(
+        log.contains("command: run"),
+        "Log should contain 'command: run', got: {log}"
+    );
+    assert!(
+        log.contains("[cli]"),
+        "Log should contain [cli] target, got: {log}"
+    );
+    assert!(
+        log.contains("run complete"),
+        "Log should contain 'run complete', got: {log}"
+    );
+}
+
+#[test]
+fn test_list_creates_session_log() {
+    let sandbox = Sandbox::new();
+    // `bnto list` should also produce a session log.
+    let home = temp_output_dir();
+    let output = sandbox
+        .command()
+        .arg("list")
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+
+    let log = read_session_log(&home);
+    assert!(
+        log.contains("command: list"),
+        "Log should contain 'command: list', got: {log}"
+    );
+}
+
+#[test]
+fn test_tui_creates_session_log() {
+    let sandbox = Sandbox::new();
+    // TUI fails without a terminal, but the logger writes before setup.
+    let home = temp_output_dir();
+    let output = sandbox
+        .command()
+        .arg("tui")
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let log = read_session_log(&home);
+    assert!(
+        log.contains("command: tui"),
+        "Log should contain 'command: tui', got: {log}"
+    );
+    assert!(
+        log.contains("session init"),
+        "Log should contain 'session init', got: {log}"
+    );
+}
+
+#[cfg(windows)]
+#[test]
+fn test_tui_without_console_says_how_to_start_it() {
+    // `output()` hands the child a null stdin, which is no console, the same
+    // as Git Bash's mintty piping its input.
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("tui").output().unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("winpty bnto tui") && stderr.contains("PowerShell"),
+        "Should say how to start the TUI, got: {stderr}"
+    );
+}
+
+#[cfg(windows)]
+#[test]
+fn test_tui_starts_in_a_windows_console() {
+    // A new console window, as PowerShell or Windows Terminal give it. A TUI
+    // that failed setup exits at once; one that started waits for keys.
+    let sandbox = Sandbox::new();
+    let script = "$p = Start-Process -FilePath $env:BNTO -ArgumentList tui \
+                  -WindowStyle Hidden -PassThru; \
+                  if ($p.WaitForExit(3000)) { \"exited $($p.ExitCode)\" } \
+                  else { Stop-Process -Id $p.Id -Force; 'running' }";
+    let output = sandbox
+        .powershell(script)
+        .env("BNTO_NO_UPDATE_CHECK", "1")
+        .output()
+        .unwrap();
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(
+        stdout.trim(),
+        "running",
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+// --- Install ---
+
+#[test]
+fn test_install_help_flag() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["install", "--help"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("dependencies"),
+        "install help should mention dependencies, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--yes"),
+        "install help should mention --yes flag, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--all"),
+        "install help should mention --all flag, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_install_no_deps_recipe() {
+    let sandbox = Sandbox::new();
+    // compress-images has no external deps — should report "no dependencies".
+    let output = sandbox
+        .command()
+        .args(["install", "compress-images", "--yes"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("no external dependencies"),
+        "Should report no deps, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_install_unknown_recipe() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["install", "nonexistent-recipe", "--yes"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Unknown recipe"),
+        "Should show unknown recipe error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_install_no_args_shows_usage() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["install", "--yes"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("--all") || stderr.contains("Usage"),
+        "Should show usage hint, got: {stderr}"
+    );
+}
+
+// --- TUI Subcommand ---
+
+#[test]
+fn test_tui_help_flag() {
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().args(["tui", "--help"]).output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("interactive") || stdout.contains("terminal"),
+        "tui help should mention interactive/terminal, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--theme"),
+        "tui help should mention --theme flag, got: {stdout}"
+    );
+}
+
+// --- Migrate ---
+
+#[test]
+fn test_migrate_help_flag() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
+        .args(["migrate", "--help"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Migrate"),
+        "migrate help should describe migration, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--dry-run"),
+        "migrate help should mention --dry-run flag, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_migrate_file_dry_run() {
+    let sandbox = Sandbox::new();
+    let dir = temp_output_dir();
+    let file = dir.path().join("old.bnto.json");
+    std::fs::write(
+        &file,
+        r#"{"id":"test","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"compression":80}}]}"#,
+    )
+    .unwrap();
+
+    let output = sandbox
+        .command()
+        .args(["migrate", file.to_str().unwrap(), "--dry-run"])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("compression"),
+        "Should report compression migration, got: {stderr}"
+    );
+    assert!(
+        stderr.contains("would migrate"),
+        "Should say 'would migrate' in dry run, got: {stderr}"
+    );
+
+    // File should be unchanged.
+    let content = std::fs::read_to_string(&file).unwrap();
+    assert!(
+        content.contains("compression"),
+        "File should not be modified in dry run"
+    );
+}
+
+#[test]
+fn test_migrate_file_applies_changes() {
+    let sandbox = Sandbox::new();
+    let dir = temp_output_dir();
+    let file = dir.path().join("recipe.bnto.json");
+    std::fs::write(
+        &file,
+        r#"{"id":"test","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"compression":75}}]}"#,
+    )
+    .unwrap();
+
+    let output = sandbox
+        .command()
+        .args(["migrate", file.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("migrated"),
+        "Should report migration, got: {stderr}"
+    );
+
+    // File should be updated.
+    let content = std::fs::read_to_string(&file).unwrap();
+    assert!(
+        content.contains("quality"),
+        "File should have quality param"
+    );
+    assert!(
+        !content.contains("compression"),
+        "File should not have compression param"
+    );
+
+    // Backup should exist (original filename + .bak).
+    assert!(
+        file.with_file_name("recipe.bnto.json.bak").exists(),
+        "Backup should be created"
+    );
+}
+
+#[test]
+fn test_migrate_noop_recipe() {
+    let sandbox = Sandbox::new();
+    let dir = temp_output_dir();
+    let file = dir.path().join("current.bnto.json");
+    std::fs::write(
+        &file,
+        r#"{"id":"test","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"quality":80}}]}"#,
+    )
+    .unwrap();
+
+    let output = sandbox
+        .command()
+        .args(["migrate", file.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("already up to date"),
+        "Should report no changes needed, got: {stderr}"
+    );
+
+    // No backup created when nothing changed.
+    assert!(!file.with_file_name("current.bnto.json.bak").exists());
+}
+
+#[test]
+fn test_migrate_directory() {
+    let sandbox = Sandbox::new();
+    let dir = temp_output_dir();
+    // One file needs migration, one doesn't.
+    std::fs::write(
+        dir.path().join("old.bnto.json"),
+        r#"{"id":"old","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"compression":80}}]}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        dir.path().join("current.bnto.json"),
+        r#"{"id":"cur","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"quality":80}}]}"#,
+    )
+    .unwrap();
+
+    let output = sandbox
+        .command()
+        .args(["migrate", dir.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("1 file migrated"),
+        "Should report 1 file migrated, got: {stderr}"
+    );
+}
+
+// --- Output: overwrite ---
+
+fn run_overwrite_rename(lib: &std::path::Path, pattern: &str, dry_run: bool) -> (bool, String) {
+    let sandbox = Sandbox::new();
+    let pattern_param = format!("rename:pattern={pattern}");
+    let mut cmd = sandbox.command();
+    cmd.args(["run", &custom_recipe_path("file-rename-overwrite")])
+        .arg(lib)
+        .args(["--yes", "-p", &pattern_param]);
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+    let output = cmd.output().unwrap();
+    (
+        output.status.success(),
+        String::from_utf8_lossy(&output.stderr).to_string(),
+    )
+}
+
+#[test]
+fn test_overwrite_refuses_two_files_onto_one_name_and_renames_nothing() {
+    // Guards: before the plan check, the second rename silently replaced the
+    // first file.
+    let lib = temp_output_dir();
+    std::fs::write(lib.path().join("a.wav"), "A").unwrap();
+    std::fs::write(lib.path().join("b.wav"), "B").unwrap();
+    for dry_run in [true, false] {
+        let (ok, stderr) = run_overwrite_rename(lib.path(), "same.{{ext}}", dry_run);
+        assert!(!ok, "dry_run={dry_run} stderr: {stderr}");
+        assert!(stderr.contains("Overwrite refused"), "stderr: {stderr}");
+    }
+    assert_eq!(
+        std::fs::read_to_string(lib.path().join("a.wav")).unwrap(),
+        "A"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.path().join("b.wav")).unwrap(),
+        "B"
+    );
+    assert!(!lib.path().join("same.wav").exists());
+}
+
+// --- Spreadsheet Read (JSON) ---
+
+#[test]
+fn test_read_json_array_names_each_item_from_a_nested_field() {
+    // Guards: spreadsheet-read turns each element into an item and
+    // flattens `meta.id`, which file-rename reads as `{{item.meta.id}}`.
+    let (out, stderr) =
+        run_custom_recipe_ok("spreadsheet-read-json-rename", &fixture_json("items.json"));
+    let mut names: Vec<String> = output_files(&out)
+        .iter()
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    assert_eq!(
+        names,
+        vec!["alpha.txt", "beta.txt", "gamma.txt"],
+        "{stderr}"
+    );
+}
+
+#[test]
+fn test_read_json_that_is_not_an_array_fails_naming_the_file() {
+    let sandbox = Sandbox::new();
+    let dir = temp_output_dir();
+    let file = dir.path().join("object.json");
+    std::fs::write(&file, r#"{"meta": {"id": "x"}}"#).unwrap();
+    let out = temp_output_dir();
+    let output = sandbox
+        .command()
+        .args([
+            "run",
+            &custom_recipe_path("spreadsheet-read-json-rename"),
+            "--yes",
+        ])
+        .arg(&file)
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("object.json"), "stderr: {stderr}");
+    assert!(stderr.contains("not a JSON array"), "stderr: {stderr}");
+    assert!(output_files(&out).is_empty());
+}
+
+// --- Spreadsheet Lookup ---
+
+/// A library of two files in nested folders, and a mapping table (outside
+/// it) giving each a new name. Returns (temp root, library dir, table path).
+fn lookup_fixture(rows: &str) -> (tempfile::TempDir, std::path::PathBuf, std::path::PathBuf) {
+    let root = temp_output_dir();
+    let lib = root.path().join("lib");
+    std::fs::create_dir_all(lib.join("Pack/sub")).unwrap();
+    std::fs::write(lib.join("Pack/sub/Glock 45 Mag Out 01.wav"), "glock").unwrap();
+    std::fs::write(lib.join("Pack/Kick 01.wav"), "kick").unwrap();
+    let table = root.path().join("mapping.csv");
+    std::fs::write(&table, format!("name,new_name,catid\n{rows}")).unwrap();
+    (root, lib, table)
+}
+
+const BOTH_ROWS: &str = "Pack/sub/Glock 45 Mag Out 01.wav,GUNMech_Glock 01.wav,GUNMech\n\
+                         Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n";
+
+/// Run a fixture recipe on `lib` with `-p` overrides; returns (success, stderr).
+fn run_lookup_recipe(
+    recipe: &str,
+    lib: &std::path::Path,
+    params: &[String],
+    dry_run: bool,
+) -> (bool, String) {
+    let sandbox = Sandbox::new();
+    let mut cmd = sandbox.command();
+    cmd.args(["run", &custom_recipe_path(recipe)])
+        .arg(lib)
+        .arg("--yes");
+    for p in params {
+        cmd.args(["-p", p]);
+    }
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+    let output = cmd.output().unwrap();
+    (
+        output.status.success(),
+        String::from_utf8_lossy(&output.stderr).to_string(),
+    )
+}
+
+fn table_param(table: &std::path::Path) -> String {
+    format!("lookup:table={}", table.to_str().unwrap())
+}
+
+#[test]
+fn test_lookup_then_rename_renames_in_place_and_undoes_from_the_same_table() {
+    // Guards: collect → spreadsheet-lookup → file-rename `{{item.new_name}}`
+    // renames each file in its folder, and the same table keyed on new_name
+    // with `{{item.name}}` puts every name back.
+    let (_root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let (ok, stderr) = run_lookup_recipe(
+        "spreadsheet-lookup-rename",
+        &lib,
+        &[table_param(&table)],
+        false,
+    );
+    assert!(ok, "stderr: {stderr}");
+    assert!(
+        lib.join("Pack/sub/GUNMech_Glock 01.wav").exists(),
+        "stderr: {stderr}"
+    );
+    assert!(lib.join("Pack/DRUMKick_Kick 01.wav").exists());
+    assert!(!lib.join("Pack/Kick 01.wav").exists());
+
+    let undo = [
+        table_param(&table),
+        "lookup:keyColumn=new_name".to_string(),
+        "lookup:matchOn=filename".to_string(),
+        "rename:pattern={{item.name}}".to_string(),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &undo, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/sub/Glock 45 Mag Out 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/Kick 01.wav")).unwrap(),
+        "kick"
+    );
+    assert!(!lib.join("Pack/DRUMKick_Kick 01.wav").exists());
+}
+
+#[test]
+fn test_lookup_unmatched_fail_stops_the_run_before_any_rename() {
+    // Guards: with `unmatched: fail` one file without a row fails the run,
+    // naming it, and no file is renamed.
+    let (_root, lib, table) = lookup_fixture("Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n");
+    let (ok, stderr) = run_lookup_recipe(
+        "spreadsheet-lookup-rename",
+        &lib,
+        &[table_param(&table)],
+        false,
+    );
+    assert!(!ok, "stderr: {stderr}");
+    assert!(
+        stderr.contains("Pack/sub/Glock 45 Mag Out 01.wav"),
+        "stderr: {stderr}"
+    );
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+}
+
+#[test]
+fn test_lookup_names_files_without_a_row_on_a_real_and_a_dry_run() {
+    // Guards: kept unmatched files are named in the summary, dry run too.
+    let (_root, lib, table) = lookup_fixture("Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n");
+    for dry_run in [false, true] {
+        let (ok, stderr) =
+            run_lookup_recipe("spreadsheet-lookup", &lib, &[table_param(&table)], dry_run);
+        assert!(ok, "stderr: {stderr}");
+        assert!(
+            stderr.contains(
+                "1 file had no row in the lookup table: Pack/sub/Glock 45 Mag Out 01.wav"
+            ),
+            "dry_run={dry_run} stderr: {stderr}"
+        );
+    }
+    assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
+}
+
+#[test]
+fn test_lookup_missing_table_fails_naming_it() {
+    let (root, lib, _table) = lookup_fixture(BOTH_ROWS);
+    let missing = root.path().join("missing.csv");
+    let (ok, stderr) =
+        run_lookup_recipe("spreadsheet-lookup", &lib, &[table_param(&missing)], false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("missing.csv"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_lookup_keep_then_rename_fails_on_a_file_without_a_row() {
+    // Guards: a kept unmatched file has no `new_name`, so the rename fails
+    // naming it instead of renaming it to the literal "{{item.new_name}}"
+    // (where two such files would overwrite each other). Nothing is renamed.
+    let (_root, lib, table) = lookup_fixture("Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n");
+    let params = [table_param(&table), "lookup:unmatched=keep".to_string()];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &params, false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("{{item.new_name}}"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("Pack/sub/Glock 45 Mag Out 01.wav"),
+        "stderr: {stderr}"
+    );
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+    assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
+}
+
+// --- Spreadsheet Export ---
+
+#[test]
+fn test_export_records_a_dry_run_rename_and_renames_nothing() {
+    // Guards: collect → lookup → rename → export → overwrite on a dry run
+    // writes the record CSV (new name, the row's columns) and touches no file.
+    let (root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let record = root.path().join("record.csv");
+    let params = [
+        table_param(&table),
+        format!("export:path={}", record.to_str().unwrap()),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-export", &lib, &params, true);
+    assert!(ok, "stderr: {stderr}");
+    assert!(
+        lib.join("Pack/Kick 01.wav").exists(),
+        "dry run renamed a file"
+    );
+    assert!(!lib.join("Pack/DRUMKick_Kick 01.wav").exists());
+
+    let text = std::fs::read_to_string(&record).unwrap();
+    let mut reader = csv::Reader::from_reader(text.as_bytes());
+    let headers: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    for column in ["file", "name", "new_name", "catid"] {
+        assert!(
+            headers.contains(&column.to_string()),
+            "missing {column}: {headers:?}"
+        );
+    }
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 2);
+    let at = |name: &str| headers.iter().position(|h| h == name).unwrap();
+    let kick = rows.iter().find(|r| &r[at("catid")] == "DRUMKick").unwrap();
+    assert_eq!(&kick[at("file")], "DRUMKick_Kick 01.wav");
+    assert_eq!(&kick[at("name")], "Pack/Kick 01.wav");
+    assert!(stderr.contains("2 rows"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_export_into_a_missing_folder_fails_and_renames_nothing() {
+    let (root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let record = root.path().join("no-such-folder").join("record.csv");
+    let params = [
+        table_param(&table),
+        format!("export:path={}", record.to_str().unwrap()),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-export", &lib, &params, false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("record.csv"), "stderr: {stderr}");
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+}
+
+#[test]
+fn test_export_record_drives_the_undo() {
+    // Guards: a real run renames and records; the record, keyed on the new
+    // name with `{{item.name}}`, puts every file back.
+    let (root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let record = root.path().join("record.csv");
+    let forward = [
+        table_param(&table),
+        format!("export:path={}", record.to_str().unwrap()),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-export", &lib, &forward, false);
+    assert!(ok, "stderr: {stderr}");
+    assert!(lib.join("Pack/sub/GUNMech_Glock 01.wav").exists());
+
+    let undo = [
+        table_param(&record),
+        "lookup:keyColumn=file".to_string(),
+        "lookup:matchOn=filename".to_string(),
+        "rename:pattern={{item.name}}".to_string(),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &undo, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/sub/Glock 45 Mag Out 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/Kick 01.wav")).unwrap(),
+        "kick"
+    );
+}
+
+// --- File Move ---
+
+const SUBJECT_ROWS: &str = "Pack/sub/Glock 45 Mag Out 01.wav,Pistol/Mag/GUNMech_Glock 01.wav,GUNMech\n\
+                            Pack/Kick 01.wav,Drums/Kick/DRUMKick_Kick 01.wav,DRUMKick\n";
+
+fn move_param(lib: &std::path::Path) -> String {
+    format!("move:destination={}", lib.to_str().unwrap())
+}
+
+#[test]
+fn test_move_sorts_files_into_a_subject_tree_and_undoes_from_the_same_table() {
+    // Guards: collect → lookup → rename `{{item.new_name}}` → file-move puts
+    // each file at its row's path under the collected folder, and the same
+    // table read the other way (key new_name, `{{item.name}}`) puts it back.
+    let (_root, lib, table) = lookup_fixture(SUBJECT_ROWS);
+    let forward = [table_param(&table), move_param(&lib)];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &forward, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pistol/Mag/GUNMech_Glock 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Drums/Kick/DRUMKick_Kick 01.wav")).unwrap(),
+        "kick"
+    );
+    assert!(!lib.join("Pack/Kick 01.wav").exists());
+    assert!(stderr.contains("Moved 2 files"), "stderr: {stderr}");
+
+    let undo = [
+        table_param(&table),
+        "lookup:keyColumn=new_name".to_string(),
+        "rename:pattern={{item.name}}".to_string(),
+        move_param(&lib),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &undo, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/sub/Glock 45 Mag Out 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/Kick 01.wav")).unwrap(),
+        "kick"
+    );
+    assert!(!lib.join("Drums/Kick/DRUMKick_Kick 01.wav").exists());
+}
+
+#[test]
+fn test_move_dry_run_moves_nothing() {
+    let (_root, lib, table) = lookup_fixture(SUBJECT_ROWS);
+    let params = [table_param(&table), move_param(&lib)];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &params, true);
+    assert!(ok, "stderr: {stderr}");
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+    assert!(!lib.join("Drums").exists(), "dry run created a folder");
+}
+
+#[test]
+fn test_move_refuses_two_files_onto_one_path_and_moves_nothing() {
+    // Guards: #571's check covers moves; the whole run is refused, dry run too.
+    let rows = "Pack/sub/Glock 45 Mag Out 01.wav,Pistol/same.wav,GUNMech\n\
+                Pack/Kick 01.wav,Pistol/same.wav,DRUMKick\n";
+    let (_root, lib, table) = lookup_fixture(rows);
+    let params = [table_param(&table), move_param(&lib)];
+    for dry_run in [true, false] {
+        let (ok, stderr) =
+            run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &params, dry_run);
+        assert!(!ok, "dry_run={dry_run} stderr: {stderr}");
+        assert!(
+            stderr.contains("File move refused, this step moved nothing"),
+            "stderr: {stderr}"
+        );
+    }
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+    assert!(!lib.join("Pistol").exists());
+}
+
+#[test]
+fn test_move_refuses_a_path_out_of_the_destination() {
+    let rows = "Pack/sub/Glock 45 Mag Out 01.wav,Pistol/a.wav,GUNMech\n\
+                Pack/Kick 01.wav,../escaped.wav,DRUMKick\n";
+    let (root, lib, table) = lookup_fixture(rows);
+    let params = [table_param(&table), move_param(&lib)];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &params, false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("\"..\""), "stderr: {stderr}");
+    assert!(!root.path().join("escaped.wav").exists());
+    assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
+}
+
+// --- Check ---
+
+fn check_fixture(name: &str) -> String {
+    custom_recipe_path(&format!("check/{name}"))
+}
+
+/// Run `bnto check` on `paths`: (exit ok, stdout lines).
+fn run_check(paths: &[String]) -> (bool, Vec<String>) {
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("check").args(paths).output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let lines = stdout.lines().map(str::to_string).collect();
+    (output.status.success(), lines)
+}
+
+#[test]
+fn test_check_passes_a_valid_recipe() {
+    let (ok, lines) = run_check(&[check_fixture("valid")]);
+    assert!(ok, "stdout: {lines:?}");
+    assert_eq!(lines, vec!["Check: PASS (1 recipe)".to_string()]);
+}
+
+#[test]
+fn test_check_fails_when_one_of_two_recipes_is_broken() {
+    let broken = check_fixture("broken");
+    let (ok, lines) = run_check(&[check_fixture("valid"), broken.clone()]);
+    assert!(!ok, "stdout: {lines:?}");
+    assert_eq!(
+        lines.last().map(String::as_str),
+        Some("Check: FAIL (3 findings)")
+    );
+    let findings = &lines[..lines.len() - 1];
+    assert_eq!(findings.len(), 3, "{findings:?}");
+    assert!(
+        findings.iter().all(|l| l.starts_with(&broken)),
+        "{findings:?}"
+    );
+    for expected in [
+        "\"only-docs\"",
+        "namePattern",
+        "image-zap",
+        "\"copy\"",
+        "{{vars.Out",
+    ] {
+        assert!(
+            findings.iter().any(|l| l.contains(expected)),
+            "no finding names {expected}: {findings:?}"
+        );
+    }
+}
+
+#[test]
+fn test_check_reports_invalid_json_as_a_finding() {
+    let bad = check_fixture("invalid-json");
+    let (ok, lines) = run_check(&[bad.clone(), check_fixture("valid")]);
+    assert!(!ok, "stdout: {lines:?}");
+    assert_eq!(lines.len(), 2, "{lines:?}");
+    assert!(lines[0].starts_with(&bad), "{lines:?}");
+    assert!(lines[0].contains("invalid JSON"), "{lines:?}");
+    assert_eq!(lines[1], "Check: FAIL (1 finding)");
+}
+
+#[test]
+fn test_check_reports_an_unreadable_file_as_a_finding() {
+    let missing = check_fixture("does-not-exist");
+    let (ok, lines) = run_check(std::slice::from_ref(&missing));
+    assert!(!ok, "stdout: {lines:?}");
+    assert_eq!(lines.len(), 2, "{lines:?}");
+    assert!(lines[0].starts_with(&missing), "{lines:?}");
+    assert_eq!(lines[1], "Check: FAIL (1 finding)");
+}

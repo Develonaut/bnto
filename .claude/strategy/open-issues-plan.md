@@ -192,7 +192,7 @@ Three places read "slug, else file" on their own: `run.rs:145` reads both, `inst
 **New:**
 
 - `engine/crates/bnto/src/recipe_source.rs`
-- `engine/crates/bnto/tests/dry_run_path.rs`
+- `engine/crates/bnto/tests/cli/dry_run_path.rs`
 
 **Modified:**
 

@@ -77,7 +77,7 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-117 | The `update_notice` pty tests are ignored on Windows: unanswered ConPTY cursor query, and no `USERPROFILE`                                   | cli test        | Open                                             |
 | ISS-118 | On Windows a PowerShell step is slow to exit in the TUI (~25 s): one streaming to stderr times out                                           | cli tui         | Open                                             |
 | ISS-119 | Many CLI tests run only on some OSes, with no list saying which are on purpose                                                               | cli test        | Open                                             |
-| ISS-120 | `engine/target` grows without bound: it reached 57 GB on one machine                                                                         | tooling         | In progress (chore/lean-dev-builds)              |
+| ISS-120 | `engine/target` grows without bound: it reached 57 GB on one machine                                                                         | tooling         | In progress (chore/one-cli-test-binary)          |
 
 ---
 
@@ -93,7 +93,7 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 
 **Found:** October 23, 2026 (fixing ISS-3).
 
-`cli_commands.rs` and the run helpers in `tests/helpers/mod.rs` now use `helpers::Sandbox` (temp HOME, BNTO_HOME, config dir and working directory, telemetry off). About 17 other files in `engine/crates/bnto/tests/` still spawn `Command::new(bnto_bin())` with no HOME or BNTO_HOME: `assert_files`, `check_edges`, `check_folders`, `check_run_time`, `edges`, `edit_fields`, `file_delete`, `file_inspect`, `file_join`, `progressive_output`, `report_file_names`, `run_args`, `run_json`, `run_temp_files`, `shell_each`, `shell_options`, and some runs in `dry_run_temp_files` and `run_timeout`. Each run writes a session log into the developer's `~/.bnto/state/logs`: `cargo test -p bnto --test edges --test run_json` added 3. A run that resolves a slug would also read their library. Switch them to `Sandbox::new().command()`.
+`cli_commands.rs` and the run helpers in `tests/helpers/mod.rs` now use `helpers::Sandbox` (temp HOME, BNTO_HOME, config dir and working directory, telemetry off). About 17 other files in `engine/crates/bnto/tests/cli/` still spawn `Command::new(bnto_bin())` with no HOME or BNTO_HOME: `assert_files`, `check_edges`, `check_folders`, `check_run_time`, `edges`, `edit_fields`, `file_delete`, `file_inspect`, `file_join`, `progressive_output`, `report_file_names`, `run_args`, `run_json`, `run_temp_files`, `shell_each`, `shell_options`, and some runs in `dry_run_temp_files` and `run_timeout`. Each run writes a session log into the developer's `~/.bnto/state/logs`: `cargo test -p bnto --test cli -- edges:: run_json::` added 3. A run that resolves a slug would also read their library. Switch them to `Sandbox::new().command()`.
 
 ### ISS-12: Released CLIs send no telemetry: the PostHog key is never set
 
@@ -186,7 +186,7 @@ A loop with `outputPersistence: "progressive"` copies each iteration's files int
 
 **Found:** October 25, 2026 (cold review of the ISS-32 fix).
 
-`engine/crates/bnto/tests/update_notice.rs:47` calls `native_pty_system().openpty(size)` from `run_in_terminal`, and its four pty tests run in parallel in one process. The ISS-32 fix found that on macOS some of many concurrent launches in one process fail with `failed to openpty: Unknown error: -6` (5 of 160 launches in a probe of 3 processes × 12 threads, 0 of 288 with launches taken in turn, likely `ptsname`'s shared buffer). The TUI journey harness now opens one pty at a time (`OPEN_PTY` in `tests/tui/harness.rs`); this file doesn't. Not yet seen failing in a real run.
+`engine/crates/bnto/tests/cli/update_notice.rs:47` calls `native_pty_system().openpty(size)` from `run_in_terminal`, and its four pty tests run in parallel in one process. The ISS-32 fix found that on macOS some of many concurrent launches in one process fail with `failed to openpty: Unknown error: -6` (5 of 160 launches in a probe of 3 processes × 12 threads, 0 of 288 with launches taken in turn, likely `ptsname`'s shared buffer). The TUI journey harness now opens one pty at a time (`OPEN_PTY` in `tests/tui/harness.rs`); this file doesn't. Not yet seen failing in a real run.
 
 - **Fix:** take the same lock around `openpty` and the spawn in `run_in_terminal`, or share the harness's launch.
 - **Regression test:** run the file's tests with `--test-threads=16` beside a parallel build several times without a failure.
@@ -394,7 +394,7 @@ Reproduced by the reviewer with the CLI (temp `HOME` and `BNTO_HOME`): a URL-mod
 
 **Found:** November 1, 2026 (fixing ISS-112, the TUI journeys on Windows).
 
-`engine/crates/bnto/tests/update_notice.rs` runs `bnto list` in its own pseudo-terminal (`run_in_terminal`) and its four pty tests are `#[cfg_attr(windows, ignore = "ConPTY runs not yet stable in CI")]`. They have the TUI journeys' problem that ISS-112 fixed in `tests/tui/harness.rs`: `portable-pty` creates ConPTY with `PSEUDOCONSOLE_INHERIT_CURSOR`, so ConPTY asks for the cursor position (`ESC[6n`) and prints nothing until it's answered, and `run_in_terminal` only reads. It also sets `HOME` but not `USERPROFILE`, which is where bnto looks on Windows, so the cached update check it seeds may not be found. Read from the code; not run on Windows.
+`engine/crates/bnto/tests/cli/update_notice.rs` runs `bnto list` in its own pseudo-terminal (`run_in_terminal`) and its four pty tests are `#[cfg_attr(windows, ignore = "ConPTY runs not yet stable in CI")]`. They have the TUI journeys' problem that ISS-112 fixed in `tests/tui/harness.rs`: `portable-pty` creates ConPTY with `PSEUDOCONSOLE_INHERIT_CURSOR`, so ConPTY asks for the cursor position (`ESC[6n`) and prints nothing until it's answered, and `run_in_terminal` only reads. It also sets `HOME` but not `USERPROFILE`, which is where bnto looks on Windows, so the cached update check it seeds may not be found. Read from the code; not run on Windows.
 
 - **Fix:** answer the cursor query as the TUI harness does (share its reader, or a small helper both use), set `USERPROFILE` and `APPDATA` as the harness does, and drop the Windows `ignore`s. ISS-67 (the same file's parallel `openpty` with no lock) fits the same PR.
 - **Regression test:** the four tests pass on the `rust-windows` CI job.
@@ -437,7 +437,7 @@ On Ryan's Mac `engine/target` was 57 GB: 34 GB `debug` (17 GB of it `debug/incre
 Ryan (November 1, 2026): the repo's workflow should keep this small on any machine, for any contributor, without anyone cleaning by hand.
 
 - **Fix, three PRs (Work order batch 5d):**
-  1. `debug = "line-tables-only"` for the workspace's crates in dev and test builds (stack traces keep file and line) and no debug info for dependencies (a panic inside one shows no file and line, accepted: our code's frames are the ones that matter). A fresh workspace test build on macOS went from 3.0 GB to 2.3 GB.
-  2. One integration-test binary for the `bnto` crate (`tests/cli/main.rs` with the files as modules) instead of 55: one link, a fraction of the disk.
+  1. `debug = "line-tables-only"` for the workspace's crates in dev and test builds (stack traces keep file and line) and no debug info for dependencies (a panic inside one shows no file and line, accepted: our code's frames are the ones that matter). A fresh workspace test build on macOS went from 3.0 GB to 2.3 GB. Done (#833).
+  2. One integration-test binary for the `bnto` crate (`tests/cli/main.rs` with the files as modules) instead of 54. The TUI journeys keep their own binary (they time a real terminal, and here they'd share test threads with every CLI test), and so does `shell_security`, already one. A fresh `cargo test -p bnto --no-run` build on macOS went from 58 executables and 1362 MB to 5 and 1140 MB. `tests/cli/layout.rs` fails on a file in `tests/cli/` that `main.rs` doesn't name (it would never run) or a new top-level test file. Done (chore/one-cli-test-binary).
   3. Automatic pruning: a `task clean:stale` that removes build artifacts and incremental caches untouched for a week, run from `task check`, and a size guard that fails when a fresh build of the tests outgrows its budget.
 - **Regression test:** the size guard; each PR measures a fresh `cargo test --workspace --no-run` build before and after.
