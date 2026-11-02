@@ -70,7 +70,7 @@ Naming follows [node-vocabulary.md](../scopes/rust/node-vocabulary.md). Enum val
 
 ### PR 1: Publish keep-awake as a built-in macOS recipe (#662)
 
-Built-in recipe #22, the first `system` recipe. One script-mode `shell-run` step (script source is the recipe's `session.parameters.script`), args `[{{ctx.paths.home_dir}}, action, duration, display, jiggle]`; script mode clears the environment, so the bnto home comes from the engine, never `$BNTO_HOME`. `display` options are `keep-on`/`allow-sleep`. Web wiring: icon, `system` category content and breadcrumb, keep-awake FAQs, registry/nav tests. 9 macOS-gated CLI tests in `bnto/tests/keep_awake.rs`, each in a temp `BNTO_HOME` + `HOME`.
+Built-in recipe #22, the first `system` recipe. One script-mode `shell-run` step (script source is the recipe's `session.parameters.script`), args `[{{ctx.paths.home_dir}}, action, duration, display, jiggle]`; script mode clears the environment, so the bnto home comes from the engine, never `$BNTO_HOME`. `display` options are `keep-on`/`allow-sleep`. Web wiring: icon, `system` category content and breadcrumb, keep-awake FAQs, registry/nav tests. 9 macOS-gated CLI tests in `bnto/tests/cli/keep_awake.rs`, each in a temp `BNTO_HOME` + `HOME`.
 
 ### PR 2: Lint bundled recipe scripts with ShellCheck in CI (#665)
 
@@ -212,7 +212,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 
 **Verification:** `task wasm:test && task cli:test`
 **Count changes:** none.
-**As built:** `executor/field_scope.rs` (`declare`, `along`) is the one rule; `PipelineContext.fields` carries it down, and `bnto check` and the dry run (`host_skip`, shell previews) walk the same path. `--param` routing lives in `bnto/src/field_owner.rs`, shared by `bnto run` and `bnto dry-run`. A declaration with no default still shadows. CJ2 is `cj2_*` in `bnto/tests/when_guard.rs`.
+**As built:** `executor/field_scope.rs` (`declare`, `along`) is the one rule; `PipelineContext.fields` carries it down, and `bnto check` and the dry run (`host_skip`, shell previews) walk the same path. `--param` routing lives in `bnto/src/field_owner.rs`, shared by `bnto run` and `bnto dry-run`. A declaration with no default still shadows. CJ2 is `cj2_*` in `bnto/tests/cli/when_guard.rs`.
 
 ### PR 6: Work out the OSes a recipe runs on, and refuse unsupported hosts
 
@@ -260,7 +260,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 - `bnto doctor` and `bnto install` honor it
   **Verification:** `task wasm:test && task cli:test`
   **Count changes:** none.
-  **As built:** `PipelineNode.requires` (any node; `Definition.requires` already parsed on nested nodes, so the TS type only changed its comment; the JSON schema gained `requires` and a `Dependency` def). `bnto_engine::scoped_deps` is the one rule: per OS, root `requires` plus the `requires` and processor deps of every node that `runs_on` it, merged into `ScopedDependency { dependency, os }`. `deps.rs` exposes `collect_pipeline_dependencies` / `collect_catalog_dependencies` for one host (pre-flight, `bnto install`, `bnto dry-run`) and `scoped_*` variants for `bnto info` and `bnto doctor`. Doctor prints `ok caffeinate (macOS only)` on macOS and `skip caffeinate (macOS only)` elsewhere; `bnto install` says "has no external dependencies on Linux". keep-awake's deps came back on its `macos` group with `installHints.macos`; fix B's test now asks for a hint only on the OSes that need a dependency. The frozen editor's export dropped a top-level node's `requires` (it only kept the root's), so `rfNodesToDefinition` now carries it like `when`. CLI tests: `bnto/tests/scoped_requires.rs` (doctor, install, info, pre-flight; the doctor test runs in the `rust` and `rust-windows` jobs). Not done: `bnto check` doesn't refuse `requires` on `input`/`output`.
+  **As built:** `PipelineNode.requires` (any node; `Definition.requires` already parsed on nested nodes, so the TS type only changed its comment; the JSON schema gained `requires` and a `Dependency` def). `bnto_engine::scoped_deps` is the one rule: per OS, root `requires` plus the `requires` and processor deps of every node that `runs_on` it, merged into `ScopedDependency { dependency, os }`. `deps.rs` exposes `collect_pipeline_dependencies` / `collect_catalog_dependencies` for one host (pre-flight, `bnto install`, `bnto dry-run`) and `scoped_*` variants for `bnto info` and `bnto doctor`. Doctor prints `ok caffeinate (macOS only)` on macOS and `skip caffeinate (macOS only)` elsewhere; `bnto install` says "has no external dependencies on Linux". keep-awake's deps came back on its `macos` group with `installHints.macos`; fix B's test now asks for a hint only on the OSes that need a dependency. The frozen editor's export dropped a top-level node's `requires` (it only kept the root's), so `rfNodesToDefinition` now carries it like `when`. CLI tests: `bnto/tests/cli/scoped_requires.rs` (doctor, install, info, pre-flight; the doctor test runs in the `rust` and `rust-windows` jobs). Not done: `bnto check` doesn't refuse `requires` on `input`/`output`.
 
 ### PR 9: PowerShell script mode
 

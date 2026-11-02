@@ -338,7 +338,7 @@ Playwright and Lighthouse start with empty storage, so they see no badge, and pa
 **New:**
 
 - `engine/crates/bnto/src/changelog.rs`
-- `engine/crates/bnto/tests/changelog_command.rs`: uses `tests/helpers/sandbox.rs`
+- `engine/crates/bnto/tests/cli/changelog_command.rs` (a module of `tests/cli/main.rs`): uses `tests/helpers/sandbox.rs`
 
 **Modified:**
 
@@ -372,7 +372,7 @@ pub fn run_changelog(version: Option<&str>);
 - `notes_url(Version(0, 19, 0))` is `https://bnto.io/changelog#0.19.0`;
 - the shipped changelog has the running version's entry. This test is skipped for a pre-release build.
 
-**Integration (`tests/changelog_command.rs`, sandboxed):**
+**Integration (`tests/cli/changelog_command.rs`, sandboxed):**
 
 - `cj10_changelog_prints_the_installed_versions_notes`: `bnto changelog` prints the running version's notes and exits 0;
 - `cj10_changelog_takes_an_older_version_with_or_without_v`: `bnto changelog 0.18.0` and `bnto changelog v0.18.0` print 0.18.0's notes and exit 0;
@@ -383,13 +383,13 @@ pub fn run_changelog(version: Option<&str>);
 
 ```bash
 (cd engine && cargo test -p bnto --bin bnto changelog::)
-(cd engine && cargo test -p bnto --test changelog_command)
+(cd engine && cargo test -p bnto --test cli changelog_command::)
 task wasm:lint && task cli:test
 ```
 
 ### Count changes
 
-None to nodes or recipes. `bnto --help` gains a command, and there's no help golden: `test_help_flag` (`tests/cli_commands.rs:15-21`) checks one substring.
+None to nodes or recipes. `bnto --help` gains a command, and there's no help golden: `test_help_flag` (`tests/cli/cli_commands.rs:15-21`) checks one substring.
 
 ---
 
@@ -428,7 +428,7 @@ Four places announce a new version. Each gains a pointer to the notes:
 - `engine/crates/bnto/tests/tui_journeys.rs`: TJ10 (`tj10_a_newer_release_shows_in_the_status_line`) and TJ15 wait for `bnto 99.0.0: U upgrade · bnto changelog` instead of the old text
 - `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_80x24.snap`
 - `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_120x36.snap`
-- `engine/crates/bnto/tests/update_notice.rs`: `a_newer_cached_release_is_mentioned` (l.73-83). Its first-line assert still passes (`contains`); add one for the link line
+- `engine/crates/bnto/tests/cli/update_notice.rs`: `a_newer_cached_release_is_mentioned` (l.73-83). Its first-line assert still passes (`contains`); add one for the link line
 - `engine/crates/bnto/tests/upgrade.rs`: the cases below, and a `fake_cargo` variant that installs a stub `bnto`. The stub is written to a temp file in `cargo/bin`, made executable, then `mv`'d over `cargo/bin/bnto`, which is the running binary. Writing into a running executable fails on Linux (ETXTBSY), and a write fd left open while spawning causes the same error (`tests/upgrade.rs:13-16`)
 - `engine/crates/bnto/README.md`: the "Updates" notice example (l.19-27)
 - `.claude/journeys/cli.md`: rows CJ12 and CJ13
@@ -460,7 +460,7 @@ pub fn show_whats_new(exe: &Path, latest: Version);
 - `the_bottom_bar_status_is_never_overwritten` still passes on every screen.
 - TJ10 sees the new text in a real pseudo-terminal.
 
-**Integration (`tests/update_notice.rs`):** with a cached 99.0.0, `bnto list` in a terminal prints both notice lines (`a_newer_cached_release_is_mentioned`). The opt-out, CI and piped cases still print neither.
+**Integration (`tests/cli/update_notice.rs`):** with a cached 99.0.0, `bnto list` in a terminal prints both notice lines (`a_newer_cached_release_is_mentioned`). The opt-out, CI and piped cases still print neither.
 
 **Integration (`tests/upgrade.rs`, unix):**
 
@@ -473,7 +473,7 @@ pub fn show_whats_new(exe: &Path, latest: Version);
 
 ```bash
 (cd engine && cargo test -p bnto --bin bnto -- update_check:: upgrade::)
-(cd engine && cargo test -p bnto --test update_notice --test upgrade)
+(cd engine && cargo test -p bnto --test cli update_notice:: && cargo test -p bnto --test upgrade)
 task tui:snapshots:update && git diff engine/crates/bnto/src/tui/snapshots && task tui:test
 task wasm:lint && task cli:test
 ```
@@ -504,11 +504,11 @@ Release after PRs 1–5, so the next release is the first whose notes appear on 
 
 **Add to `.claude/journeys/cli.md`'s Journey Matrix,** after CJ9:
 
-| #    | Journey                                  | Steps                                                                                                               | Pass Criteria                                                                                                                                                                          | Test / PR                                                                                                                                     |
-| ---- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| CJ10 | Read what changed, offline               | `bnto changelog`, then `bnto changelog 0.18.0` and `bnto changelog v0.18.0`                                         | The running version's notes, then 0.18.0's, on stdout; exit 0; no network                                                                                                              | `cj10_*` in `tests/changelog_command.rs` (PR 4)                                                                                               |
-| CJ11 | Ask for a version this bnto doesn't have | `bnto changelog 0.0.1`, then `bnto changelog 99.0.0`                                                                | Both exit 1 with nothing on stdout. The older one names the versions covered; the newer one gives `https://bnto.io/changelog#99.0.0` and `bnto upgrade`                                | `cj11_*` in `tests/changelog_command.rs` (PR 4)                                                                                               |
-| CJ12 | The update notice links what changed     | With a cached 99.0.0, `bnto list` in a terminal; then `bnto upgrade --check`                                        | Both print the unchanged first line, then `What's new: https://bnto.io/changelog#99.0.0`. Opt-out, CI and piped runs print neither                                                     | `a_newer_cached_release_is_mentioned` in `tests/update_notice.rs`; `check_reports_a_newer_release_and_caches_it` in `tests/upgrade.rs` (PR 5) |
-| CJ13 | `bnto upgrade` shows what changed        | `bnto upgrade` on a cargo install (fake cargo), with a new binary that has 99.0.0's notes and with one that doesn't | After "Upgraded …": the new binary's notes, or `What's new in 99.0.0: https://bnto.io/changelog#99.0.0` and never the child's error; exit 0 both ways. A failed install prints neither | `cj13_*` and `a_failed_cargo_install_says_so` in `tests/upgrade.rs` (PR 5)                                                                    |
+| #    | Journey                                  | Steps                                                                                                               | Pass Criteria                                                                                                                                                                          | Test / PR                                                                                                                                         |
+| ---- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CJ10 | Read what changed, offline               | `bnto changelog`, then `bnto changelog 0.18.0` and `bnto changelog v0.18.0`                                         | The running version's notes, then 0.18.0's, on stdout; exit 0; no network                                                                                                              | `cj10_*` in `tests/cli/changelog_command.rs` (PR 4)                                                                                               |
+| CJ11 | Ask for a version this bnto doesn't have | `bnto changelog 0.0.1`, then `bnto changelog 99.0.0`                                                                | Both exit 1 with nothing on stdout. The older one names the versions covered; the newer one gives `https://bnto.io/changelog#99.0.0` and `bnto upgrade`                                | `cj11_*` in `tests/cli/changelog_command.rs` (PR 4)                                                                                               |
+| CJ12 | The update notice links what changed     | With a cached 99.0.0, `bnto list` in a terminal; then `bnto upgrade --check`                                        | Both print the unchanged first line, then `What's new: https://bnto.io/changelog#99.0.0`. Opt-out, CI and piped runs print neither                                                     | `a_newer_cached_release_is_mentioned` in `tests/cli/update_notice.rs`; `check_reports_a_newer_release_and_caches_it` in `tests/upgrade.rs` (PR 5) |
+| CJ13 | `bnto upgrade` shows what changed        | `bnto upgrade` on a cargo install (fake cargo), with a new binary that has 99.0.0's notes and with one that doesn't | After "Upgraded …": the new binary's notes, or `What's new in 99.0.0: https://bnto.io/changelog#99.0.0` and never the child's error; exit 0 both ways. A failed install prints neither | `cj13_*` and `a_failed_cargo_install_says_so` in `tests/upgrade.rs` (PR 5)                                                                        |
 
 **Update `.claude/journeys/tui.md`'s TJ10** (Upgrade notice, l.57). Its pass criteria become: the status line shows `bnto X: U upgrade · bnto changelog`. Its test, `tj10_a_newer_release_shows_in_the_status_line` (`tests/tui_journeys.rs:260-265`), waits for that text (PR 5).

@@ -97,7 +97,7 @@ Both nest: a loop inside a branch inside a loop. Auto-iteration needs nothing ex
   - in a flat chain it sees nothing;
   - a nested loop sees both frames.
 - **`file-copy` units**, with a context whose `held_elsewhere` names a path: `overwrite` and `newer` onto that path are refused, while `skip`, `rename` and a copy onto its own source are not.
-- **CLI**, in `bnto/tests/write_into_source_folder.rs`:
+- **CLI**, in `bnto/tests/cli/write_into_source_folder.rs`:
   - rows 2 to 4 and 6 keep `BBBB` and fail with the refusal;
   - the in-place compress loop above still runs. That's the guard against over-refusal.
 - **`RunScope`:** the forwarding test.
@@ -206,4 +206,4 @@ Whether `file-move` and `file-delete` should also refuse a source `held_elsewher
 
 - **`bnto-core`:** `executor/tests/held_files.rs` (loop, finished iteration under its new name, nested loop, flat chain, fan-out branch, write log), `held.rs` and `run_scope.rs` unit tests.
 - **`bnto-file`:** `copy_batch/held_tests.rs` (refusals for `overwrite`, `newer` and a dry run; skip and rename allowed; in place allowed; writes recorded).
-- **CLI:** `bnto/tests/copy_held_files.rs` (the loop in both orders, `newer`, fan-out, the mid-loop message, and in-place compression flat and in a loop).
+- **CLI:** `bnto/tests/cli/copy_held_files.rs` (the loop in both orders, `newer`, fan-out, the mid-loop message, and in-place compression flat and in a loop).

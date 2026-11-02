@@ -291,9 +291,14 @@ src/
         +-- file_list.rs   # File listing widget
         +-- status_line.rs # Bottom status bar
 tests/
-+-- cli_commands.rs        # Integration tests for CLI commands
-+-- golden_tests.rs        # Golden tests (byte-exact output verification)
-+-- recipe_tests.rs        # Integration tests for recipe execution
++-- cli/                   # CLI integration tests: one binary, each file a module of main.rs
+|   +-- cli_commands.rs    # CLI commands
+|   +-- golden_tests.rs    # Golden tests (byte-exact output verification)
+|   +-- recipe_tests.rs    # Recipe execution
++-- shell_security/        # shell-run security suite (its own binary)
++-- tui_journeys.rs        # TUI journeys in a real pseudo-terminal (its own binary)
++-- upgrade.rs             # `bnto upgrade` with a fake cargo (its own binary)
++-- tui/                   # The journeys' terminal harness
 +-- helpers/               # Shared test helpers (fixtures, temp dirs)
 ```
 

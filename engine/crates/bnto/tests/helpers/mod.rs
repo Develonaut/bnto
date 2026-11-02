@@ -1,5 +1,5 @@
 // Shared helpers for CLI integration tests.
-// Each test file compiles as a separate crate — not all helpers are used by every file.
+// Not every test binary uses every helper.
 #![allow(dead_code)]
 
 mod sandbox;

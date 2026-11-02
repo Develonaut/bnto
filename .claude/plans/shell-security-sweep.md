@@ -38,7 +38,7 @@ User decisions:
 **PR 1, `test/shell-each-macos-path`: Expect the resolved work dir in `shell_each` on macOS.**
 
 - Test-only change. On macOS `getcwd` returns `/private/var/...`.
-- At `tests/shell_each.rs:76-78`, build the expected root with `if cfg!(unix) { canonicalize } else { as-is }`. On Windows, canonicalizing would yield `\\?\`.
+- At `tests/cli/shell_each.rs:76-78`, build the expected root with `if cfg!(unix) { canonicalize } else { as-is }`. On Windows, canonicalizing would yield `\\?\`.
 
 **PR 2, `fix/tui-consent-gate` (SEC-19): Ask for consent in the TUI before running an untrusted shell recipe.**
 
