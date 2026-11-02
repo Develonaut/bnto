@@ -14,7 +14,7 @@
 
 Agreed with Ryan on October 30, 2026, replacing the October 27 order's batches 5–9. Take one batch at a time, one PR per issue (or per tightly coupled pair), and finish a batch before starting the next. When an issue is fixed or a new one is logged, update this list in the same PR.
 
-Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Done, October 30, 2026: ISS-58, and ISS-35 for five nodes (#821). Done, October 31, 2026: ISS-109 (#823), ISS-110 (#824), ISS-108 (#825). Done, November 1, 2026: ISS-111 (#828), closing batch 5, loop semantics. Done, November 2, 2026: batch 5d, small build footprint (ISS-120: #833, #834, #836). Batches keep their numbers.
+Done, October 27, 2026: batch 1, engine file operations (ISS-83 #803, ISS-87 #804, ISS-82 #805); batch 2, TUI correctness (ISS-98 #806, ISS-66 #807, ISS-97 #808, ISS-101 #809, ISS-102 #810). Done, October 29, 2026: batch 3, checks before a run starts (ISS-75 #811, ISS-74 #812, ISS-96 #813, ISS-79 #814, ISS-73 #815); batch 4, engine file nodes (ISS-17 #816, ISS-34 #817, ISS-33 #818, ISS-100 #819, ISS-107 #820). Done, October 30, 2026: ISS-58, and ISS-35 for five nodes (#821). Done, October 31, 2026: ISS-109 (#823), ISS-110 (#824), ISS-108 (#825). Done, November 1, 2026: ISS-111 (#828), closing batch 5, loop semantics. Done, November 2, 2026: batch 5d, small build footprint (ISS-120: #833, #834, #836); ISS-31 (#837), by retiring Darkmatter and excluding its hosts in PostHog's test-account filters. Batches keep their numbers.
 
 Batches group issues that share code and verification, so each runs while its build and test setup is warm: the engine batches (5–7) first, then the web batches (8–10; batch 10's ISS-12 is the CLI's telemetry), then codegen and tooling. Within that, silent wrong results come first and hygiene last.
 
@@ -32,10 +32,6 @@ Batches group issues that share code and verification, so each runs while its bu
 
 After batch 6, the rest of the template-filters plan (the filters themselves, a feature rather than a defect) can run straight on or after batch 12; Ryan decides when.
 
-**Waiting on Ryan:**
-
-- ISS-31: move the other app (Darkmatter) to a PostHog project of its own. That's outside this repo; the issue closes once the review's `$host` breakdown shows only bnto.io.
-
 ## Open issues
 
 | ID      | Issue                                                                                                                                        | Area            | Status                                           |
@@ -45,7 +41,6 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-12  | Released CLIs send no telemetry: the PostHog key is never set                                                                                | cli             | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18  | A Windows process test times out waiting 20 s for PowerShell                                                                                 | engine test     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-29  | Errors on bnto.io go unseen: exception capture is off                                                                                        | core            | Open                                             |
-| ISS-31  | Another app's events land in bnto.io's PostHog project                                                                                       | analytics       | Open                                             |
 | ISS-35  | `file-rename` and `file-decode` fill their own tokens over values the executor filled                                                        | engine          | Open                                             |
 | ISS-37  | The homepage loads ~500 KB of JS that competes with its CSS                                                                                  | web perf        | Open                                             |
 | ISS-44  | In the browser, a renamed or removed param's error says to run `bnto migrate`                                                                | web             | Open                                             |
@@ -119,15 +114,6 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 - **Fix:** enable exception capture, and give every run exactly one outcome event.
 - **Decided (Ryan, October 30, 2026):** turn on exception autocapture with a `before_send` that removes message text, since an engine error can name the user's files (ISS-57's `bedroom.jpg`); keep the type and stack.
 - **Regression test:** a unit test on the PostHog adapter's init options that exception capture is on, and a check that every run emits exactly one of `recipe_run_completed` / `recipe_run_failed`.
-
-### ISS-31: Another app's events land in bnto.io's PostHog project
-
-**Found:** October 24, 2026 (PostHog review).
-
-- **What PostHog shows:** 190 events (`$pageview`, `$web_vitals` and a custom event) from three hosts outside bnto.io, June 14 to October 7, 2026, arriving through a different `/ingest` proxy. The project's test-account filters exclude only localhost, an internal cohort and one IP, so these count in web analytics.
-- **Fix:** this is a PostHog config fix, not a repo change. Either give that app its own project key, or add a `$host` filter (`^(www\.)?bnto\.io$`) to the test-account filters.
-- **Decided (Ryan, October 30, 2026):** move the other app (Darkmatter, which shares the project) to a project of its own. A `$host` test-account filter would also hide Darkmatter's events from its own filtered views.
-- **No repo test:** it's project config. After the fix, rerun the review's `$host` breakdown to confirm only bnto.io remains.
 
 ### ISS-35: `file-rename` and `file-decode` fill their own tokens over values the executor filled
 
