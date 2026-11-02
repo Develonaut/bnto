@@ -6,9 +6,9 @@
  * from other builds don't count. Binaries (`bnto`, `tonkotsu-demo`) and
  * bnto-wasm's library aren't counted: cargo names them without a unit hash.
  * Catches full debug info coming back or test binaries multiplying, each of
- * which links the whole engine. It then marks
- * those units as used (markUsed.ts), so the prune keeps the build `task check`
- * makes most even where a read doesn't count as use.
+ * which links the whole engine. It then marks those units as used
+ * (markUsed.ts), so the prune keeps the build `task check` makes most, even
+ * where a read doesn't count as use.
  *   pnpm exec tsx scripts/target/checkTestBuildSize.ts [engine folder]
  * The engine folder defaults to `engine`; the target folder is
  * `$CARGO_TARGET_DIR`, else `<engine>/target`.
