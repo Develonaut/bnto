@@ -2,6 +2,9 @@
  * The units a cargo build is made of, from its `--message-format=json`
  * output (ISS-120). Cargo reports every artifact and build script run, fresh
  * ones too, so a no-op rebuild lists the whole build without compiling anything.
+ * Files without a unit hash name no unit and are skipped: a binary's copy
+ * (`target/debug/bnto`, which other builds overwrite, so it can't say which
+ * unit it came from) and bnto-wasm's library (a cdylib crate's files carry no hash).
  */
 
 import { unitKey } from "./unitKey.ts";

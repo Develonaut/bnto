@@ -5,7 +5,7 @@
  * machine). Something still in use is rebuilt by the next build that needs it.
  * `task check` runs it; `task clean:stale` runs it alone.
  *   pnpm exec tsx scripts/target/pruneTarget.ts [--days N] [--dry-run] [target]
- * The target defaults to `engine/target`, from the repo root.
+ * The target defaults to `$CARGO_TARGET_DIR`, else `engine/target` from the repo root.
  */
 
 import { rmSync } from "node:fs";
@@ -23,7 +23,11 @@ function options() {
   });
   const days = Number(values.days);
   if (!(days >= 0)) throw new Error(`--days takes a number of days, not "${values.days}"`);
-  return { days, dryRun: values["dry-run"], target: positionals[0] ?? "engine/target" };
+  return {
+    days,
+    dryRun: values["dry-run"],
+    target: positionals[0] ?? (process.env.CARGO_TARGET_DIR || "engine/target"),
+  };
 }
 
 // A file a running program holds (Windows) can't go: say so, and go on.

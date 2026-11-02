@@ -3,8 +3,12 @@
  * (testBuildBudget.ts, ISS-120). It asks cargo for the units of
  * `cargo test --workspace` (a no-op after the tests ran, otherwise a build)
  * and adds up what those units hold in the target folder, so units left over
- * from other builds don't count. Catches full debug info coming back or test
- * binaries multiplying, each of which links the whole engine.
+ * from other builds don't count. Binaries (`bnto`, `tonkotsu-demo`) and
+ * bnto-wasm's library aren't counted: cargo names them without a unit hash.
+ * Catches full debug info coming back or test binaries multiplying, each of
+ * which links the whole engine. It then marks
+ * those units as used (markUsed.ts), so the prune keeps the build `task check`
+ * makes most even where a read doesn't count as use.
  *   pnpm exec tsx scripts/target/checkTestBuildSize.ts [engine folder]
  * The engine folder defaults to `engine`; the target folder is
  * `$CARGO_TARGET_DIR`, else `<engine>/target`.
@@ -13,6 +17,7 @@
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { artifactKeys } from "./artifactKeys.ts";
+import { markUsed } from "./markUsed.ts";
 import { targetEntries } from "./targetEntries.ts";
 import { TEST_BUILD_BUDGET_MB } from "./testBuildBudget.ts";
 
@@ -27,11 +32,10 @@ function buildOutput(engine: string): string {
 
 function buildMegabytes(engine: string): number {
   const keys = artifactKeys(buildOutput(engine));
-  const target = process.env.CARGO_TARGET_DIR || join(engine, "target");
-  const bytes = targetEntries(target)
-    .filter((entry) => keys.has(entry.key))
-    .reduce((sum, entry) => sum + entry.bytes, 0);
-  return Math.round(bytes / 1e6);
+  const entries = targetEntries(process.env.CARGO_TARGET_DIR || join(engine, "target"));
+  const build = entries.filter((entry) => keys.has(entry.key));
+  markUsed(build, new Date());
+  return Math.round(build.reduce((sum, entry) => sum + entry.bytes, 0) / 1e6);
 }
 
 function main() {

@@ -4,7 +4,7 @@
  */
 
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { linkSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
@@ -56,6 +56,20 @@ describe("targetEntries", () => {
     const build = found().find((e) => e.path.startsWith("debug/build/"));
     assert.equal(build?.bytes, 4);
     assert.equal(build?.lastUsed, NEW.getTime());
+  });
+
+  it("counts a file with several names once, for the unit's own entry", () => {
+    // rustc hard-links incremental work products into deps/.
+    write(`debug/.fingerprint/x-${A}/lib-x`, 0);
+    write(`debug/deps/x-${A}.x.cgu.0.rcgu.o`, 6);
+    mkdirSync(join(target, "debug/incremental/x-0abc/s-1"), { recursive: true });
+    linkSync(
+      join(target, `debug/deps/x-${A}.x.cgu.0.rcgu.o`),
+      join(target, "debug/incremental/x-0abc/s-1/a.o"),
+    );
+    const bytes = Object.fromEntries(found().map((e) => [e.path, e.bytes]));
+    assert.equal(bytes[`debug/deps/x-${A}.x.cgu.0.rcgu.o`], 6);
+    assert.equal(bytes["debug/incremental/x-0abc"], 0);
   });
 
   it("keys each incremental cache by its own path", () => {
