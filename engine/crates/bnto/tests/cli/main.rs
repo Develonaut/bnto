@@ -2,9 +2,11 @@
 // test binary, linked and cached apart; one binary is one link and one
 // incremental cache (ISS-120). A new test file goes in as a `mod` here.
 //
-// Two suites keep their own binaries: the TUI journeys (`tui_journeys`), which
+// Three suites keep their own binaries. The TUI journeys (`tui_journeys`)
 // time a real terminal and would share their test threads with every test
-// here, and the shell-run security suite (`shell_security`).
+// here. `upgrade` writes executables and runs them, which only works while
+// every spawn in its process takes its lock (`EXEC_FILES`). The shell-run
+// security suite (`shell_security`) was one binary already.
 
 #[path = "../helpers/mod.rs"]
 mod helpers;
@@ -61,6 +63,5 @@ mod telemetry_setting;
 mod unfilled_fields;
 mod unfilled_params;
 mod update_notice;
-mod upgrade;
 mod when_guard;
 mod write_into_source_folder;

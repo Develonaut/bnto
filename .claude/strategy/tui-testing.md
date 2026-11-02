@@ -75,7 +75,7 @@ Goal: the TUI gets the same two layers the web has. Agents can then validate a T
   - **TJ3:** run Compress Images on a fixture through the picker and reach the results screen
 
 **RED tests:** TJ1–TJ3. TJ2 fails against the code before #680.
-**Verification:** `cargo test -p bnto --test tui` on Linux, macOS and Windows (CI's `rust-windows` job, over ConPTY).
+**Verification:** `cargo test -p bnto --test tui_journeys` on Linux, macOS and Windows (CI's `rust-windows` job, over ConPTY).
 **Count changes:** none.
 
 ## PR 3: Write the TUI journey matrix and the agent workflow

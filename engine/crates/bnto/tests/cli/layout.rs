@@ -1,6 +1,7 @@
 // Keeps the CLI's integration tests in one binary (ISS-120): a file in
 // `tests/cli/` that `main.rs` doesn't name never compiles, so its tests would
-// silently never run, and a new top-level `tests/*.rs` is a binary of its own.
+// silently never run, and a new top-level `tests/*.rs` or `tests/*/main.rs`
+// is a binary of its own.
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -42,12 +43,25 @@ fn every_file_in_tests_cli_is_a_module_of_main() {
     );
 }
 
+/// Folders in `dir` that hold a `main.rs`, each of which cargo builds as a
+/// test binary.
+fn binary_folders(dir: &Path) -> BTreeSet<String> {
+    std::fs::read_dir(dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.join("main.rs").is_file())
+        .map(|path| path.file_name().unwrap().to_string_lossy().into_owned())
+        .collect()
+}
+
 #[test]
-fn the_only_top_level_test_file_is_the_tui_journeys() {
-    let top_level = rust_stems(&tests_dir());
-    assert_eq!(
-        top_level,
-        BTreeSet::from(["tui_journeys".to_owned()]),
-        "a new CLI test file goes in tests/cli/ as a module of main.rs, not in tests/ as its own binary"
-    );
+fn only_the_listed_suites_are_test_binaries_of_their_own() {
+    let reason = "a new CLI test file goes in tests/cli/ as a module of main.rs, \
+                  not in tests/ as its own binary (tests/cli/main.rs says which suites keep one)";
+    let files = rust_stems(&tests_dir());
+    let expected_files = BTreeSet::from(["tui_journeys".to_owned(), "upgrade".to_owned()]);
+    assert_eq!(files, expected_files, "{reason}");
+    let folders = binary_folders(&tests_dir());
+    let expected_folders = BTreeSet::from(["cli".to_owned(), "shell_security".to_owned()]);
+    assert_eq!(folders, expected_folders, "{reason}");
 }

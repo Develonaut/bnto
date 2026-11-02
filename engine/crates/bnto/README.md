@@ -297,6 +297,7 @@ tests/
 |   +-- recipe_tests.rs    # Recipe execution
 +-- shell_security/        # shell-run security suite (its own binary)
 +-- tui_journeys.rs        # TUI journeys in a real pseudo-terminal (its own binary)
++-- upgrade.rs             # `bnto upgrade` with a fake cargo (its own binary)
 +-- tui/                   # The journeys' terminal harness
 +-- helpers/               # Shared test helpers (fixtures, temp dirs)
 ```

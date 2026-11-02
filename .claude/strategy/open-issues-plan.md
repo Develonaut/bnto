@@ -227,7 +227,7 @@ pub fn dry_run_recipe(recipe_arg: &str, definition_json: &str, inputs: &[String]
 ### Verification
 
 ```bash
-cd engine && cargo test -p bnto --bin bnto recipe_source && cargo test -p bnto --bin bnto dry_run && cargo test -p bnto --no-fail-fast --test dry_run_path --test cli_commands --test unfilled_fields
+cd engine && cargo test -p bnto --bin bnto recipe_source && cargo test -p bnto --bin bnto dry_run && cargo test -p bnto --no-fail-fast --test cli -- dry_run_path:: cli_commands:: unfilled_fields::
 task check
 ```
 
@@ -263,7 +263,7 @@ A full run of the CLI tests adds no session logs to the real `~/.bnto`:
 before=$(ls ~/.bnto/state/logs | wc -l); (cd engine && cargo test -p bnto --tests --no-fail-fast); test "$before" -eq "$(ls ~/.bnto/state/logs | wc -l)"
 ```
 
-It fails today (`--test edges --test run_json` alone added 3).
+It fails today (`--test cli -- edges:: run_json::` alone added 3).
 
 ### Verification
 
@@ -286,7 +286,7 @@ task tui:test
 - **Move the remaining 10 files onto `Sandbox`.** They build partial sandboxes today: `when_guard`, `scoped_requires`, `dogfood_recipes`, three `telemetry_*`, three `keep_awake*` and `shell_security/support.rs`. Some never set HOME, or leave telemetry able to touch the real config.
 - **Enforce it, two ways:**
   - `bnto_bin()` becomes private to `helpers/sandbox.rs`, which is a compile-time block.
-  - `tests/sandboxed_spawns.rs` walks `tests/**/*.rs` and fails, naming each file, when `CARGO_BIN_EXE_bnto` appears outside `helpers/sandbox.rs` and the three tests that need the binary path itself (`tui/harness.rs`, `update_notice.rs`, `upgrade.rs`), each of which already sandboxes in full.
+  - `tests/cli/sandboxed_spawns.rs` walks `tests/**/*.rs` and fails, naming each file, when `CARGO_BIN_EXE_bnto` appears outside `helpers/sandbox.rs` and the three tests that need the binary path itself (`tui/harness.rs`, `cli/update_notice.rs`, `upgrade.rs`), each of which already sandboxes in full.
 
 ### Files (~1 new, ~13 modified)
 
