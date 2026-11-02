@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-120**.
+- **IDs never get reused.** The next one is **ISS-121**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
@@ -22,6 +22,7 @@ Batches group issues that share code and verification, so each runs while its bu
 | --- | -------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 5b  | shell-run token checks     | ISS-115, ISS-116                                            | Security: SEC-27's count misses a shell-run token after a stray `{`, so a value can be filled twice (ISS-115); a URL holding `{{input}}` is filled twice (ISS-116). Found reviewing ISS-111; both on `main`. `bnto-core`'s `reserved_tokens.rs` and `bnto-shell`                                                                                                                                                                 |
 | 5c  | Windows shell and pty runs | ISS-118, ISS-117, ISS-119                                   | On Windows a PowerShell step is slow to exit in the TUI, by about 25 s (ISS-118, found by the journeys #829 turned on); `update_notice`'s pty tests still skip Windows (ISS-117); many other tests run only on some OSes with no record of why (ISS-119). After the per-OS CI workflows ([PLAN.md](PLAN.md)), which make a Windows run a branch run                                                                              |
+| 5d  | Small build footprint      | ISS-120 (three PRs)                                         | `engine/target` reached 57 GB on one machine, and nothing bounds it on any other. Lighter debug info, one integration-test binary instead of 55, then automatic pruning from `task check` with a size guard. Ryan, November 1, 2026: the repo's workflow keeps its footprint small on every machine, without anyone cleaning by hand                                                                                             |
 | 6   | Template unification       | ISS-35                                                      | `file-rename` and `file-decode` move onto the shared one-pass fill. These are the first PRs of the template-filters plan ([PLAN.md backlog](PLAN.md#backlog)), which must unify the interpolators before adding filters; write that plan first                                                                                                                                                                                   |
 | 7   | TUI and CLI behavior       | ISS-103, ISS-104, ISS-113, ISS-114, ISS-45                  | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a terminal left in raw mode when setup fails (ISS-113); tonkotsu acting on key releases (ISS-114); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                         |
 | 8   | Web performance            | ISS-99, then ISS-37                                         | Public pages render per request, which costs compute that static pages don't (ISS-99), then the homepage's ~500 KB of JS (mobile LCP 4.9 s, ISS-37). Moved up from last: first of the web batches. Its own plan, profiling first; ISS-99 first because it changes what ISS-37 measures                                                                                                                                           |
@@ -76,6 +77,7 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-117 | The `update_notice` pty tests are ignored on Windows: unanswered ConPTY cursor query, and no `USERPROFILE`                                   | cli test        | Open                                             |
 | ISS-118 | On Windows a PowerShell step is slow to exit in the TUI (~25 s): one streaming to stderr times out                                           | cli tui         | Open                                             |
 | ISS-119 | Many CLI tests run only on some OSes, with no list saying which are on purpose                                                               | cli test        | Open                                             |
+| ISS-120 | `engine/target` grows without bound: it reached 57 GB on one machine                                                                         | tooling         | In progress (chore/lean-dev-builds)              |
 
 ---
 
@@ -421,3 +423,21 @@ Some are right to be OS-specific (a POSIX shell feature, macOS case-insensitivit
 
 - **Fix:** sort each gate into "by design" (with its reason) or "should run everywhere" (fix it, as #829 did for the journeys). Then have the per-OS CI workflows (PLAN.md) compare each OS's `cargo test -- --list` and `-- --list --ignored` against Linux's, with the by-design gates as the allowlist, so a test can't leave an OS unnoticed.
 - **Regression test:** the per-OS comparison fails on a test that runs on Linux but not on Windows or macOS without an allowlist entry.
+
+### ISS-120: `engine/target` grows without bound
+
+**Found:** November 1, 2026 (checking for temp-file bloat on macOS, while #831 fixed leaked test temp folders).
+
+On Ryan's Mac `engine/target` was 57 GB: 34 GB `debug` (17 GB of it `debug/incremental`), 21 GB `wasm32-unknown-unknown` (20 GB its `debug`), 1.3 GB `release`, 1.1 GB `fast`. Cargo never deletes what it built before:
+
+- **Stale test binaries:** `target/debug/deps` held 594 test executables, though one build makes about 90 (84 integration-test files, 55 of them the `bnto` crate's, each its own binary, plus one per library and binary). A new copy is written whenever the build's settings change (another `cargo test -p` selection, clippy versus test, a feature or toolchain change), and each statically links the engine, at 30–67 MB.
+- **Full debug info:** the workspace sets nothing for `[profile.dev]`, so dev and test builds carry full debug info for every crate, dependencies included.
+- **Caches:** incremental compile caches (`debug/incremental`, the WASM tests' `debug`) are never pruned.
+
+Ryan (November 1, 2026): the repo's workflow should keep this small on any machine, for any contributor, without anyone cleaning by hand.
+
+- **Fix, three PRs (Work order batch 5d):**
+  1. `debug = "line-tables-only"` for the workspace's crates in dev and test builds (stack traces keep file and line) and no debug info for dependencies (a panic inside one shows no file and line, accepted: our code's frames are the ones that matter). A fresh workspace test build on macOS went from 3.0 GB to 2.3 GB.
+  2. One integration-test binary for the `bnto` crate (`tests/cli/main.rs` with the files as modules) instead of 55: one link, a fraction of the disk.
+  3. Automatic pruning: a `task clean:stale` that removes build artifacts and incremental caches untouched for a week, run from `task check`, and a size guard that fails when a fresh build of the tests outgrows its budget.
+- **Regression test:** the size guard; each PR measures a fresh `cargo test --workspace --no-run` build before and after.
