@@ -36,6 +36,8 @@ tasks:
   check:
     desc: Run all quality checks (Rust + TypeScript)
     cmds:
+      - echo "=== prune stale build files ==="
+      - task: clean:stale
       - echo "=== rust lint ==="
       - task: wasm:lint
       - echo "=== rust tests (unit + WASM integration) ==="
@@ -44,6 +46,8 @@ tasks:
       - task: cli:test
       - echo "=== tui snapshots + journeys ==="
       - task: tui:test
+      - echo "=== test build size ==="
+      - task: check:test-build-size
       - echo "=== typescript build ==="
       - task: ui:build
       - echo "=== typescript tests ==="
@@ -69,6 +73,15 @@ tasks:
       - task: check:nonexistent-paths
       - task: check:extension-splits
       - echo "=== all checks passed ==="
+
+  # Build footprint (ISS-120): cargo never deletes what it built before
+  clean:stale:
+    desc: Delete build units and incremental caches in engine/target that no build used for 7 days
+    cmds: [pnpm exec tsx scripts/target/pruneTarget.ts]
+
+  check:test-build-size:
+    desc: Fail when one build of the engine's tests outgrows its budget (scripts/target/testBuildBudget.ts)
+    cmds: [pnpm exec tsx scripts/target/checkTestBuildSize.ts]
 
   # CLI tasks (engine/crates/bnto)
   cli:tui:

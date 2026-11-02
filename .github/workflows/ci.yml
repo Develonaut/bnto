@@ -126,6 +126,12 @@ jobs:
           # The keep-awake round trip must really hold a sleep lock.
           BNTO_REQUIRE_KEEP_AWAKE: "1"
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: EXPERIMENT test build size (Linux)
+        run: node --no-warnings ../scripts/target/checkTestBuildSize.ts .
+
       # The TUI's quality gate, like the web's E2E suite: screen snapshots
       # plus journeys driving the real `bnto tui` in a pseudo-terminal. Already
       # run above; repeated by name so a TUI failure reads as one
@@ -223,6 +229,15 @@ jobs:
       - name: Tests left no temp files (scripts/check-test-tmp.sh)
         shell: bash
         run: sh ../scripts/check-test-tmp.sh check
+
+      # Here, where the tests just ran the build it measures, so it adds no
+      # build of its own. Node runs the TypeScript itself: no pnpm install.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Test build size (scripts/target/testBuildBudget.ts)
+        run: node --no-warnings ../scripts/target/checkTestBuildSize.ts .
 
   # keep-awake's macOS branch drives caffeinate and osascript, so its round
   # trips (bnto/tests/cli/keep_awake.rs) only run on a Mac. Free on a public repo.
