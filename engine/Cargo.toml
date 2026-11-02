@@ -97,13 +97,15 @@ vt100 = "0.18"
 [profile.dev]
 # Dev and test builds (tests inherit this profile, and so do wasm-pack's
 # debug builds) keep only file-and-line debug info for the workspace's own
-# crates, enough for backtraces. Full debug info roughly tripled every test
-# binary, each of which links the whole engine (ISS-120). For a debugger
-# session, build once with `CARGO_PROFILE_DEV_DEBUG=full`.
+# crates, enough for backtraces. Each of the ~90 test binaries links the whole
+# engine; with this and the dependency setting below, a fresh test build on
+# macOS went from 3.0 GB to 2.3 GB (ISS-120). For a debugger session on our crates, build once with
+# `CARGO_PROFILE_DEV_DEBUG=full`.
 debug = "line-tables-only"
 
 [profile.dev.package."*"]
-# Dependencies carry no debug info at all.
+# Dependencies carry no debug info at all, so a panic inside one shows no file
+# and line; our own frames still do.
 debug = false
 
 [profile.release]

@@ -430,14 +430,14 @@ Some are right to be OS-specific (a POSIX shell feature, macOS case-insensitivit
 
 On Ryan's Mac `engine/target` was 57 GB: 34 GB `debug` (17 GB of it `debug/incremental`), 21 GB `wasm32-unknown-unknown` (20 GB its `debug`), 1.3 GB `release`, 1.1 GB `fast`. Cargo never deletes what it built before:
 
-- **Stale test binaries:** `target/debug/deps` held 594 test executables, though one build makes about 70 (the `bnto` crate alone has 55 integration-test files, each its own binary). A new copy is written whenever the build's settings change (another `cargo test -p` selection, clippy versus test, a feature or toolchain change), and each statically links the engine, at 30–67 MB.
-- **Full debug info:** the workspace sets nothing for `[profile.dev]`, so dev and test builds carry full debug info, which roughly doubles or triples each binary.
+- **Stale test binaries:** `target/debug/deps` held 594 test executables, though one build makes about 90 (84 integration-test files, 55 of them the `bnto` crate's, each its own binary, plus one per library and binary). A new copy is written whenever the build's settings change (another `cargo test -p` selection, clippy versus test, a feature or toolchain change), and each statically links the engine, at 30–67 MB.
+- **Full debug info:** the workspace sets nothing for `[profile.dev]`, so dev and test builds carry full debug info for every crate, dependencies included.
 - **Caches:** incremental compile caches (`debug/incremental`, the WASM tests' `debug`) are never pruned.
 
 Ryan (November 1, 2026): the repo's workflow should keep this small on any machine, for any contributor, without anyone cleaning by hand.
 
 - **Fix, three PRs (Work order batch 5d):**
-  1. `debug = "line-tables-only"` for dev and test builds: stack traces keep file and line, binaries shrink.
+  1. `debug = "line-tables-only"` for the workspace's crates in dev and test builds (stack traces keep file and line) and no debug info for dependencies (a panic inside one shows no file and line, accepted: our code's frames are the ones that matter). A fresh workspace test build on macOS went from 3.0 GB to 2.3 GB.
   2. One integration-test binary for the `bnto` crate (`tests/cli/main.rs` with the files as modules) instead of 55: one link, a fraction of the disk.
   3. Automatic pruning: a `task clean:stale` that removes build artifacts and incremental caches untouched for a week, run from `task check`, and a size guard that fails when a fresh build of the tests outgrows its budget.
 - **Regression test:** the size guard; each PR measures a fresh `cargo test --workspace --no-run` build before and after.
