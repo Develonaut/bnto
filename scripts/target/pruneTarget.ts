@@ -5,12 +5,13 @@
  * machine). Something still in use is rebuilt by the next build that needs it.
  * `task check` runs it; `task clean:stale` runs it alone.
  *   pnpm exec tsx scripts/target/pruneTarget.ts [--days N] [--dry-run] [target]
- * The target defaults to `$CARGO_TARGET_DIR`, else `engine/target` from the repo root.
+ * The target defaults to the one cargo builds `engine/` into (targetDir.ts), from the repo root.
  */
 
 import { rmSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { staleEntries } from "./staleEntries.ts";
+import { targetDir } from "./targetDir.ts";
 import { type TargetEntry, targetEntries } from "./targetEntries.ts";
 
 function options() {
@@ -22,11 +23,14 @@ function options() {
     },
   });
   const days = Number(values.days);
-  if (!(days >= 0)) throw new Error(`--days takes a number of days, not "${values.days}"`);
+  if (!(days >= 0)) {
+    console.error(`--days takes a number of days, not "${values.days}"`);
+    process.exit(2);
+  }
   return {
     days,
     dryRun: values["dry-run"],
-    target: positionals[0] ?? (process.env.CARGO_TARGET_DIR || "engine/target"),
+    target: positionals[0] ?? targetDir("engine"),
   };
 }
 

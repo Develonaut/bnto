@@ -5,19 +5,23 @@
  * and adds up what those units hold in the target folder, so units left over
  * from other builds don't count. Binaries (`bnto`, `tonkotsu-demo`) and
  * bnto-wasm's library aren't counted: cargo names them without a unit hash.
+ * Nor are object files: macOS keeps them beside the binaries for debug info,
+ * and keeps earlier rebuilds' objects inside units still in use (ISS-121), so
+ * counting them would grow with every rebuild. Debug info growth still shows
+ * on Linux and Windows, which keep it in binaries and `.pdb` files.
  * Catches full debug info coming back or test binaries multiplying, each of
  * which links the whole engine. It then marks those units as used
  * (markUsed.ts), so the prune keeps the build `task check` makes most, even
  * where a read doesn't count as use.
  *   pnpm exec tsx scripts/target/checkTestBuildSize.ts [engine folder]
- * The engine folder defaults to `engine`; the target folder is
- * `$CARGO_TARGET_DIR`, else `<engine>/target`.
+ * The engine folder defaults to `engine`; the target folder is the one cargo
+ * builds into (targetDir.ts).
  */
 
 import { execFileSync } from "node:child_process";
-import { join } from "node:path";
 import { artifactKeys } from "./artifactKeys.ts";
 import { markUsed } from "./markUsed.ts";
+import { targetDir } from "./targetDir.ts";
 import { targetEntries } from "./targetEntries.ts";
 import { TEST_BUILD_BUDGET_MB } from "./testBuildBudget.ts";
 
@@ -32,10 +36,14 @@ function buildOutput(engine: string): string {
 
 function buildMegabytes(engine: string): number {
   const keys = artifactKeys(buildOutput(engine));
-  const entries = targetEntries(process.env.CARGO_TARGET_DIR || join(engine, "target"));
-  const build = entries.filter((entry) => keys.has(entry.key));
+  const target = targetDir(engine);
+  const build = targetEntries(target).filter((entry) => keys.has(entry.key));
+  const counted = build.filter((entry) => !entry.path.endsWith(".o"));
+  if (keys.size > 0 && build.length === 0) {
+    throw new Error(`cargo listed ${keys.size} units, and none of them is in ${target}`);
+  }
   markUsed(build, new Date());
-  return Math.round(build.reduce((sum, entry) => sum + entry.bytes, 0) / 1e6);
+  return Math.round(counted.reduce((sum, entry) => sum + entry.bytes, 0) / 1e6);
 }
 
 function main() {
