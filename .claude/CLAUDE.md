@@ -177,6 +177,8 @@ task wasm:fmt           # Auto-format Rust code
 task wasm:fmt:check     # Check Rust formatting (CI)
 task wasm:bench         # Run Criterion benchmarks (results in engine/target/criterion/)
 task wasm:clean         # Clean Rust build artifacts
+task clean:stale        # Delete build units and caches no build used for 7 days (task check runs it)
+task check:test-build-size  # Fail when one engine test build outgrows its budget (task check runs it)
 
 # Native CLI (via Taskfile)
 task cli:build          # Build native CLI binary (fast profile for local dev)
