@@ -271,8 +271,9 @@ impl Drop for Tui {
     fn drop(&mut self) {
         let _ = self.child.kill();
         let _ = self.child.wait();
-        // The pty closes before the folders go (field order did this too,
-        // so it's explicit here for clarity, not the fix).
+        // Close the pty before the retries below: fields only drop after
+        // this function returns. (Before the retries, field order closed it
+        // first; whether the order matters on Windows is unproven.)
         drop(self.master.take());
         remove_with_retries(self._homes.0.path());
         remove_with_retries(self._homes.1.path());
@@ -295,7 +296,9 @@ fn remove_with_retries(dir: &std::path::Path) {
         thread::sleep(Duration::from_millis(100));
     }
     if let Some(e) = last {
-        eprintln!("could not remove {}: {e}", dir.display());
+        // Straight to stderr: cargo hides `eprintln!` for tests that pass,
+        // and a leftover folder doesn't fail the test.
+        let _ = writeln!(std::io::stderr(), "could not remove {}: {e}", dir.display());
     }
 }
 
