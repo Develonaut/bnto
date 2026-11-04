@@ -69,5 +69,5 @@ fn opening_it_from_the_library_opens_the_users_copy() {
     let app = update(app, AppMessage::LibraryConfirm);
     let detail = app.detail.expect("detail opened");
     assert_eq!(detail.name, "My Compress");
-    assert_eq!(detail.kind, SourceKind::Library);
+    assert!(matches!(detail.kind, SourceKind::Library(Some(_))));
 }

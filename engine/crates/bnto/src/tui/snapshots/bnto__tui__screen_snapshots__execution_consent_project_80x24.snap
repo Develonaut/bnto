@@ -1,0 +1,27 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+      ▄▄
+      ██           ██
+      ████▄ ████▄ ▀██▀▀ ▄███▄
+      ██ ██ ██ ██  ██   ██ ██
+      ████▀ ██ ██  ██   ▀███▀
+
+
+      ╭ R U N N I N G ───────────────────────────────────────────────────╮
+      │  This recipe runs commands on your computer                      │
+      │  1 flagged path · deletes files · runs 1 command                 │
+      │                                                                  │
+      │  Recipe: Tidy Assets                                             │
+      │  Project recipe `tidy` from `/repo/.bnto/recipes/tidy.bnto.json` │
+      │                                                                  │
+      │  PATHS                                                           │
+      │    - file-list base: assets                                      │
+      │    ! file-delete base: ~/Pictures  (your home folder)            │
+      │    - shell-run searchPath: bin                                   │
+      │  COMMANDS                                                        │
+      │  ↓ more below · j/k scroll                                       │
+      ╰──────────────────────────────────────────────────────────────────╯
+      n/Esc cancel  j more  q quit  22 recipes  ·  v[version]  ·  Los Angeles

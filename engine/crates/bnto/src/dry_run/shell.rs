@@ -22,6 +22,8 @@ pub struct ShellCommandInfo {
     pub command: String,
     pub args: Vec<String>,
     pub output_mode: String,
+    /// The step's `env`, as `NAME=value` with its values as written.
+    pub env: Vec<String>,
     pub unresolved: Vec<String>,
     /// Why it won't run on this host: a `when` guard on it or a container
     /// above it that doesn't hold.
@@ -110,9 +112,15 @@ fn override_target(
 }
 
 /// A command and its args as a line that pastes into a shell, each one word.
+#[cfg(test)]
 pub fn format_command_line(cmd: &ShellCommandInfo) -> String {
-    let args = cmd.args.iter().map(|w| shell_word(w));
-    std::iter::once(program_word(&cmd.command))
+    format_words(&cmd.command, &cmd.args)
+}
+
+/// `command` and `args` as a line that pastes into a shell, each one word.
+pub fn format_words(command: &str, args: &[String]) -> String {
+    let args = args.iter().map(|w| shell_word(w));
+    std::iter::once(program_word(command))
         .chain(args)
         .collect::<Vec<_>>()
         .join(" ")
@@ -182,17 +190,28 @@ fn resolve_shell_command(node: &PipelineNode, field_values: &FieldValues) -> She
         .into_iter()
         .collect();
 
-    let node_name = node.id.clone();
-
     ShellCommandInfo {
         node_id: node.id.clone(),
-        node_name,
+        node_name: node.id.clone(),
+        env: env_pairs(&node.params),
         command,
         args,
         output_mode,
         unresolved,
         skipped: None,
     }
+}
+
+/// A step's `env` as `NAME=value`, in name order, values as the recipe
+/// wrote them (a placeholder is filled when it runs).
+fn env_pairs(params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+    let Some(serde_json::Value::Object(env)) = params.get("env") else {
+        return Vec::new();
+    };
+    let value = |v: &serde_json::Value| v.as_str().map_or_else(|| v.to_string(), str::to_string);
+    env.iter()
+        .map(|(k, v)| format!("{k}={}", value(v)))
+        .collect()
 }
 
 /// Find the first shell-run node ID in the tree.
@@ -311,6 +330,7 @@ mod tests {
     #[test]
     fn format_command_line_simple() {
         let cmd = ShellCommandInfo {
+            env: Vec::new(),
             node_id: "n1".into(),
             node_name: "Test".into(),
             command: "echo".into(),
@@ -325,6 +345,7 @@ mod tests {
     #[test]
     fn format_command_line_quotes_special() {
         let cmd = ShellCommandInfo {
+            env: Vec::new(),
             node_id: "n1".into(),
             node_name: "Test".into(),
             command: "yt-dlp".into(),
@@ -340,6 +361,7 @@ mod tests {
     /// `printf` with the one arg `arg`.
     fn printf_with(arg: &str) -> ShellCommandInfo {
         ShellCommandInfo {
+            env: Vec::new(),
             node_id: "n1".into(),
             node_name: "Test".into(),
             command: "printf".into(),

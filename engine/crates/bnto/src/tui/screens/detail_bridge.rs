@@ -9,6 +9,7 @@ use ratatui::style::Style;
 use tonkotsu::{Field, FieldState, FormModel};
 
 use super::detail::{ParamEntry, is_param_visible};
+use crate::display_text::display_text;
 use crate::tui::theme::Theme;
 
 /// Convert a ParamEntry into a tonkotsu::Field.
@@ -19,8 +20,43 @@ use crate::tui::theme::Theme;
 /// - Number with constraints → Number (with range/suffix)
 /// - Number without constraints → Text (free-form entry)
 /// - String → Text
-#[expect(clippy::too_many_lines)]
+///
+/// A recipe writes a field's label, description and option labels, so
+/// they're escaped (`display_text`) here; they never run. Values, defaults
+/// and option values stay raw, since they're what runs and what `confirm`
+/// and `visible_when` compare: the form is escaped when it's drawn
+/// (`form_display`).
 pub fn param_to_field(param: &ParamEntry) -> Field {
+    field_for(&escaped(param))
+}
+
+/// `param` with its shown text escaped.
+fn escaped(param: &ParamEntry) -> ParamEntry {
+    let shown = |s: &str| display_text(s).into_owned();
+    ParamEntry {
+        label: shown(&param.label),
+        description: param.description.as_deref().map(shown),
+        param_type: escaped_type(&param.param_type),
+        ..param.clone()
+    }
+}
+
+/// `param_type` with an enum's option labels escaped.
+fn escaped_type(param_type: &ParameterType) -> ParameterType {
+    let ParameterType::Enum { options } = param_type else {
+        return param_type.clone();
+    };
+    let option = |o: &bnto_core::metadata::OptionEntry| bnto_core::metadata::OptionEntry {
+        label: display_text(&o.label).into_owned(),
+        ..o.clone()
+    };
+    ParameterType::Enum {
+        options: options.iter().map(option).collect(),
+    }
+}
+
+#[expect(clippy::too_many_lines)]
+fn field_for(param: &ParamEntry) -> Field {
     match &param.param_type {
         ParameterType::Boolean => tonkotsu::confirm(&param.name)
             .label(&param.label)
@@ -246,6 +282,57 @@ mod tests {
     }
 
     // --- param_to_field: String ---
+
+    /// A default `display_text` would change: a tab and a zero-width joiner.
+    const RAW_DEFAULT: &str = "a\tb|\u{200d}|c";
+
+    #[test]
+    fn an_untouched_field_whose_default_needs_escaping_sends_no_override() {
+        let detail = super::super::detail::DetailModel::from_test_data(
+            "tabdef",
+            "Tabdef",
+            "",
+            vec![string_param("fmt", RAW_DEFAULT)],
+        );
+        assert!(detail.confirm().overrides.is_empty());
+    }
+
+    #[test]
+    fn an_edited_field_sends_what_was_typed() {
+        let mut detail = super::super::detail::DetailModel::from_test_data(
+            "tabdef",
+            "Tabdef",
+            "",
+            vec![string_param("fmt", RAW_DEFAULT)],
+        );
+        detail.form.fields[0].value = "typed\there".into();
+        let overrides = detail.confirm().overrides;
+        assert_eq!(
+            overrides.get("n:fmt").map(String::as_str),
+            Some("typed\there")
+        );
+    }
+
+    #[test]
+    fn a_field_value_stays_raw_for_visibility_checks() {
+        let params = vec![
+            string_param("mode", RAW_DEFAULT),
+            ParamEntry {
+                visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                    param: "mode".into(),
+                    equals: RAW_DEFAULT.into(),
+                })),
+                ..string_param("width", "800")
+            },
+        ];
+        let mut form = FormModel::new(params_to_fields(&params));
+        update_visibility(&mut form, &params);
+        assert!(
+            form.fields[1].visible,
+            "the raw value matches its raw condition"
+        );
+        assert_eq!(form.fields[0].value, RAW_DEFAULT);
+    }
 
     #[test]
     fn string_param_becomes_text_field() {

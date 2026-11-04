@@ -1,4 +1,6 @@
-// Progress reporting — prints pipeline events to stderr with colors.
+// Progress reporting — prints pipeline events to stderr with colors. Text a
+// recipe or its commands wrote (step ids, errors, output lines) is escaped
+// (`display_text`, ISS-125).
 // Also logs command output lines via the session Logger for diagnostics.
 
 use std::cell::RefCell;
@@ -8,6 +10,7 @@ use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use bnto_core::{PipelineEvent, PipelineReporter};
 use colored::Colorize;
 
+use crate::display_text::display_text;
 use crate::live_bar::LiveBar;
 use crate::output_names::OutputNames;
 use crate::progress_indent::{self, StepDepths};
@@ -50,8 +53,8 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
                 "{}{} {} {}",
                 progress_indent::step_indent(depth),
                 progress_indent::step_counter(*node_index, *total_nodes).dimmed(),
-                node_type.dimmed(),
-                format!("skipped: {reason}").dimmed(),
+                display_text(node_type).dimmed(),
+                display_text(&format!("skipped: {reason}")).dimmed(),
             );
         }
         PipelineEvent::IterationCompleted { output_files, .. } => {
@@ -75,7 +78,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
                 "{}{} {}",
                 progress_indent::step_indent(depth),
                 progress_indent::step_counter(*node_index, *total_nodes).dimmed(),
-                node_type.cyan(),
+                display_text(node_type).cyan(),
             );
         }
         PipelineEvent::FileProgress {
@@ -84,15 +87,20 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             percent,
             message,
             ..
-        } => live
-            .borrow_mut()
-            .file_progress(*file_index, *total_files, *percent, message),
+        } => live.borrow_mut().file_progress(
+            *file_index,
+            *total_files,
+            *percent,
+            &display_text(message),
+        ),
         PipelineEvent::NodeProgress {
             done,
             total,
             message,
             ..
-        } => live.borrow_mut().node_progress(*done, *total, message),
+        } => live
+            .borrow_mut()
+            .node_progress(*done, *total, &display_text(message)),
         PipelineEvent::NodeCompleted {
             node_id,
             duration_ms,
@@ -112,9 +120,10 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
         PipelineEvent::NodeFailed { node_id, error, .. } => {
             live.borrow_mut().clear();
             eprintln!(
-                "{}{} {node_id}: {error}",
+                "{}{} {}",
                 progress_indent::step_indent(depths.borrow().depth(node_id)),
-                "FAILED".red().bold()
+                "FAILED".red().bold(),
+                display_text(&format!("{node_id}: {error}"))
             );
         }
         // No line here: the run's verdict prints `Pipeline failed:` once, last.
@@ -149,8 +158,11 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
 /// One line a step's command printed, lined up with the live line's text.
 /// It stays on screen after the step ends, so it carries no spinner frame:
 /// the live bar below it is what spins.
+/// Colour codes are dropped first; anything else a command prints that a
+/// terminal would act on shows escaped.
 fn command_output_line(line: &str) -> String {
-    format!("          {line}")
+    let line = crate::strip_colours::strip_colours(line);
+    format!("          {}", display_text(&line))
 }
 
 /// Format a pipeline completion summary line.
@@ -215,6 +227,12 @@ mod tests {
     }
 
     // --- Command output lines ---
+
+    #[test]
+    fn test_command_output_drops_colours_and_shows_other_control_escaped() {
+        let line = command_output_line("\u{1b}[1;32mok\u{1b}[0m done\u{1b}[2K\rX");
+        assert_eq!(line, "          ok done\\e[2K\\rX");
+    }
 
     #[test]
     fn test_command_output_line_has_no_spinner_glyph() {

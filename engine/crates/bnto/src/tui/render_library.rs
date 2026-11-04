@@ -10,6 +10,7 @@ use super::app::AppModel;
 use super::render_layout::content_panel;
 use super::theme::Theme;
 use super::widgets::search_input;
+use crate::display_text::display_text;
 
 /// Draw the Library screen content area.
 #[expect(clippy::too_many_lines)]
@@ -87,11 +88,11 @@ pub fn draw_library(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
 
             lines.push(Line::from(vec![
                 Span::styled(prefix, name_style),
-                Span::styled(&entry.name, name_style),
+                Span::styled(display_text(&entry.name), name_style),
             ]));
             if !entry.description.is_empty() {
                 lines.push(Line::from(Span::styled(
-                    format!("    {}", entry.description),
+                    format!("    {}", display_text(&entry.description)),
                     desc_style,
                 )));
             }

@@ -12,6 +12,7 @@ use std::process;
 use bnto_core::{NodeRegistry, PipelineDefinition, RunTimeParam, check_pipeline};
 
 use crate::check_targets::{CheckTarget, check_targets};
+use crate::display_text::display_text;
 use crate::file_param::hint_value;
 
 /// One file's output: finding lines, then note lines.
@@ -44,7 +45,7 @@ impl CheckOutput {
 pub fn run_check(paths: &[String]) {
     let (recipes, output) = check_paths(paths, &bnto_engine::create_registry());
     for line in &output.lines {
-        println!("{line}");
+        println!("{}", display_text(line));
     }
     println!("{}", verdict(recipes, output.findings, output.notes));
     if output.findings > 0 {

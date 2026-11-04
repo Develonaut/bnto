@@ -21,7 +21,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | 6b  | Keep `test_list_command` out of the real `~/.bnto`   | `test/list-sandboxed`          | Merged (#735)    |
 | 7a  | Record the project-recipes design                    | `feat/project-recipes`         | Done (on branch) |
 | 7b  | Consent by where a recipe came from                  | `feat/project-recipes`         | Done (on branch) |
-| 7c  | Consent prompt shows origin, steps and flagged paths | `feat/project-recipes`         | Not started      |
+| 7c  | Consent prompt shows origin, steps and flagged paths | `feat/project-recipes`         | Done (on branch) |
 | 7d  | Find the project root                                | `feat/project-recipes`         | Not started      |
 | 7e  | Load project recipes from `.bnto/recipes/`           | `feat/project-recipes`         | Not started      |
 | 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Not started      |

@@ -98,7 +98,10 @@ mod tests {
             category: String::new(),
             tags: Vec::new(),
             definition_json: r#"{"name":"Tidy","nodes":[]}"#.into(),
-            source: RecipeSource::Project(std::path::PathBuf::from("project")),
+            source: RecipeSource::Project {
+                root: std::path::PathBuf::from("project"),
+                file: std::path::PathBuf::from("project/.bnto/recipes/tidy.bnto.json"),
+            },
         };
         let catalog = RecipeCatalog::bundled_only().with_entry(entry);
         assert!(!hints_trusted(Some("tidy"), false, &catalog));

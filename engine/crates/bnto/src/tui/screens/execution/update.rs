@@ -78,8 +78,8 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
         } => model.set_outputs(files, output_dir, warnings),
         M::Reported { message } => model.message = Some(message),
         M::Cancel => model.status = ExecutionStatus::Cancelled,
-        // Recorded and applied at the app level, which owns the trust store.
-        M::AllowCommands => {}
+        // Handled at the app level: it owns the trust store (`consent.rs`).
+        M::AllowCommands | M::ScrollConsent(_) => {}
         M::Tick { elapsed_ms } => model.elapsed_ms = elapsed_ms,
     }
     model

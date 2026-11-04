@@ -2,6 +2,13 @@
 
 use super::super::results::OutputFile;
 
+/// Which way the consent prompt scrolls.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConsentScroll {
+    Up,
+    Down,
+}
+
 /// Messages the execution screen can handle.
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
@@ -9,6 +16,8 @@ pub enum ExecutionMessage {
     /// The user allowed an untrusted recipe's commands (handled by the app,
     /// which records the approval).
     AllowCommands,
+    /// Scroll the consent prompt, to read all of it.
+    ScrollConsent(ConsentScroll),
     /// Pipeline started — initialize file and node tracking.
     PipelineStarted {
         total_nodes: usize,

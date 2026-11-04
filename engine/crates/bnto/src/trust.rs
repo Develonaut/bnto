@@ -102,8 +102,8 @@ pub fn trust_level(
 ) -> TrustLevel {
     let asks = match kind {
         SourceKind::Bundled => false,
-        SourceKind::Project(_) => true,
-        SourceKind::Library | SourceKind::Path => has_shell,
+        SourceKind::Project { .. } => true,
+        SourceKind::Library(_) | SourceKind::Path(_) => has_shell,
     };
     if !asks || store.is_approved(hash) {
         TrustLevel::Trusted
@@ -119,40 +119,13 @@ pub fn definition_hash(json: &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-/// Print consent prompt to stderr and read response from stdin.
-///
-/// Shows the recipe name, lists shell commands that will execute,
-/// and asks for y/n confirmation. Returns true if the user consents.
-pub fn prompt_consent(recipe_name: &str, shell_commands: &[String]) -> bool {
-    use std::io::{BufRead, Write};
-
-    eprintln!();
-    eprintln!("  Warning: This recipe executes external commands:");
-    for cmd in shell_commands {
-        eprintln!("    - {cmd}");
-    }
-    eprintln!();
-    eprintln!("  Recipe: {recipe_name}");
-    eprintln!("  Run `bnto dry-run <recipe>` without input files to inspect the full commands.");
-    eprintln!();
-    eprint!("  Allow execution? [y/N] ");
-    let _ = std::io::stderr().flush();
-
-    let stdin = std::io::stdin();
-    let mut line = String::new();
-    if stdin.lock().read_line(&mut line).is_err() {
-        return false;
-    }
-    matches!(line.trim().to_lowercase().as_str(), "y" | "yes")
-}
-
 /// Format a trust badge for display in the TUI.
 pub fn trust_badge(kind: &SourceKind, has_shell: bool) -> &'static str {
     match kind {
         SourceKind::Bundled => "built-in",
-        SourceKind::Project(_) => "project",
-        SourceKind::Library | SourceKind::Path if has_shell => "local (shell)",
-        SourceKind::Library | SourceKind::Path => "local",
+        SourceKind::Project { .. } => "project",
+        SourceKind::Library(_) | SourceKind::Path(_) if has_shell => "local (shell)",
+        SourceKind::Library(_) | SourceKind::Path(_) => "local",
     }
 }
 
@@ -221,7 +194,10 @@ mod tests {
     // --- trust_level ---
 
     fn project() -> SourceKind {
-        SourceKind::Project(std::path::PathBuf::from("project"))
+        SourceKind::Project {
+            root: std::path::PathBuf::from("project"),
+            file: None,
+        }
     }
 
     #[test]
@@ -241,7 +217,10 @@ mod tests {
     #[test]
     fn library_and_path_no_shell_is_trusted() {
         let store = TrustStore::default();
-        for kind in [SourceKind::Library, SourceKind::Path] {
+        for kind in [
+            SourceKind::Library(None),
+            SourceKind::Path("x.bnto.json".into()),
+        ] {
             assert_eq!(
                 trust_level(&kind, false, &store, "hash"),
                 TrustLevel::Trusted
@@ -252,7 +231,10 @@ mod tests {
     #[test]
     fn library_and_path_with_shell_first_run() {
         let store = TrustStore::default();
-        for kind in [SourceKind::Library, SourceKind::Path] {
+        for kind in [
+            SourceKind::Library(None),
+            SourceKind::Path("x.bnto.json".into()),
+        ] {
             assert_eq!(
                 trust_level(&kind, true, &store, "hash"),
                 TrustLevel::FirstRun
@@ -264,7 +246,7 @@ mod tests {
     fn library_with_shell_approved() {
         let mut store = TrustStore::default();
         store.approve("abc123".into());
-        let level = trust_level(&SourceKind::Library, true, &store, "abc123");
+        let level = trust_level(&SourceKind::Library(None), true, &store, "abc123");
         assert_eq!(level, TrustLevel::Trusted);
     }
 
@@ -363,14 +345,23 @@ mod tests {
 
     #[test]
     fn badge_library_no_shell() {
-        assert_eq!(trust_badge(&SourceKind::Library, false), "local");
-        assert_eq!(trust_badge(&SourceKind::Path, false), "local");
+        assert_eq!(trust_badge(&SourceKind::Library(None), false), "local");
+        assert_eq!(
+            trust_badge(&SourceKind::Path("x.bnto.json".into()), false),
+            "local"
+        );
     }
 
     #[test]
     fn badge_library_with_shell() {
-        assert_eq!(trust_badge(&SourceKind::Library, true), "local (shell)");
-        assert_eq!(trust_badge(&SourceKind::Path, true), "local (shell)");
+        assert_eq!(
+            trust_badge(&SourceKind::Library(None), true),
+            "local (shell)"
+        );
+        assert_eq!(
+            trust_badge(&SourceKind::Path("x.bnto.json".into()), true),
+            "local (shell)"
+        );
     }
 
     #[test]

@@ -216,6 +216,18 @@ src/
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run or dry run
 +-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
 +-- consent.rs             # Consent gate by source kind (run + dry-run); a project recipe asks even without shell steps
++-- consent_request.rs     # What a consent prompt is about: origin, step types, path params, commands, files it runs
++-- consent_body.rs        # The prompt's lines, escaped, which the CLI prompt and the TUI's consent screen both render
++-- consent_summary.rs     # The prompt's heading and its one-line risk summary
++-- consent_prompt.rs      # The terminal prompt (stderr) and its y/N answer
++-- consent_paths.rs       # The path params and output names a recipe's steps use, each flagged when it reaches outside
++-- consent_files.rs       # Files from the working folder its shell steps run (searchPath, cwd, args, env values, script)
++-- consent_lines.rs       # Each shell step's full command line, as consent shows it
++-- fill_fields.rs         # `{{fields.*}}` filled with the values a run uses, for the consent prompt
++-- path_flag.rs           # Why a path needs a second look: absolute, `..`, `~`, set when run, leaves the project
++-- path_placeholders.rs   # Which `{{…}}` placeholders can't move a path (ctx.date, time, timestamp, started, platform)
++-- display_text.rs        # Escapes recipe text before bnto prints it: control characters shown, bidi flagged (ISS-125)
++-- strip_colours.rs       # Drops SGR colour codes from a command's output before it's escaped
 +-- dry_run_hint.rs        # The quoted commands bnto suggests: a declined run's `bnto dry-run …`, a dry run's `Run with: bnto run …`
 +-- run_input.rs           # What a suggested `bnto run` ends with by input mode: nothing, `<url>`, `<text>` or `<files...>`
 +-- shell_word.rs          # Quotes an argument as one sh, zsh or PowerShell word, for printed command lines
@@ -259,10 +271,12 @@ src/
     +-- render.rs          # Root render dispatcher
     +-- render_detail.rs   # Detail screen renderer
     +-- render_execution.rs # Execution screen renderer
+    +-- render_consent.rs  # Consent screen: the shared body, summary pinned, scrolled a row at a time; y once read to the end
     +-- render_picker.rs   # File picker renderer
     +-- render_results.rs  # Results screen renderer
     +-- screen.rs          # Screen titles and each screen's own key hints
     +-- footer_hints.rs    # Footer hints: a mode's or the screen's keys, then the shared ones
+    +-- form_display.rs    # A tonkotsu form as drawn: text escaped, values left raw
     +-- theme.rs           # Theme variants and style helpers
     +-- screens/
     |   +-- browser.rs     # Recipe browser model + update

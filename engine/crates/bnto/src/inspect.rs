@@ -7,6 +7,7 @@ use colored::Colorize;
 use crate::catalog::{RecipeCatalog, SourceKind};
 use crate::cli::DryRunArgs;
 use crate::consent::check_trust;
+use crate::display_text::display_text;
 use crate::dry_run_hint::DryRunHint;
 use crate::unfilled_fields::refuse_unfilled;
 use crate::{dry_run, host_support, info, list, recipe_source, vars};
@@ -38,7 +39,7 @@ pub fn show_dry_run(args: &DryRunArgs, catalog: &RecipeCatalog) {
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
     if !args.inputs.is_empty() {
-        check_trust(&json, &given, args.yes, &kind);
+        check_trust((&json, &json), &given, args.yes, &kind);
         dry_run::print_shell_note(&json);
     }
     let result = dry_run::dry_run_recipe(recipe_arg, &json, &args.inputs, params);
@@ -53,7 +54,11 @@ fn read_recipe(recipe_arg: &str, catalog: &RecipeCatalog) -> (String, SourceKind
         Ok(read) => read,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => exit_unknown_recipe(recipe_arg),
         Err(e) => {
-            eprintln!("{} {e}", "Error reading recipe:".red());
+            eprintln!(
+                "{} {}",
+                "Error reading recipe:".red(),
+                display_text(&e.to_string())
+            );
             process::exit(1);
         }
     }
@@ -64,7 +69,7 @@ fn read_recipe(recipe_arg: &str, catalog: &RecipeCatalog) -> (String, SourceKind
 fn refuse_unsupported_host(recipe_arg: &str, json: &str) {
     let host = bnto_core::HostPlatform::current();
     if let Some(why) = host_support::unsupported_host(recipe_arg, json, host) {
-        eprintln!("{} {why}", "Error:".red());
+        eprintln!("{} {}", "Error:".red(), display_text(&why));
         process::exit(1);
     }
 }
@@ -72,14 +77,18 @@ fn refuse_unsupported_host(recipe_arg: &str, json: &str) {
 /// The value, or print the error and exit 1, as `bnto run` does.
 fn or_exit<T>(result: Result<T, String>) -> T {
     result.unwrap_or_else(|why| {
-        eprintln!("{} {why}", "Error:".red());
+        eprintln!("{} {}", "Error:".red(), display_text(&why));
         process::exit(1);
     })
 }
 
 /// Report an unknown recipe (for dry-run: no such slug or file), then exit.
 fn exit_unknown_recipe(recipe_arg: &str) -> ! {
-    eprintln!("{} Unknown recipe: {recipe_arg}", "Error:".red());
+    eprintln!(
+        "{} Unknown recipe: {}",
+        "Error:".red(),
+        display_text(recipe_arg)
+    );
     eprintln!("Run {} to see available recipes.", "bnto list".cyan());
     process::exit(1);
 }

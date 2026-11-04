@@ -9,6 +9,7 @@ use colored::Colorize;
 
 use crate::catalog::{RecipeCatalog, SourceKind};
 use crate::consent::check_trust;
+use crate::display_text::display_text;
 use crate::dry_run_hint::DryRunHint;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
@@ -83,7 +84,12 @@ pub fn run_recipe(
     prepared.definition_json = definition_json;
     let (ctx, target) = run_context(output_override, flags, time_limit, &prepared, &verdict);
     let given = DryRunHint::new(recipe_path, param_overrides, flags.vars);
-    check_trust(&raw_json, &given, flags.yes, &kind);
+    check_trust(
+        (&raw_json, &prepared.definition_json),
+        &given,
+        flags.yes,
+        &kind,
+    );
     print_run_banner(recipe_path, &raw_json, &prepared);
     let stats = run_stats(recipe_path, &prepared, param_overrides, catalog);
     log_run_start(logger, &stats);
@@ -313,6 +319,7 @@ fn resolve_effective_output_dir(
 /// Print `<recipe> with N files...` (or the input mode label).
 fn print_run_banner(recipe_path: &str, raw_json: &str, prepared: &input::PreparedInput) {
     let label = input::mode_label(raw_json);
+    let recipe_path = display_text(recipe_path);
     if prepared.files.is_empty() {
         eprintln!("{} with {label}...", recipe_path.bold());
     } else {

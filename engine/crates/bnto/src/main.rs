@@ -23,15 +23,23 @@ mod child_env;
 mod cli;
 mod command_stream;
 mod consent;
+mod consent_body;
+mod consent_files;
 mod consent_lines;
+mod consent_paths;
+mod consent_prompt;
+mod consent_request;
+mod consent_summary;
 mod context;
 mod dispatch;
+mod display_text;
 mod doctor;
 pub mod dry_run;
 mod dry_run_hint;
 mod exit_report;
 mod field_owner;
 mod file_param;
+mod fill_fields;
 mod fill_with;
 mod host_support;
 mod info;
@@ -52,6 +60,8 @@ mod ordered_write;
 mod output_names;
 mod overwrite;
 mod package_manager;
+mod path_flag;
+mod path_placeholders;
 mod process_registry;
 mod progress;
 mod progress_indent;
@@ -69,6 +79,7 @@ mod run_watchdog;
 mod scratch;
 mod shell_word;
 pub mod storage;
+mod strip_colours;
 pub mod telemetry;
 mod trust;
 mod trust_gate;
@@ -174,7 +185,11 @@ pub(crate) fn unwrap_or_exit<T, E: std::fmt::Display>(result: Result<T, E>) -> T
     match result {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("{} {e}", "Error:".red());
+            eprintln!(
+                "{} {}",
+                "Error:".red(),
+                display_text::display_text(&e.to_string())
+            );
             process::exit(1);
         }
     }

@@ -6,6 +6,7 @@ use std::process;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
+use crate::display_text::display_text;
 use bnto_core::{NodeTally, PipelineReporter, PipelineResult, RunSummary};
 use colored::Colorize;
 
@@ -52,7 +53,7 @@ impl RunVerdict {
         let nodes = self.tally.lock().unwrap().nodes();
         let summary = RunSummary::from_error(error, elapsed_ms).with_nodes(nodes);
         let message = summary.error.as_deref().unwrap_or_default();
-        eprintln!("{} {message}", label.red());
+        eprintln!("{} {}", label.red(), display_text(message));
         self.print_json(&summary);
         crate::scratch::remove_live_dirs();
         process::exit(1);

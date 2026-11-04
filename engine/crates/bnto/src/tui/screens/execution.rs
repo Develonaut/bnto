@@ -13,14 +13,15 @@ use std::path::PathBuf;
 
 use super::results::OutputFile;
 
-pub use message::ExecutionMessage;
+pub use message::{ConsentScroll, ExecutionMessage};
 pub use update::update;
 
 /// Pipeline execution status.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum ExecutionStatus {
     /// An untrusted shell recipe waiting for the user to allow its commands.
     AwaitingConsent,
+    #[default]
     Idle,
     Running,
     Completed,
@@ -78,7 +79,7 @@ pub struct NodeProgress {
 }
 
 /// Execution screen state.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 #[allow(dead_code)]
 pub struct ExecutionModel {
     pub slug: String,
@@ -109,6 +110,15 @@ pub struct ExecutionModel {
     pub preview_mode: bool,
     /// What the user is asked to allow while the run awaits consent.
     pub consent: Option<crate::trust_gate::ConsentRequest>,
+    /// Rows the consent prompt is scrolled down by, when it's taller than
+    /// the panel (kept in range before each draw, `render_consent`).
+    pub consent_scroll: usize,
+    /// Whether the prompt's last row was on screen at the last draw: only
+    /// then does `y` allow it, so nothing is approved unread.
+    pub consent_at_end: bool,
+    /// The panel width the prompt was last laid out at; a new width starts
+    /// it over from the top.
+    pub consent_width: Option<usize>,
 }
 
 /// Maximum number of command output lines to retain in the rolling window.
@@ -119,22 +129,7 @@ impl ExecutionModel {
     pub fn new(slug: &str) -> Self {
         Self {
             slug: slug.to_string(),
-            status: ExecutionStatus::Idle,
-            files: Vec::new(),
-            nodes: Vec::new(),
-            elapsed_ms: 0,
-            error: None,
-            selected_files: Vec::new(),
-            param_overrides: HashMap::new(),
-            definition_json: String::new(),
-            output_files: Vec::new(),
-            output_dir: None,
-            output_lines: VecDeque::new(),
-            live_line_node: None,
-            warnings: Vec::new(),
-            message: None,
-            preview_mode: false,
-            consent: None,
+            ..Self::default()
         }
     }
 
@@ -173,6 +168,9 @@ impl ExecutionModel {
         Self {
             status: ExecutionStatus::AwaitingConsent,
             consent: Some(request),
+            consent_scroll: 0,
+            consent_at_end: false,
+            consent_width: None,
             ..self
         }
     }

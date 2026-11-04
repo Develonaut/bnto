@@ -1081,7 +1081,7 @@ mod tests {
             param_overrides: HashMap::new(),
             preview_mode: false,
             consent: ConsentCheck {
-                kind: SourceKind::Library,
+                kind: SourceKind::Library(None),
                 paths: crate::storage::BntoPaths {
                     home: trust.path().to_path_buf(),
                 },

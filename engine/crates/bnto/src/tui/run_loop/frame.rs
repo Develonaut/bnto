@@ -12,7 +12,7 @@ use crate::tui::app::{AppMessage, AppModel, Screen, update};
 use crate::tui::screens::browser::BrowserMessage;
 use crate::tui::screens::picker::PickerMessage;
 use crate::tui::terminal::TuiTerminal;
-use crate::tui::{detail_fit, render, render_layout};
+use crate::tui::{detail_fit, render, render_consent, render_layout};
 
 /// Lines a list screen draws above its list: the search bar or folder path,
 /// then a blank line.
@@ -26,6 +26,7 @@ pub(super) fn render(
 ) -> io::Result<AppModel> {
     // Before drawing, so a key that moved focus shows it scrolled into view.
     fit_detail(terminal, &mut model)?;
+    fit_consent(terminal, &mut model)?;
     draw(terminal, &model, logger)?;
     resize_list(terminal, model)
 }
@@ -35,6 +36,14 @@ fn fit_detail(terminal: &mut TuiTerminal, model: &mut AppModel) -> io::Result<()
         && let Some(detail) = &mut model.detail
     {
         detail_fit::fit_detail(detail, &model.theme, terminal.size()?);
+    }
+    Ok(())
+}
+
+/// Keep a consent prompt's scroll within it (`render_consent::fit_consent`).
+fn fit_consent(terminal: &mut TuiTerminal, model: &mut AppModel) -> io::Result<()> {
+    if let Some(exec) = &mut model.execution {
+        render_consent::fit_consent(exec, &model.theme, terminal.size()?);
     }
     Ok(())
 }

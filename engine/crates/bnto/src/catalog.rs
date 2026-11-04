@@ -14,9 +14,14 @@ pub enum RecipeSource {
     Bundled,
     /// Loaded from the user's library directory. May need consent for shell commands.
     Library(PathBuf),
-    /// Loaded from a project's `.bnto/recipes/`; holds the project root.
-    /// Always needs consent until its definition is approved.
-    Project(PathBuf),
+    /// Loaded from a project's `.bnto/recipes/`. Always needs consent until
+    /// its definition is approved.
+    Project {
+        /// The project root, which the recipe's paths are judged against.
+        root: PathBuf,
+        /// The recipe file, which the consent prompt names.
+        file: PathBuf,
+    },
 }
 
 impl RecipeSource {
@@ -24,27 +29,37 @@ impl RecipeSource {
     pub fn kind(&self) -> SourceKind {
         match self {
             Self::Bundled => SourceKind::Bundled,
-            Self::Library(_) => SourceKind::Library,
-            Self::Project(root) => SourceKind::Project(root.clone()),
+            Self::Library(file) => SourceKind::Library(Some(file.clone())),
+            Self::Project { root, file } => SourceKind::Project {
+                root: root.clone(),
+                file: Some(file.clone()),
+            },
         }
     }
 }
 
 /// Where the recipe a run uses came from, which decides when it needs
 /// consent (`trust::trust_level`). It follows how the recipe resolved (a
-/// catalog entry, else a file), never the argument's spelling.
+/// catalog entry, else a file), never the argument's spelling. Each kind
+/// carries the file the definition was read from, when there is one, so the
+/// consent prompt can name it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SourceKind {
     /// Shipped with the binary: reviewed, never asks.
     Bundled,
-    /// The user's own library: asks only for shell steps.
-    Library,
-    /// A project's `.bnto/recipes/` (the project root): a cloned repo's
-    /// recipe can move or delete files without a shell, so it always asks.
-    Project(PathBuf),
+    /// The user's own library: asks only for shell steps. `None` when what
+    /// runs isn't the file's text (an edit in the TUI) or has no file.
+    Library(Option<PathBuf>),
+    /// A project's `.bnto/recipes/`: a cloned repo's recipe can move or
+    /// delete files without a shell, so it always asks. `file` is `None`
+    /// when what runs isn't the file's text (an edit in the TUI).
+    Project {
+        root: PathBuf,
+        file: Option<PathBuf>,
+    },
     /// A `.bnto.json` named by path: asks only for shell steps, so Task and
     /// CI runs by path never meet a prompt they can't answer.
-    Path,
+    Path(PathBuf),
 }
 
 /// A recipe entry in the catalog. Source-agnostic — consumers don't care
@@ -331,11 +346,22 @@ mod tests {
     #[test]
     fn each_source_has_its_trust_kind() {
         let root = PathBuf::from("project");
+        let file = root.join(".bnto/recipes/tidy.bnto.json");
         assert_eq!(RecipeSource::Bundled.kind(), SourceKind::Bundled);
-        let library = RecipeSource::Library(PathBuf::from("mine.bnto.json"));
-        assert_eq!(library.kind(), SourceKind::Library);
-        let project = RecipeSource::Project(root.clone());
-        assert_eq!(project.kind(), SourceKind::Project(root));
+        let mine = PathBuf::from("mine.bnto.json");
+        let library = RecipeSource::Library(mine.clone());
+        assert_eq!(library.kind(), SourceKind::Library(Some(mine)));
+        let project = RecipeSource::Project {
+            root: root.clone(),
+            file: file.clone(),
+        };
+        assert_eq!(
+            project.kind(),
+            SourceKind::Project {
+                root,
+                file: Some(file)
+            }
+        );
     }
 
     #[test]

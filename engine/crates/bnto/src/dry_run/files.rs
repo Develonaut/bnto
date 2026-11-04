@@ -18,6 +18,7 @@ use bnto_core::pipeline::PipelineResult;
 use bnto_core::processor::FileData;
 
 use crate::context::NativeContext;
+use crate::display_text::display_text;
 use crate::run_watchdog::{self, Watched};
 use crate::{input, run_limit};
 
@@ -72,7 +73,10 @@ pub fn run_preview(
 /// A preview stuck past its time limit can't finish printing, so report the
 /// timeout as its failure, delete its temp files and exit 1.
 fn end_stuck_preview(error: BntoError) {
-    eprintln!("Warning: pipeline preview failed: {error}");
+    eprintln!(
+        "Warning: pipeline preview failed: {}",
+        display_text(&error.to_string())
+    );
     crate::scratch::remove_live_dirs();
     std::process::exit(1);
 }

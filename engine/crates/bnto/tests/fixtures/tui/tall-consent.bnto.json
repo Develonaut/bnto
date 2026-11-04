@@ -1,0 +1,77 @@
+{
+  "id": "tall-consent",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Tall Consent",
+  "metadata": {
+    "description": "A shell recipe whose consent prompt is taller than an 80x24 panel, for TUI journey TJ17.",
+    "category": "system"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "parameters": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "version",
+      "type": "shell-run",
+      "version": "1.0.0",
+      "parameters": {
+        "command": "git",
+        "args": ["--version"]
+      }
+    },
+    {
+      "id": "g1",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    },
+    {
+      "id": "g2",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    },
+    {
+      "id": "g3",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    },
+    {
+      "id": "g4",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    },
+    {
+      "id": "g5",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    },
+    {
+      "id": "g6",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    },
+    {
+      "id": "g7",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    },
+    {
+      "id": "g8",
+      "type": "group",
+      "version": "1.0.0",
+      "nodes": []
+    }
+  ]
+}

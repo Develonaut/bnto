@@ -76,11 +76,22 @@ fn picker_hints(model: &AppModel) -> Option<Vec<Hint>> {
         .then(|| SETTINGS_PICKER.to_vec())
 }
 
+/// `y` allows only once the prompt's end has shown; until then, cancel (first,
+/// so a narrow footer keeps it) or scroll.
+fn consent_hints(model: &AppModel) -> Vec<Hint> {
+    let read = model.execution.as_ref().is_some_and(|e| e.consent_at_end);
+    if read {
+        vec![("y", "allow"), ("n/Esc", "cancel")]
+    } else {
+        vec![("n/Esc", "cancel"), ("j", "more")]
+    }
+}
+
 /// Consent takes y or n/Esc, a run in progress only Esc to cancel it, and a
 /// finished run Enter for its results or Esc back to the recipe.
 fn execution_hints(model: &AppModel) -> Option<Vec<Hint>> {
     match model.execution.as_ref()?.status {
-        ExecutionStatus::AwaitingConsent => Some(vec![("y", "allow"), ("n/Esc", "cancel")]),
+        ExecutionStatus::AwaitingConsent => Some(consent_hints(model)),
         ExecutionStatus::Idle | ExecutionStatus::Running => Some(vec![("Esc", "cancel")]),
         ExecutionStatus::Completed | ExecutionStatus::Failed => {
             Some(vec![("Enter", "continue"), ("Esc", "back")])
@@ -315,7 +326,8 @@ mod tests {
 
     #[test]
     fn consent_shows_its_answers_and_quit() {
-        // Enter does nothing while consent waits; y and n/Esc answer, q quits.
+        // Enter does nothing while consent waits; y (once the prompt's end
+        // has shown, until then j to scroll) and n/Esc answer, q quits.
         let (_tmp, mut app) = model(Screen::Execution {
             slug: "s".into(),
             from: DetailOrigin::Home,
@@ -323,6 +335,8 @@ mod tests {
         let mut exec = crate::tui::screens::execution::ExecutionModel::new("s");
         exec.status = ExecutionStatus::AwaitingConsent;
         app.execution = Some(exec);
+        assert_eq!(keys(&footer_hints(&app)), ["n/Esc", "j", "q"]);
+        app.execution.as_mut().unwrap().consent_at_end = true;
         assert_eq!(keys(&footer_hints(&app)), ["y", "n/Esc", "q"]);
     }
 

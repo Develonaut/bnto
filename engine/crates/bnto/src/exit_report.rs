@@ -10,6 +10,7 @@
 // named on stderr, never deleted. `file-collect` skips the prefix, so a
 // later run doesn't take it as an input.
 
+use crate::display_text::display_text;
 use std::path::PathBuf;
 
 /// Print a warning for each kept staging folder, then for each file a move
@@ -28,7 +29,7 @@ fn report_parked_files() {
     use colored::Colorize;
 
     for line in parked_lines(&bnto_file::relocate::take_parked()) {
-        eprintln!("  {} {line}", "Warning:".yellow().bold());
+        eprintln!("  {} {}", "Warning:".yellow().bold(), display_text(&line));
     }
 }
 

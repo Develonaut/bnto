@@ -3,6 +3,7 @@
 use bnto_core::RunSummary;
 use colored::Colorize;
 
+use crate::display_text::display_text;
 use crate::io;
 use crate::run_message::{RunMessage, run_message};
 use crate::run_verdict::RunVerdict;
@@ -46,7 +47,7 @@ fn reported_message(
 /// Warnings and totals, printed before the Done line so it stays last.
 fn print_warnings(result: &bnto_core::PipelineResult, outcome: &io::WriteOutcome, dry_run: bool) {
     for warning in &result.warnings {
-        eprintln!("  {} {warning}", "Warning:".yellow().bold());
+        eprintln!("  {} {}", "Warning:".yellow().bold(), display_text(warning));
     }
     io::warn_renamed(outcome, dry_run);
     io::warn_files_left_as_newer(result);
@@ -78,7 +79,7 @@ fn print_done(
         return;
     }
     let text = done_text(outcome, summary.files_written, &duration, dry_run);
-    eprintln!("\n{done} {text}");
+    eprintln!("\n{done} {}", display_text(&text));
 }
 
 /// The `Done.` line's text after `Done.` for a write outcome; `count` is the
@@ -105,8 +106,14 @@ fn done_text(outcome: &io::WriteOutcome, count: usize, duration: &str, dry_run: 
 /// A message under its label, every line indented:
 /// `Session Log:\n  No active session.`
 fn message_block(message: &RunMessage) -> String {
-    let header = message.label.as_ref().map(|label| format!("{label}:"));
-    let lines = message.text.lines().map(|line| format!("  {line}"));
+    let header = message
+        .label
+        .as_ref()
+        .map(|label| format!("{}:", display_text(label)));
+    let lines = message
+        .text
+        .lines()
+        .map(|line| format!("  {}", display_text(line)));
     header
         .into_iter()
         .chain(lines)

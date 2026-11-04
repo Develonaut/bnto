@@ -13,6 +13,7 @@ use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
 use crate::context::{self, NativeContext};
+use crate::display_text::display_text;
 use crate::install_plan::InstallStep;
 use crate::install_trust;
 use crate::package_manager;
@@ -44,7 +45,7 @@ pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool, catalog: &Re
         println!(
             "{} {} has no external dependencies{here}.",
             "ok".green().bold(),
-            label
+            display_text(&label)
         );
         return;
     }
@@ -67,7 +68,7 @@ fn install_missing(
         println!(
             "{} All dependencies for {} are already installed.",
             "ok".green().bold(),
-            label
+            display_text(label)
         );
         return;
     }
@@ -170,7 +171,7 @@ fn print_install_plan(steps: &[PlannedStep], label: &str) {
         "Install".bold(),
         steps.len(),
         dependency_noun(steps.len()),
-        label
+        display_text(label)
     );
     for planned in steps {
         println!("  {} {}", "→".cyan(), plan_line(planned));
@@ -178,12 +179,14 @@ fn print_install_plan(steps: &[PlannedStep], label: &str) {
     println!();
 }
 
-/// Plan text for one step: the command, or `binary (manual hint)`.
+/// Plan text for one step: the command, or `binary (manual hint)`, escaped:
+/// a recipe wrote it, and it's shown before the user agrees to run it.
 fn plan_line(planned: &PlannedStep) -> String {
-    match &planned.step {
+    let line = match &planned.step {
         InstallStep::Manual(hint) => format!("{} ({hint})", planned.binary),
         step => step.display(),
-    }
+    };
+    display_text(&line).into_owned()
 }
 
 /// "dependency" or "dependencies" for `count`.
@@ -248,11 +251,12 @@ fn command_noun(count: usize) -> &'static str {
 
 /// Run one step, echoing its exact command. Returns true on success.
 fn install_one(ctx: &dyn ProcessContext, planned: &PlannedStep) -> bool {
-    eprintln!("{} {}", "Running:".dimmed(), planned.step.display());
+    let shown = planned.step.display();
+    eprintln!("{} {}", "Running:".dimmed(), display_text(&shown));
     match planned.step.run(ctx) {
         Ok(()) => true,
         Err(e) => {
-            eprintln!("  {} {e}", "failed:".red());
+            eprintln!("  {} {}", "failed:".red(), display_text(&e.to_string()));
             false
         }
     }
@@ -272,7 +276,7 @@ fn exit_install_failed(failed: &[String]) -> ! {
         "Error:".red(),
         failed.len(),
         dependency_noun(failed.len()),
-        failed.join(", ")
+        display_text(&failed.join(", "))
     );
     std::process::exit(1);
 }
@@ -302,7 +306,11 @@ fn exit_still_missing(still_missing: &[&DependencyStatus]) -> ! {
         dependency_noun(still_missing.len())
     );
     for s in still_missing {
-        eprintln!("  {} {}", "MISSING".red(), s.dependency.binary);
+        eprintln!(
+            "  {} {}",
+            "MISSING".red(),
+            display_text(&s.dependency.binary)
+        );
     }
     std::process::exit(1);
 }
@@ -311,7 +319,7 @@ fn exit_still_missing(still_missing: &[&DependencyStatus]) -> ! {
 fn read_recipe_json(slug: &str, catalog: &RecipeCatalog) -> String {
     let read = crate::recipe_source::read_recipe(slug, catalog);
     read.map(|(json, _)| json).unwrap_or_else(|_| {
-        eprintln!("{} Unknown recipe: {slug}", "Error:".red());
+        eprintln!("{} Unknown recipe: {}", "Error:".red(), display_text(slug));
         eprintln!("Run {} to see available recipes.", "bnto list".cyan());
         std::process::exit(1);
     })

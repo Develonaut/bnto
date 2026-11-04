@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use bnto_core::{PipelineFile, PipelineResult};
 
+use crate::display_text::display_text;
 use crate::ordered_write;
 use crate::output_names::{self, Renamed};
 
@@ -250,7 +251,7 @@ pub fn warn_files_left_as_newer(result: &PipelineResult) {
     let newer = files_left_as_newer(result);
     if !newer.is_empty() {
         let warning = "Warning:".yellow().bold();
-        eprintln!("  {warning} {}", newer_warning_text(&newer));
+        eprintln!("  {warning} {}", display_text(&newer_warning_text(&newer)));
     }
 }
 
@@ -284,7 +285,10 @@ pub fn warn_files_without_a_row(result: &PipelineResult) {
     let unmatched = files_without_a_row(result);
     if !unmatched.is_empty() {
         let warning = "Warning:".yellow().bold();
-        eprintln!("  {warning} {}", no_row_warning_text(&unmatched));
+        eprintln!(
+            "  {warning} {}",
+            display_text(&no_row_warning_text(&unmatched))
+        );
     }
 }
 
@@ -304,7 +308,7 @@ pub fn warn_renamed(outcome: &WriteOutcome, dry_run: bool) {
 
     if let WriteOutcome::Written { renamed, .. } = outcome {
         for line in renamed_warning_lines(renamed, dry_run) {
-            eprintln!("  {} {line}", "Warning:".yellow().bold());
+            eprintln!("  {} {}", "Warning:".yellow().bold(), display_text(&line));
         }
     }
 }

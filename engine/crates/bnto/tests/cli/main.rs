@@ -47,6 +47,7 @@ mod output_dir_placeholders;
 mod output_suffix;
 mod progressive_output;
 mod recipe_tests;
+mod recipe_text_escaped;
 mod removed_params;
 mod rename_pattern;
 mod report_file_names;

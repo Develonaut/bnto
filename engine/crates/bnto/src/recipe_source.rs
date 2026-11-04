@@ -6,11 +6,11 @@ use crate::catalog::{RecipeCatalog, SourceKind};
 
 /// A slug in the catalog, else a `.bnto.json` path read from disk. A slug
 /// wins over a file of the same name. The kind is how it resolved: the
-/// catalog entry's source, or `Path` for a file.
+/// catalog entry's source, or `Path` for a file, each with the file read.
 pub fn read_recipe(arg: &str, catalog: &RecipeCatalog) -> std::io::Result<(String, SourceKind)> {
     match catalog.resolve(arg) {
         Some(entry) => Ok((entry.definition_json.clone(), entry.source.kind())),
-        None => Ok((std::fs::read_to_string(arg)?, SourceKind::Path)),
+        None => Ok((std::fs::read_to_string(arg)?, SourceKind::Path(arg.into()))),
     }
 }
 
@@ -53,16 +53,27 @@ mod tests {
         std::fs::write(library.path().join("mine.bnto.json"), r#"{"name":"Mine"}"#).unwrap();
         let catalog = RecipeCatalog::load(library.path());
         let (_, kind) = read_recipe("mine", &catalog).unwrap();
-        assert_eq!(kind, SourceKind::Library);
+        let file = library.path().join("mine.bnto.json");
+        assert_eq!(kind, SourceKind::Library(Some(file)));
     }
 
     #[test]
-    fn a_project_slug_is_a_project_recipe_of_its_root() {
+    fn a_project_slug_is_a_project_recipe_of_its_root_and_file() {
         let root = PathBuf::from("project");
-        let source = RecipeSource::Project(root.clone());
+        let file = root.join(".bnto/recipes/tidy.bnto.json");
+        let source = RecipeSource::Project {
+            root: root.clone(),
+            file: file.clone(),
+        };
         let catalog = RecipeCatalog::bundled_only().with_entry(entry("tidy", source));
         let (_, kind) = read_recipe("tidy", &catalog).unwrap();
-        assert_eq!(kind, SourceKind::Project(root));
+        assert_eq!(
+            kind,
+            SourceKind::Project {
+                root,
+                file: Some(file)
+            }
+        );
     }
 
     #[test]
@@ -73,7 +84,7 @@ mod tests {
         std::fs::write(&path, r#"{"name":"Mine"}"#).unwrap();
         let (json, kind) = read_recipe(path.to_str().unwrap(), &catalog).unwrap();
         assert_eq!(json, r#"{"name":"Mine"}"#);
-        assert_eq!(kind, SourceKind::Path);
+        assert_eq!(kind, SourceKind::Path(path));
     }
 
     #[test]
@@ -89,7 +100,7 @@ mod tests {
         std::fs::write(&path, r#"{"name":"Mine"}"#).unwrap();
         let (json, kind) = read_recipe(path.to_str().unwrap(), &catalog).unwrap();
         assert_eq!(json, r#"{"name":"Mine"}"#);
-        assert_eq!(kind, SourceKind::Path);
+        assert_eq!(kind, SourceKind::Path(path));
     }
 
     #[test]

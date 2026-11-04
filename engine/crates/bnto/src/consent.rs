@@ -17,7 +17,15 @@ use crate::{storage, trust, trust_gate};
 ///
 /// Exits the process when the user declines, suggesting the `bnto dry-run`
 /// that inspects the same recipe with the same `-p` and `--vars` (`given`).
-pub fn check_trust(raw_json: &str, given: &DryRunHint, skip_consent: bool, kind: &SourceKind) {
+///
+/// `shown_json` is the recipe as the run will execute it (`-p` values
+/// filled in), which the prompt shows; the approval is pinned to `raw_json`.
+pub fn check_trust(
+    (raw_json, shown_json): (&str, &str),
+    given: &DryRunHint,
+    skip_consent: bool,
+    kind: &SourceKind,
+) {
     if skip_consent {
         return;
     }
@@ -27,10 +35,11 @@ pub fn check_trust(raw_json: &str, given: &DryRunHint, skip_consent: bool, kind:
         .as_ref()
         .map(|p| trust::TrustStore::load(p))
         .unwrap_or_default();
-    let Some(request) = trust_gate::consent_needed(raw_json, recipe_arg, kind, &store) else {
+    let request = trust_gate::consent_needed_shown(raw_json, shown_json, recipe_arg, kind, &store);
+    let Some(request) = request else {
         return;
     };
-    if !trust::prompt_consent(&request.recipe_name, &request.commands) {
+    if !crate::consent_prompt::prompt_consent(&request) {
         exit_declined(given);
     }
     if let Some(path) = trust_path {

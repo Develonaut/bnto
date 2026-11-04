@@ -5,10 +5,11 @@
 
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Paragraph, Wrap};
+use ratatui::widgets::Paragraph;
 
 use super::app::AppModel;
 use super::file_window::file_window;
+use super::render_consent::draw_consent;
 use super::render_layout::content_panel;
 use super::screens::execution::{
     ExecutionModel, ExecutionStatus, FileStatus, NodeProgress, NodeStatus,
@@ -16,6 +17,7 @@ use super::screens::execution::{
 use super::screens::results::format_duration;
 use super::theme::Theme;
 use super::wrap_lines::wrap_lines;
+use crate::display_text::display_text;
 
 /// Render the execution screen.
 pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -27,11 +29,10 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
         return;
     };
 
-    // Consent gets the whole panel, wrapped, so a long command line is
-    // read in full before it's approved.
+    // Consent gets the whole panel, wrapped and scrolled, so a long command
+    // line is read in full before it's approved.
     if let Some(request) = &exec.consent {
-        let prompt = Paragraph::new(consent_lines(request, theme)).wrap(Wrap { trim: false });
-        frame.render_widget(prompt, inner);
+        draw_consent(frame, request, exec.consent_scroll, theme, inner);
         return;
     }
 
@@ -47,40 +48,6 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
     // Fill the bottom area with the most recent command output lines.
     let output = output_lines(exec, theme, bottom.height as usize);
     frame.render_widget(Paragraph::new(output), bottom);
-}
-
-/// The consent prompt: what the recipe will run and how to answer.
-/// Mirrors the CLI prompt, so both surfaces ask the same question.
-#[expect(clippy::too_many_lines)]
-fn consent_lines<'a>(
-    request: &'a crate::trust_gate::ConsentRequest,
-    theme: &'a Theme,
-) -> Vec<Line<'a>> {
-    let mut lines = vec![
-        Line::from(Span::styled(
-            "  This recipe runs commands on your computer",
-            theme.heading(),
-        )),
-        Line::from(""),
-        Line::from(Span::styled(
-            format!("  Recipe: {}", request.recipe_name),
-            theme.muted(),
-        )),
-        Line::from(Span::styled("  COMMANDS", theme.category())),
-    ];
-    for command in &request.commands {
-        // A script step's line carries its script on the lines below.
-        for (i, part) in command.lines().enumerate() {
-            let bullet = if i == 0 { "    - " } else { "      " };
-            lines.push(Line::from(format!("{bullet}{part}")));
-        }
-    }
-    lines.push(Line::from(""));
-    lines.push(Line::from(Span::styled(
-        "  y allow and run  ·  n / Esc cancel",
-        theme.heading(),
-    )));
-    lines
 }
 
 /// Rows the OUTPUT pane keeps (heading and lines) whenever there's output,
@@ -129,8 +96,8 @@ fn header_lines<'a>(
 fn error_lines(error: &str, theme: &Theme, width: usize) -> Vec<Line<'static>> {
     let row = |(i, part): (usize, &str)| {
         let text = match i {
-            0 => format!("  Error: {part}"),
-            _ => format!("  {}", part.trim_start()),
+            0 => format!("  Error: {}", display_text(part)),
+            _ => format!("  {}", display_text(part.trim_start())),
         };
         Line::from(Span::styled(text, theme.heading()))
     };
@@ -488,11 +455,7 @@ mod tests {
         };
         let tail = "--sub-langs {{fields.subtitles}} -o {{output_dir}}/%(title)s.%(ext)s";
         let command = format!("yt-dlp --no-playlist {tail}");
-        let request = ConsentRequest {
-            recipe_name: "Probe".into(),
-            commands: vec![command],
-            hash: "h".into(),
-        };
+        let request = ConsentRequest::for_commands("Probe", vec![command]);
         let model = AppModel {
             screen: Screen::Execution {
                 slug: "probe".into(),

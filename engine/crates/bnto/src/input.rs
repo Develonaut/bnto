@@ -9,6 +9,7 @@ use bnto_core::{
     resolve_input_mode,
 };
 
+use crate::display_text::display_text;
 use crate::io;
 
 /// Ready-to-execute inputs: potentially mutated definition JSON + files.
@@ -132,7 +133,8 @@ fn load_files(paths: &[String]) -> Result<Vec<PipelineFile>, String> {
         .filter_map(|path| match io::read_pipeline_file(path) {
             Ok(f) => Some(f),
             Err(e) => {
-                eprintln!("Warning: skipping {path}: {e}");
+                let why = display_text(&format!("{path}: {e}")).into_owned();
+                eprintln!("Warning: skipping {why}");
                 None
             }
         })

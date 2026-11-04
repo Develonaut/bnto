@@ -5,22 +5,14 @@
 use std::path::Path;
 
 use crate::catalog::SourceKind;
+pub use crate::consent_request::ConsentRequest;
 use crate::trust::{self, TrustLevel, TrustStore};
-
-/// What the user is asked to approve before an untrusted recipe runs.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConsentRequest {
-    pub recipe_name: String,
-    /// Each shell command the recipe runs, as consent shows it.
-    pub commands: Vec<String>,
-    /// The definition hash an approval is pinned to.
-    pub hash: String,
-}
 
 /// The consent the recipe in `raw_json` still needs, or `None` when it may
 /// run: bundled, a library or by-path recipe with no shell steps, or this
 /// exact definition already approved (`trust::trust_level`). Unparseable
-/// JSON needs none here; the run itself refuses it.
+/// JSON needs none here; the run itself refuses it. `fallback_name` is how
+/// the user named the recipe (its slug, or a path), which the prompt shows.
 pub fn consent_needed(
     raw_json: &str,
     fallback_name: &str,
@@ -33,11 +25,34 @@ pub fn consent_needed(
     if trust::trust_level(kind, has_shell, store, &hash) == TrustLevel::Trusted {
         return None;
     }
-    Some(ConsentRequest {
-        recipe_name: recipe_name(raw_json, fallback_name),
-        commands: crate::consent_lines::shell_command_lines(&def.nodes),
+    let name = recipe_name(raw_json, fallback_name);
+    Some(ConsentRequest::new(&def, name, fallback_name, kind, hash))
+}
+
+/// `consent_needed` for `raw_json`, shown as `shown_json` would run: the
+/// same recipe with what the run fills before it starts (`-p` values).
+/// Approval stays pinned to `raw_json`.
+pub fn consent_needed_shown(
+    raw_json: &str,
+    shown_json: &str,
+    fallback_name: &str,
+    kind: &SourceKind,
+    store: &TrustStore,
+) -> Option<ConsentRequest> {
+    let request = consent_needed(raw_json, fallback_name, kind, store)?;
+    let Ok(shown) = serde_json::from_str::<bnto_core::PipelineDefinition>(shown_json) else {
+        return Some(request);
+    };
+    let ConsentRequest {
+        recipe_name, hash, ..
+    } = request;
+    Some(ConsentRequest::new(
+        &shown,
+        recipe_name,
+        fallback_name,
+        kind,
         hash,
-    })
+    ))
 }
 
 /// The recipe's `name`, falling back to how the user referred to it.
@@ -79,7 +94,7 @@ mod tests {
         let request = consent_needed(
             SHELL_RECIPE,
             "probe",
-            &SourceKind::Library,
+            &SourceKind::Library(None),
             &TrustStore::default(),
         )
         .expect("a library shell recipe must ask");
@@ -107,7 +122,7 @@ mod tests {
             consent_needed(
                 PLAIN_RECIPE,
                 "plain",
-                &SourceKind::Library,
+                &SourceKind::Library(None),
                 &TrustStore::default()
             ),
             None
@@ -119,7 +134,7 @@ mod tests {
         let mut store = TrustStore::default();
         store.approve(trust::definition_hash(SHELL_RECIPE));
         assert_eq!(
-            consent_needed(SHELL_RECIPE, "probe", &SourceKind::Library, &store),
+            consent_needed(SHELL_RECIPE, "probe", &SourceKind::Library(None), &store),
             None
         );
     }
@@ -129,11 +144,14 @@ mod tests {
         let mut store = TrustStore::default();
         store.approve(trust::definition_hash(SHELL_RECIPE));
         let edited = SHELL_RECIPE.replace("--version", "--help");
-        assert!(consent_needed(&edited, "probe", &SourceKind::Library, &store).is_some());
+        assert!(consent_needed(&edited, "probe", &SourceKind::Library(None), &store).is_some());
     }
 
     fn project() -> SourceKind {
-        SourceKind::Project(std::path::PathBuf::from("project"))
+        SourceKind::Project {
+            root: std::path::PathBuf::from("project"),
+            file: None,
+        }
     }
 
     #[test]
@@ -167,7 +185,12 @@ mod tests {
     fn by_path_recipes_without_shell_steps_run_without_asking() {
         let store = TrustStore::default();
         assert_eq!(
-            consent_needed(PLAIN_RECIPE, "plain", &SourceKind::Path, &store),
+            consent_needed(
+                PLAIN_RECIPE,
+                "plain",
+                &SourceKind::Path("x.bnto.json".into()),
+                &store
+            ),
             None
         );
     }

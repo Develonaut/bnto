@@ -1,4 +1,6 @@
-// `bnto doctor` — check external dependencies and recipe secrets.
+// `bnto doctor` — check external dependencies and recipe secrets. Recipe
+// text it prints (slugs, tool names, hints, secret descriptions) is escaped
+// (ISS-125).
 
 use bnto_core::HostPlatform;
 use bnto_engine::deps::{DependencyStatus, ScopedDependency};
@@ -6,6 +8,7 @@ use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
 use crate::context;
+use crate::display_text::display_text;
 
 /// Run the doctor command — check dependencies and recipe secrets.
 pub fn run_doctor(catalog: &RecipeCatalog) {
@@ -92,8 +95,8 @@ fn print_parse_failures(invalid: &[(String, String)]) -> bool {
         println!(
             "{} Could not parse recipe {}: {}",
             "Warning:".yellow().bold(),
-            slug,
-            err
+            display_text(slug),
+            display_text(err)
         );
     }
     if !invalid.is_empty() {
@@ -116,15 +119,12 @@ fn print_dep_statuses(statuses: &[DependencyStatus], scoped: &[ScopedDependency]
     has_issues
 }
 
-/// The binary, plus " (macOS only)" when some OS doesn't need it.
+/// The binary, escaped, plus " (macOS only)" when some OS doesn't need it.
 fn name_with_os(scoped: &ScopedDependency) -> String {
+    let binary = display_text(&scoped.dependency.binary);
     match scoped.os_note() {
-        Some(note) => format!(
-            "{} {}",
-            scoped.dependency.binary,
-            format!("({note})").dimmed()
-        ),
-        None => scoped.dependency.binary.clone(),
+        Some(note) => format!("{binary} {}", format!("({note})").dimmed()),
+        None => binary.into_owned(),
     }
 }
 
@@ -144,12 +144,11 @@ fn print_dep_status(status: &DependencyStatus, name: &str) -> bool {
 
 fn print_missing(status: &DependencyStatus, name: &str) {
     println!("  {} {name}", "MISSING".red().bold());
-    println!(
-        "         Install: {}",
-        status.dependency.host_install_hint().cyan()
-    );
+    let hint = status.dependency.host_install_hint();
+    println!("         Install: {}", display_text(hint).cyan());
     if !status.dependency.homepage.is_empty() {
-        println!("         Homepage: {}", status.dependency.homepage);
+        let homepage = display_text(&status.dependency.homepage);
+        println!("         Homepage: {homepage}");
     }
 }
 
@@ -158,18 +157,16 @@ fn print_outdated(status: &DependencyStatus, name: &str) {
     println!(
         "  {} {name} (installed: {}, requires: {})",
         "OUTDATED".yellow().bold(),
-        installed,
-        status.dependency.version
+        display_text(installed),
+        display_text(&status.dependency.version)
     );
-    println!(
-        "         Update: {}",
-        status.dependency.host_install_hint().cyan()
-    );
+    let hint = status.dependency.host_install_hint();
+    println!("         Update: {}", display_text(hint).cyan());
 }
 
 fn print_found(status: &DependencyStatus, name: &str) {
     let version_info = match &status.installed_version {
-        Some(v) => format!(" ({})", v.dimmed()),
+        Some(v) => format!(" ({})", display_text(v).dimmed()),
         None => String::new(),
     };
     println!("  {} {name}{version_info}", "ok".green());
@@ -213,6 +210,7 @@ fn print_recipe_secret_status(
     let statuses = bnto_core::secrets::check_secrets(&def.secrets, ctx);
     let missing = bnto_core::secrets::missing_required(&statuses);
 
+    let slug = display_text(slug);
     if missing.is_empty() {
         println!("  {} {}: all secrets present", "ok".green(), slug);
         return false;
@@ -220,10 +218,11 @@ fn print_recipe_secret_status(
 
     println!("  {} {}", "MISSING".red().bold(), slug);
     for s in &missing {
+        let key = display_text(&s.key);
         if s.description.is_empty() {
-            println!("         - {}", s.key);
+            println!("         - {key}");
         } else {
-            println!("         - {} ({})", s.key, s.description);
+            println!("         - {key} ({})", display_text(&s.description));
         }
     }
     true

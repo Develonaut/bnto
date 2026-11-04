@@ -10,6 +10,7 @@ use super::app::AppModel;
 use super::render_layout::content_panel;
 use super::theme::Theme;
 use super::widgets::{file_list, search_input};
+use crate::display_text::display_text;
 
 /// Render the file picker screen.
 #[expect(clippy::too_many_lines)]
@@ -26,6 +27,7 @@ pub fn draw_picker(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
 
     // Breadcrumb path with status indicators
     let breadcrumb = render_breadcrumb(&picker.current_dir, inner.width as usize);
+    let breadcrumb = display_text(&breadcrumb).into_owned();
     let mut path_spans = vec![Span::styled(format!("  {breadcrumb}"), theme.heading())];
 
     if picker.show_hidden {

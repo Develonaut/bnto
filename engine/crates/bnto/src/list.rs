@@ -6,6 +6,7 @@ use bnto_core::HostPlatform;
 use bnto_core::os_support::recipe_os;
 
 use crate::catalog::CatalogEntry;
+use crate::display_text::display_text;
 use crate::host_support::os_badge;
 
 /// A group of recipes sharing a category, ready for display.
@@ -26,7 +27,8 @@ pub struct RecipeEntry {
     pub os: Vec<HostPlatform>,
 }
 
-/// Print grouped recipes to stdout with colored formatting.
+/// Print grouped recipes to stdout with colored formatting, recipe text
+/// escaped (ISS-125).
 pub fn print_recipe_list(groups: &[RecipeGroup]) {
     use colored::Colorize;
     println!("{}\n", "Available recipes:".bold());
@@ -34,14 +36,14 @@ pub fn print_recipe_list(groups: &[RecipeGroup]) {
         if i > 0 {
             println!();
         }
-        println!("  {}:", group.category.yellow());
+        println!("  {}:", display_text(&group.category).yellow());
         for entry in &group.recipes {
             let badge = os_badge(&entry.os).map(|b| format!("{} ", b.yellow()));
             println!(
                 "    {:<30} {}{}",
-                entry.slug.cyan(),
+                display_text(&entry.slug).cyan(),
                 badge.unwrap_or_default(),
-                entry.description.dimmed()
+                display_text(&entry.description).dimmed()
             );
         }
     }

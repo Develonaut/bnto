@@ -56,7 +56,8 @@ pub fn check_then_consent(
     unfilled_fields::refuse_unfilled_with(&definition_json, run.overrides, form)?;
     let prepared = input::prepare_inputs(&definition_json, run.args, run.overrides)?;
     let recipe_dir = recipe_output_dir(&prepared.definition_json, ctx, &prepared.files)?;
-    let allowed = allowed(tx, &definition_json, run.slug, consent);
+    let shown = (definition_json.as_str(), prepared.definition_json.as_str());
+    let allowed = allowed(tx, shown, run.slug, consent);
     Ok(allowed.then_some(Ready {
         prepared,
         recipe_dir,
@@ -64,16 +65,19 @@ pub fn check_then_consent(
 }
 
 /// Whether the run may go ahead: no consent needed, or the user allowed it.
-/// Waits for the answer; a dropped reply (the run was let go) is a no.
+/// Waits for the answer; a dropped reply (the run was let go) is a no. The
+/// prompt shows `shown` (the form's values filled), the approval is pinned
+/// to `definition`.
 fn allowed(
     tx: &mpsc::Sender<BridgeEvent>,
-    definition_json: &str,
+    (definition, shown): (&str, &str),
     slug: &str,
     consent: &ConsentCheck,
 ) -> bool {
     let store = TrustStore::load(&consent.paths.trusted_file());
-    let Some(request) = trust_gate::consent_needed(definition_json, slug, &consent.kind, &store)
-    else {
+    let kind = &consent.kind;
+    let request = trust_gate::consent_needed_shown(definition, shown, slug, kind, &store);
+    let Some(request) = request else {
         return true;
     };
     let (reply, answer) = mpsc::channel();

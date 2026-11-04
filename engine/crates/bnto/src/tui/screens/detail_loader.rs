@@ -306,7 +306,7 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         name,
         description,
         // Raw JSON from no catalog source, badged like a library recipe.
-        kind: crate::catalog::SourceKind::Library,
+        kind: crate::catalog::SourceKind::Library(None),
         has_shell: pipeline_def
             .as_ref()
             .is_some_and(|d| crate::trust::has_shell_commands(&d.nodes)),
