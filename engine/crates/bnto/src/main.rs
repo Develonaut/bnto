@@ -67,6 +67,14 @@ mod progress;
 mod progress_indent;
 mod progress_line;
 mod progressive_output;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "wired to catalog loading in project-recipes step 7e"
+    )
+)]
+mod project_root;
 mod recipe_output_dir;
 mod recipe_source;
 mod run;
@@ -116,9 +124,7 @@ fn main() {
     telemetry::init(paths.as_ref());
     // Session logger — shared across all commands.
     let logger = create_logger(&paths);
-    // Build unified recipe catalog — bundled + user library.
-    let library_dir = paths.as_ref().map(|p| p.recipes_dir()).unwrap_or_default();
-    let catalog = RecipeCatalog::load(&library_dir);
+    let catalog = load_catalog(paths.as_ref());
 
     let cmd_name = cli.command.as_ref().map_or("tui", cli::Command::name);
     log_command(&logger, cmd_name);
@@ -149,15 +155,28 @@ fn install_signal_handler() {
     });
 }
 
-/// Resolve paths, create dirs, run pending migrations — before anything else.
+/// Resolve paths, create dirs, run pending migrations — before anything
+/// else. A home that can't be resolved or isn't absolute (`BNTO_HOME`, the
+/// config's `paths.home`) ends the process before any command runs: it
+/// would make the current folder's `.bnto/` the home (ISS-126). Only then
+/// is storage set up, and a failure there just warns.
 fn init_storage() -> Option<storage::BntoPaths> {
-    match storage::ensure_ready() {
-        // Apply config home override so all derived paths follow it.
-        Ok(p) => Some(p.configured()),
-        Err(e) => {
-            eprintln!("{} storage init: {e}", "Warning:".yellow());
-            None
-        }
+    let paths = unwrap_or_exit(storage::BntoPaths::resolve());
+    unwrap_or_exit(paths.clone().configured());
+    if let Err(e) = storage::ensure_ready(&paths) {
+        eprintln!("{} storage init: {e}", "Warning:".yellow());
+        return None;
+    }
+    // Read again: a migration may have rewritten the config.
+    Some(unwrap_or_exit(paths.configured()))
+}
+
+/// The unified recipe catalog: bundled recipes plus the user's library, or
+/// bundled alone when storage couldn't be set up.
+fn load_catalog(paths: Option<&storage::BntoPaths>) -> RecipeCatalog {
+    match paths {
+        Some(p) => RecipeCatalog::load(&p.recipes_dir()),
+        None => RecipeCatalog::without_library(),
     }
 }
 

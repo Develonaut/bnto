@@ -91,10 +91,20 @@ impl RecipeCatalog {
     /// slug runs (the user's copy overrides the bundled recipe), but the
     /// built-in stays in `bundled()` for the TUI's Recipes pane.
     pub fn load(library_dir: &Path) -> Self {
+        Self::with_library(load_library(library_dir))
+    }
+
+    /// The bundled recipes alone, when there's no bnto home to hold a
+    /// library (its storage couldn't be set up).
+    pub fn without_library() -> Self {
+        Self::with_library(Vec::new())
+    }
+
+    /// The bundled recipes with `library_entries` over them.
+    fn with_library(library_entries: Vec<CatalogEntry>) -> Self {
         let mut builtins = load_bundled();
         builtins.sort_by(|a, b| a.category.cmp(&b.category).then(a.slug.cmp(&b.slug)));
         let mut entries = builtins.clone();
-        let library_entries = load_library(library_dir);
 
         // Library overrides bundled: remove bundled entries whose slugs
         // collide with library entries, then append library entries.
@@ -247,6 +257,19 @@ mod tests {
             r#"{{"id":"{slug}","name":"{name}","metadata":{{"description":"Test recipe","category":"{category}","tags":["test"]}},"nodes":[]}}"#,
         );
         std::fs::write(dir.join(format!("{slug}.bnto.json")), json).unwrap();
+    }
+
+    #[test]
+    fn without_library_holds_the_bundled_recipes_alone() {
+        let catalog = RecipeCatalog::without_library();
+        assert!(!catalog.all().is_empty());
+        assert!(
+            catalog
+                .all()
+                .iter()
+                .all(|e| e.source == RecipeSource::Bundled)
+        );
+        assert_eq!(catalog.all().len(), catalog.bundled().len());
     }
 
     #[test]

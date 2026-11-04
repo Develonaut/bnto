@@ -25,7 +25,7 @@ fn move_home(home: &Path, to: &Path) {
 /// A session moved from `default` to `moved`, as `bnto tui` launches it.
 fn moved_session(default: &Path, moved: &Path) -> AppModel {
     move_home(default, moved);
-    let configured = paths(default).configured();
+    let configured = paths(default).configured().unwrap();
     AppModel::with_paths(ThemeVariant::LosAngeles, None, false, configured)
         .with_config_home(paths(default))
 }
@@ -66,7 +66,10 @@ fn saving_the_home_field_writes_the_config_configured_reads() {
     let (default, moved, next) = (tempdir(), tempdir(), tempdir());
     let model = moved_session(default.path(), moved.path());
     let model = pick_home(model, next.path());
-    assert_eq!(paths(default.path()).configured().home, next.path());
+    assert_eq!(
+        paths(default.path()).configured().unwrap().home,
+        next.path()
+    );
     // The session keeps its home until the next launch, and says so.
     assert_eq!(model.paths.home, moved.path());
     let status = model.status_message.expect("a notice");
@@ -81,9 +84,24 @@ fn a_later_theme_change_keeps_a_home_saved_without_a_move() {
     let model = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths(home.path()));
     let model = pick_home(model, next.path());
     let _ = update(model, AppMessage::ThemeChanged(ThemeVariant::Tokyo));
-    assert_eq!(paths(home.path()).configured().home, next.path());
+    assert_eq!(paths(home.path()).configured().unwrap().home, next.path());
 }
 
 fn tempdir() -> tempfile::TempDir {
     tempfile::tempdir().unwrap()
+}
+
+#[cfg(unix)]
+#[test]
+fn a_home_reached_through_a_symlink_is_not_a_move() {
+    // The session's config and the one `configured` reads are one file, so
+    // the home saved must survive a later theme save to the session's.
+    let (home, next) = (tempdir(), tempdir());
+    let link = next.path().join("home-link");
+    std::os::unix::fs::symlink(home.path(), &link).unwrap();
+    let model = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths(home.path()))
+        .with_config_home(paths(&link));
+    let model = pick_home(model, next.path());
+    let _ = update(model, AppMessage::ThemeChanged(ThemeVariant::Tokyo));
+    assert_eq!(paths(home.path()).configured().unwrap().home, next.path());
 }

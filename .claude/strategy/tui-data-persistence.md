@@ -141,6 +141,8 @@ impl BntoPaths {
 
 `BNTO_HOME` is the "escape hatch" for developers and CI. Set it once, everything goes there. Standard XDG vars are respected for users who have custom XDG setups.
 
+**`BNTO_HOME` and `config.toml`'s `paths.home` must be absolute (November 2026, ISS-126).** A relative or empty one is refused with an error naming the setting, and there is no relative `.bnto` fallback when the platform has no home folder: a relative home would make the current folder's `.bnto/` the bnto home, so a cloned repo's recipes would load as library recipes and its `state/trusted.json` would hold the approvals ([project-recipes.md](../decisions/project-recipes.md#7d-finding-the-project-root)).
+
 ---
 
 ## Config File Format

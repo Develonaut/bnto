@@ -113,8 +113,14 @@ pub(crate) fn settings_for(model: &AppModel) -> SettingsModel {
 
 /// Whether the session's own config is the one `BntoPaths::configured`
 /// reads (no move in effect), so it must carry the home setting too.
+/// Compared as files, not spellings, so a home reached through a symlink
+/// isn't taken for a move. When either config can't be opened the two homes
+/// are compared instead, and spellings decide when either home can't be.
 fn config_is_the_sessions(model: &AppModel) -> bool {
-    model.config_home.home == model.paths.home
+    let (read, session) = (model.config_home.config_file(), model.paths.config_file());
+    same_file::is_same_file(&read, &session)
+        .or_else(|_| same_file::is_same_file(&model.config_home.home, &model.paths.home))
+        .unwrap_or(read == session)
 }
 
 /// The `paths.home` the next launch follows.

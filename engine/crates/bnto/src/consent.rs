@@ -30,7 +30,7 @@ pub fn check_trust(
         return;
     }
     let recipe_arg = given.recipe_arg;
-    let trust_path = storage::BntoPaths::resolve_configured().map(|p| p.trusted_file());
+    let trust_path = trust_file();
     let store = trust_path
         .as_ref()
         .map(|p| trust::TrustStore::load(p))
@@ -55,4 +55,12 @@ fn exit_declined(given: &DryRunHint) -> ! {
         given.command().cyan()
     );
     process::exit(1);
+}
+
+/// The configured home's trust file. `main` exits before any command when
+/// the home can't be resolved or isn't absolute (ISS-126), so `None` only
+/// reaches code run outside `main`; there every recipe asks.
+fn trust_file() -> Option<std::path::PathBuf> {
+    let paths = storage::BntoPaths::resolve_configured().ok()?;
+    Some(paths.trusted_file())
 }

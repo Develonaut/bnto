@@ -74,13 +74,15 @@ impl NativeContext {
     }
 
     /// Create a context using the current working directory and the
-    /// configured bnto home (`BntoPaths::resolve_configured`, ISS-127). If
-    /// no home can be determined, it falls back to a temp dir and reads no
-    /// user `.env`: on a shared temp dir another user could plant one.
+    /// configured bnto home (`BntoPaths::resolve_configured`, ISS-127).
+    /// `main` exits before any command when the home can't be resolved or
+    /// isn't absolute (ISS-126); code run outside `main` that meets one falls
+    /// back to a temp dir and reads no user `.env`: on a shared temp dir
+    /// another user could plant one.
     pub fn current_dir() -> Result<Self, BntoError> {
         match crate::storage::BntoPaths::resolve_configured() {
-            Some(paths) => Self::current_dir_in(&paths),
-            None => Ok(Self::without_home(cwd()?, &std::env::temp_dir())),
+            Ok(paths) => Self::current_dir_in(&paths),
+            Err(_) => Ok(Self::without_home(cwd()?, &std::env::temp_dir())),
         }
     }
 

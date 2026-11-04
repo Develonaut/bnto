@@ -37,7 +37,7 @@ pub fn run_upgrade(check_only: bool, paths: Option<&BntoPaths>) {
 fn install(current: Version, latest: Version) {
     let exe = std::env::current_exe().expect("the running binary's path");
     let cargo_home = std::env::var_os("CARGO_HOME").map(Into::into);
-    if install_method(&exe, cargo_home, dirs::home_dir()) == InstallMethod::Other {
+    if install_method(&exe, cargo_home, absolute_home()) == InstallMethod::Other {
         println!("bnto {latest} is available (you have {current}).");
         println!("This bnto wasn't installed with cargo ({}).", exe.display());
         println!(
@@ -52,6 +52,11 @@ fn install(current: Version, latest: Version) {
         eprintln!("cargo install failed; bnto {current} is still installed.");
         std::process::exit(1);
     }
+}
+
+/// The user's home folder, ignored when `$HOME` is relative (ISS-126).
+fn absolute_home() -> Option<std::path::PathBuf> {
+    dirs::home_dir().filter(|h| h.is_absolute())
 }
 
 /// Run `cargo install bnto --locked` in the user's terminal. On Windows the

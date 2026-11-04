@@ -261,14 +261,15 @@ fn the_tui_applies_the_home_override_once_as_bnto_run_does() {
     };
     // What `main`'s `init_storage` hands on, and what `bnto run`'s consent
     // reads (`BntoPaths::resolve_configured` with BNTO_HOME at `default`).
-    let cli_paths = default_paths.configured();
+    let cli_paths = default_paths.configured().unwrap();
     assert_eq!(cli_paths.home, moved.path());
     let model = super::new_model(
         ThemeVariant::LosAngeles,
         None,
         false,
         Some(cli_paths.clone()),
-    );
+    )
+    .unwrap();
     assert_eq!(model.paths.trusted_file(), cli_paths.trusted_file());
 }
 

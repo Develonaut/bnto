@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use bnto_engine::create_registry;
 
 use crate::catalog::RecipeCatalog;
+use crate::storage::HomeError;
 use crate::storage::config::TomlConfig;
 use crate::storage::paths::BntoPaths;
 
@@ -21,12 +22,18 @@ impl AppModel {
     /// Loads persisted config from disk. The `variant` argument is the
     /// CLI override — if `None`, uses the config's saved theme.
     /// If `recipe_json` is Some, opens the recipe in the editor.
-    /// If `new_recipe` is true, opens a blank editor.
-    pub fn new(variant: ThemeVariant, recipe_json: Option<String>, new_recipe: bool) -> Self {
-        let default = BntoPaths::resolve_or_relative();
+    /// If `new_recipe` is true, opens a blank editor. A home that isn't
+    /// absolute is refused, as `main` refuses it (ISS-126).
+    pub fn new(
+        variant: ThemeVariant,
+        recipe_json: Option<String>,
+        new_recipe: bool,
+    ) -> Result<Self, HomeError> {
+        let default = BntoPaths::resolve()?;
         // The configured home, as `main` hands `bnto tui` (ISS-127).
-        let paths = default.clone().configured();
-        Self::with_paths(variant, recipe_json, new_recipe, paths).with_config_home(default)
+        let paths = default.clone().configured()?;
+        let model = Self::with_paths(variant, recipe_json, new_recipe, paths);
+        Ok(model.with_config_home(default))
     }
 
     /// This model with `home` as the home whose `config.toml` sets

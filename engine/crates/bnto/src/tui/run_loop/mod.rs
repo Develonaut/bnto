@@ -15,7 +15,7 @@ use super::SessionEnd;
 use super::app::{AppMessage, AppModel, update};
 use super::terminal::TuiTerminal;
 use super::theme::ThemeVariant;
-use crate::storage::BntoPaths;
+use crate::storage::{BntoPaths, HomeError};
 use bridge_events::RunBridge;
 
 /// Render or update time in microseconds above which a frame is logged.
@@ -30,7 +30,7 @@ pub(super) fn run_loop(
     logger: &Arc<dyn Logger>,
     paths: Option<BntoPaths>,
 ) -> io::Result<SessionEnd> {
-    let mut model = new_model(variant, recipe_json, new_recipe, paths);
+    let mut model = new_model(variant, recipe_json, new_recipe, paths).map_err(io::Error::other)?;
     let (update_notice, mut update_rx) = crate::update_check::for_tui(&model.paths);
     model.update_notice = update_notice;
     let label = model.screen.log_label();
@@ -86,17 +86,18 @@ fn end_session(
     commands.terminate_all();
 }
 
-/// The model the TUI starts on.
+/// The model the TUI starts on; a home that isn't absolute fails the
+/// launch (ISS-126).
 fn new_model(
     variant: ThemeVariant,
     recipe_json: Option<String>,
     new_recipe: bool,
     paths: Option<BntoPaths>,
-) -> AppModel {
+) -> Result<AppModel, HomeError> {
     match paths {
         // `main` moved `p` already; the default home's config moved it.
-        Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p)
-            .with_config_home(BntoPaths::resolve_or_relative()),
+        Some(p) => Ok(AppModel::with_paths(variant, recipe_json, new_recipe, p)
+            .with_config_home(BntoPaths::resolve()?)),
         None => AppModel::new(variant, recipe_json, new_recipe),
     }
 }

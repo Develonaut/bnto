@@ -125,7 +125,8 @@ fn render_breadcrumb(path: &Path, max_width: usize) -> String {
 /// Built from path components rather than by splitting `display()` output,
 /// so Windows `\` separators never end up inside a segment.
 fn breadcrumb_segments(path: &Path) -> Vec<String> {
-    if let Some(home) = dirs::home_dir()
+    // A relative `$HOME` names no folder to abbreviate (ISS-126).
+    if let Some(home) = dirs::home_dir().filter(|h| h.is_absolute())
         && let Ok(relative) = path.strip_prefix(&home)
     {
         let mut segments = vec!["~".to_string()];

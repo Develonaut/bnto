@@ -22,7 +22,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | 7a  | Record the project-recipes design                    | `feat/project-recipes`         | Done (on branch) |
 | 7b  | Consent by where a recipe came from                  | `feat/project-recipes`         | Done (on branch) |
 | 7c  | Consent prompt shows origin, steps and flagged paths | `feat/project-recipes`         | Done (on branch) |
-| 7d  | Find the project root                                | `feat/project-recipes`         | Not started      |
+| 7d  | Find the project root                                | `feat/project-recipes`         | Done (on branch) |
 | 7e  | Load project recipes from `.bnto/recipes/`           | `feat/project-recipes`         | Not started      |
 | 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Not started      |
 | 7k  | Confine project recipes at run time                  | `feat/project-recipes`         | Not started      |
