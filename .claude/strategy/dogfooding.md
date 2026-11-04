@@ -1,7 +1,7 @@
 # Dogfooding bnto in its own repo
 
 **Created:** October 23, 2026
-**Status:** Phase 1 done (October 23, 2026). Phase 2 in progress: 6a and 6b merged; project recipes (7a-7j) are on one branch, `feat/project-recipes` ([project-recipes.md](../decisions/project-recipes.md)). The working tracker for this effort: update the table below in every PR that moves a row.
+**Status:** Phase 1 done (October 23, 2026). Phase 2 in progress: 6a and 6b merged; project recipes (7a-7k) are on one branch, `feat/project-recipes` ([project-recipes.md](../decisions/project-recipes.md)). The working tracker for this effort: update the table below in every PR that moves a row.
 **Related:** [recipes/README.md](../../recipes/README.md) (the dogfood recipes), [core-principles.md](core-principles.md), [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md)
 
 ## Tracker
@@ -25,6 +25,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | 7d  | Find the project root                                | `feat/project-recipes`         | Not started      |
 | 7e  | Load project recipes from `.bnto/recipes/`           | `feat/project-recipes`         | Not started      |
 | 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Not started      |
+| 7k  | Confine project recipes at run time                  | `feat/project-recipes`         | Not started      |
 | 7g  | Run project recipes at the project root              | `feat/project-recipes`         | Not started      |
 | 7h  | The TUI editor keeps a recipe's source               | `feat/project-recipes`         | Not started      |
 | 7i  | Project pane in the TUI                              | `feat/project-recipes`         | Not started      |
@@ -39,7 +40,7 @@ Phase 1  1 delete assets ─► 2 unused-assets check
          3 split node_types.rs, 3b tui/mod.rs ─► 4 Rust size limit
          5 release-verify                          (independent)
 Phase 2  6a telemetry · 6b list test                (independent)
-         7a-7j project recipes, one branch (project-recipes.md)
+         7a-7k project recipes, one branch (project-recipes.md)
 Phase 3  8 (after 4) · 9 (after 2) · 10 (after 5)
 ```
 
@@ -70,7 +71,7 @@ Git hooks stay shell scripts: a hook can't count on a contributor having a built
 - **Optimizing SVGs isn't worth it.** bnto's own `optimize-svg` over all 39 SVGs saved 1.5% (1.87 MB to 1.84 MB). The WebPs were already made with cwebp.
 - **The Rust 400-production-line limit wasn't enforced** (only TypeScript's, through ESLint `max-lines`). One file was over: `bnto-core/src/metadata/node_types.rs` (451). **Decided: split it** (PR 3), then enforce the limit (PR 4). Counting strictly for PR 4 found a second, `bnto/src/tui/mod.rs` (406), which an early `#[cfg(test)] use` had hidden from a "count up to the first `#[cfg(test)]`" rule (PR 3b).
 - **Checking a release was manual.** After v0.18.0, crates.io, the GitHub Release and the production deploy were checked by hand (PR 5).
-- **Repo recipes are invisible to bnto.** `RecipeCatalog::load` reads only bundled recipes and the user's library, so `bnto list` and `bnto tui` can't see them (7a-7j).
+- **Repo recipes are invisible to bnto.** `RecipeCatalog::load` reads only bundled recipes and the user's library, so `bnto list` and `bnto tui` can't see them (7a-7k).
 - **Existing issues found along the way:** telemetry sends custom recipe names and run-by-path file paths as `slug` (PR 6a), and `test_list_command` reads the developer's real `~/.bnto` (PR 6b).
 
 ## Not dogfooded, on purpose
@@ -80,11 +81,11 @@ Git hooks stay shell scripts: a hook can't count on a contributor having a built
 - **Test fixture generation,** which is circular (rule 5).
 - **Image and SVG optimization of the site,** which measured negligible savings.
 
-## Project recipes (7a-7j)
+## Project recipes (7a-7k)
 
 When bnto runs inside a project, it also loads `*.bnto.json` from the nearest `<project>/.bnto/recipes/`, shows them in `bnto list` and a TUI Project pane, and runs them at the project root. A project recipe never overrides a built-in or library recipe, and asks for consent on its first run. bnto's own dogfood recipes move there in 7j.
 
-The design, its security review, and the ten-step plan are in [project-recipes.md](../decisions/project-recipes.md). It changes the earlier sketch here in two ways: a project needn't be a git repo, and project recipes run at the project root. Ryan chose to ship all ten steps on one branch, `feat/project-recipes`, as one PR to `main` released as a new version; each row moves when its step is pushed to that branch.
+The design, its security reviews, and the eleven-step plan are in [project-recipes.md](../decisions/project-recipes.md). It changes the earlier sketch here in two ways: a project needn't be a git repo, and project recipes run at the project root. Ryan chose to ship all eleven steps on one branch, `feat/project-recipes`, as one PR to `main` released as a new version; each row moves when its step is pushed to that branch.
 
 ## Product gaps this surfaces (PRs 8-10)
 
