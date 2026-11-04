@@ -197,6 +197,8 @@ fn a_refusal_after_a_progressive_loop_names_what_the_loop_wrote() {
     assert!(err.contains("../b.txt"), "{err}");
     assert!(err.contains("the final write wrote nothing"), "{err}");
     assert!(err.contains("Loop iterations already wrote"), "{err}");
+    // A multi-line error keeps its line breaks rather than showing `\n`.
+    assert!(!err.contains("\\n"), "{err}");
     let wrote = err.split("Loop iterations already wrote").nth(1).unwrap();
     assert!(wrote.contains("deep") && wrote.contains("a.txt"), "{err}");
     let mut expected = vec!["a.txt", "b.txt", "names.bnto.json", "out/deep/a.txt"];

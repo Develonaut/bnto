@@ -31,6 +31,7 @@ mod file_delete;
 mod file_inspect;
 mod file_join;
 mod file_params;
+mod forged_error_lines;
 mod golden_helpers;
 mod golden_tests;
 mod image_pad;

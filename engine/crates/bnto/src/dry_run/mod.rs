@@ -117,7 +117,7 @@ fn preview_files(definition_json: &str, inputs: &[String], params: &[String]) ->
             warnings: result.warnings,
         },
         Err(e) => {
-            let e = crate::display_text::display_text(&e.to_string()).into_owned();
+            let e = crate::run_verdict::shown_error(&e.to_string());
             eprintln!("Warning: pipeline preview failed: {e}");
             FilesPreview::default()
         }

@@ -93,16 +93,30 @@ fn header_lines<'a>(
 
 /// The error, one row per line it holds, each wrapped to `width`: a failed
 /// write's later lines name where kept copies are, and must show in full.
+/// Every row after the first, a wrapped row of the first line's included,
+/// starts under the text after `Error: `, past the column the screen's own
+/// rows start at, so recipe text a builder failed to escape can't pass for
+/// one of them.
 fn error_lines(error: &str, theme: &Theme, width: usize) -> Vec<Line<'static>> {
-    let row = |(i, part): (usize, &str)| {
-        let text = match i {
-            0 => format!("  Error: {}", display_text(part)),
-            _ => format!("  {}", display_text(part.trim_start())),
-        };
+    let gutter = " ".repeat(ERROR_LABEL.len());
+    let row = |part: &str| {
+        let text = format!("{gutter}{}", display_text(part.trim_start()));
         Line::from(Span::styled(text, theme.heading()))
     };
-    wrap_lines(error.lines().enumerate().map(row).collect(), width)
+    let mut rows = wrap_lines(error.lines().map(row).collect(), width);
+    if let Some(first) = rows.first_mut() {
+        let text = first.to_string();
+        let rest = text.strip_prefix(&gutter).unwrap_or(text.trim_start());
+        *first = Line::from(Span::styled(
+            format!("{ERROR_LABEL}{rest}"),
+            theme.heading(),
+        ));
+    }
+    rows
 }
+
+/// What an error's first row starts with; its later rows indent to its end.
+const ERROR_LABEL: &str = "  Error: ";
 
 fn status_lines<'a>(exec: &ExecutionModel, theme: &Theme) -> Vec<Line<'a>> {
     let status_label = match &exec.status {
@@ -353,6 +367,91 @@ mod tests {
             screen.contains("Copies set aside for a swap are kept in"),
             "{screen}"
         );
+    }
+
+    /// What a recipe would like to show as a row of its own.
+    const FORGED: &str = "FORGED 1 file written";
+
+    /// The execution screen at 100x30 after a run failed with `error`.
+    fn failed_screen(error: String) -> String {
+        use crate::tui::screens::execution::{self, ExecutionMessage};
+        let failed = ExecutionMessage::PipelineFailed {
+            node_id: String::new(),
+            error,
+        };
+        let home = tempfile::tempdir().unwrap();
+        let paths = crate::storage::BntoPaths {
+            home: home.path().to_path_buf(),
+        };
+        let variant = crate::tui::theme::ThemeVariant::LosAngeles;
+        let mut model = AppModel::with_paths(variant, None, false, paths);
+        model.execution = Some(execution::update(ExecutionModel::new("s"), failed));
+        screen_text(&model, 100, 30)
+    }
+
+    /// No row of `screen` starts with the recipe's text at or before the
+    /// column the screen's own rows use, past the panel's border.
+    fn assert_no_forged_row(screen: &str) {
+        for row in screen.lines() {
+            let inner = row.split_once('│').map_or(row, |(_, rest)| rest);
+            let indent = inner.chars().take_while(|c| *c == ' ').count();
+            let forged = inner.trim_start().starts_with("FORGED");
+            assert!(
+                !forged || indent >= ERROR_LABEL.len(),
+                "a forged row:\n{screen}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_line_break_in_a_copy_destination_forges_no_row() {
+        let value = format!("C:x\n{FORGED}");
+        let err = bnto_core::in_work_dir("destination", &value, &bnto_core::NoopContext);
+        let screen = failed_screen(err.unwrap_err().to_string());
+        assert!(screen.contains(&format!("\\n{FORGED}")), "{screen}");
+        assert_no_forged_row(&screen);
+    }
+
+    #[test]
+    fn a_line_break_in_a_rename_prefix_forges_no_row() {
+        // The name a `file-rename` prefix of `../\nFORGED…` builds, refused
+        // by `file-copy` as the engine refuses it.
+        use bnto_core::processor::{BatchFile, BatchInput, FileData, NodeProcessor};
+        let out = tempfile::tempdir().unwrap();
+        let file = BatchFile {
+            data: FileData::Bytes(b"a".to_vec()),
+            filename: format!("../\n{FORGED}a.txt"),
+            mime_type: None,
+            metadata: serde_json::Map::new(),
+        };
+        let params = serde_json::json!({ "destination": out.path().to_str().unwrap() });
+        let input = BatchInput {
+            files: vec![file],
+            params: params.as_object().unwrap().clone(),
+        };
+        let progress = bnto_core::ProgressReporter::new_noop();
+        let copy = bnto_file::FileCopy::new();
+        let err = copy.process_batch(input, &progress, &bnto_core::NoopContext);
+        let screen = failed_screen(err.err().unwrap().to_string());
+        assert!(screen.contains(&format!("\\n{FORGED}")), "{screen}");
+        assert_no_forged_row(&screen);
+    }
+
+    #[test]
+    fn a_raw_line_break_in_an_error_starts_its_row_past_the_label() {
+        // A builder that missed escaping: its line still can't pass for one
+        // of the screen's own rows.
+        let screen = failed_screen(format!("boom\n{FORGED}"));
+        assert!(screen.contains("  Error: boom"), "{screen}");
+        assert!(screen.contains(&format!("         {FORGED}")), "{screen}");
+        assert_no_forged_row(&screen);
+    }
+
+    #[test]
+    fn a_long_first_line_wraps_under_the_label() {
+        // Enough words that some wrapped row starts with one.
+        let screen = failed_screen("FORGED ".repeat(40));
+        assert_no_forged_row(&screen);
     }
 
     #[test]
