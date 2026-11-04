@@ -227,7 +227,7 @@ Numbers continue the dogfooding tracker. Each step is one sentence, as a PR woul
 
 ### 7d: Finding the project root
 
-- **What:** `project_root` per §2; an absolute `BNTO_HOME` and `paths.home` (ISS-126); both relative `.bnto` fallbacks removed. Not wired to anything yet.
+- **What:** `project_root` per §2; an absolute `BNTO_HOME` and `paths.home` (ISS-126); both relative `.bnto` fallbacks removed. Both fallbacks now go through `BntoPaths::resolve_or_relative` (`storage/paths.rs`, since 7b), so removing it removes both. Also from 7b's reviews: the TUI Settings screen decides whether the session home moved by comparing path spellings (`config_is_the_sessions`, `tui/app_helpers/settings.rs`); compare the config files by identity (`same-file`) instead, so a symlinked home can't take the "moved" branch and let a later theme save undo a new home. Not wired to anything yet.
 - **Files (~1 new, ~3 modified):** new `project_root.rs`; `storage/paths.rs`, `storage/mod.rs`, `tui/app/init.rs`.
 - **Key API:** `fn project_root(start: &Path, home: &Path, bnto_home: &Path) -> Option<PathBuf>`.
 - **RED tests:** found in the start folder and three levels up; stops at a `.git` dir and a `.git` file; never returns home (trailing slash, symlinked `/var`, other case); skips a root whose recipes are the library; ignores `recipes/` without the dot; ignores a `.bnto` that's a symlink; stops at another user's folder and at an unreadable parent (Unix); `BNTO_HOME=.bnto` and `BNTO_HOME=` are refused.
