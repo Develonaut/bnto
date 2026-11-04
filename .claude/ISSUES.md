@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** from the next batch in the [Work order](#work-order), by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-122**.
+- **IDs never get reused.** The next one is **ISS-128**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 ## Work order
@@ -22,8 +22,9 @@ Batches group issues that share code and verification, so each runs while its bu
 | --- | -------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 5b  | shell-run token checks     | ISS-115, ISS-116                                                 | Security: SEC-27's count misses a shell-run token after a stray `{`, so a value can be filled twice (ISS-115); a URL holding `{{input}}` is filled twice (ISS-116). Found reviewing ISS-111; both on `main`. `bnto-core`'s `reserved_tokens.rs` and `bnto-shell`                                                                                                                                                                 |
 | 5c  | Windows shell and pty runs | ISS-118, ISS-117, ISS-119                                        | On Windows a PowerShell step is slow to exit in the TUI, by about 25 s (ISS-118, found by the journeys #829 turned on); `update_notice`'s pty tests still skip Windows (ISS-117); many other tests run only on some OSes with no record of why (ISS-119). After the per-OS CI workflows ([PLAN.md](PLAN.md)), which make a Windows run a branch run                                                                              |
+| 5e  | Project recipes            | ISS-127, ISS-125, ISS-126, ISS-124, ISS-123                      | Fixed inside the project-recipes feature branch ([project-recipes.md](decisions/project-recipes.md)), which needs each before a cloned repo's recipes load: the trust file (step 7b), escaped recipe text (7c), an absolute `BNTO_HOME` (7d), checked package names (7e), `file-list` paths (7f). Found by its security review                                                                                                   |
 | 6   | Template unification       | ISS-35                                                           | `file-rename` and `file-decode` move onto the shared one-pass fill. These are the first PRs of the template-filters plan ([PLAN.md backlog](PLAN.md#backlog)), which must unify the interpolators before adding filters; write that plan first                                                                                                                                                                                   |
-| 7   | TUI and CLI behavior       | ISS-103, ISS-104, ISS-113, ISS-114, ISS-45                       | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a terminal left in raw mode when setup fails (ISS-113); tonkotsu acting on key releases (ISS-114); progressive writes in message/none mode (ISS-45). `tui:test` and `cli:test`                                                                                                                                                         |
+| 7   | TUI and CLI behavior       | ISS-103, ISS-104, ISS-113, ISS-114, ISS-45, ISS-122              | The node picker swallowing `j`/`k` (ISS-103); a file param shown as a text box (ISS-104); a terminal left in raw mode when setup fails (ISS-113); tonkotsu acting on key releases (ISS-114); progressive writes in message/none mode (ISS-45); a `{a,b}` glob matching nothing (ISS-122). `tui:test` and `cli:test`, plus `wasm:test` for ISS-122's `bnto-file` change                                                           |
 | 8   | Web performance            | ISS-99, then ISS-37                                              | Public pages render per request, which costs compute that static pages don't (ISS-99), then the homepage's ~500 KB of JS (mobile LCP 4.9 s, ISS-37). Moved up from last: first of the web batches. Its own plan, profiling first; ISS-99 first because it changes what ISS-37 measures                                                                                                                                           |
 | 9   | Web cleanups               | ISS-86, ISS-91, ISS-88, ISS-90, ISS-84, then ISS-85, ISS-44      | Prettier first, so later PRs don't fight the formatter (ISS-86); `React.*` types (ISS-91); dot-notation names (ISS-88); dead `@bnto/form` exports (ISS-90); the E2E heading check, then the helpers split in the same file (ISS-84, ISS-85); old params in the browser, which also moves the migrations out of the CLI crate (ISS-44). `ui:lint`, `task e2e`, `seo:audit`; ISS-44 also needs the engine's tests and a WASM build |
 | 10  | Telemetry and analytics    | ISS-12, then ISS-7 (same release), ISS-57, ISS-29, ISS-70        | Released CLIs send nothing (ISS-12) and the notice links a 404 (ISS-7); a wrong `out_of_memory` category (ISS-57); exception capture off (ISS-29); recipe-page downloads not recorded (ISS-70)                                                                                                                                                                                                                                   |
@@ -72,6 +73,12 @@ After batch 6, the rest of the template-filters plan (the filters themselves, a 
 | ISS-118 | On Windows a PowerShell step is slow to exit in the TUI (~25 s): one streaming to stderr times out                                           | cli tui         | Open                                             |
 | ISS-119 | Many CLI tests run only on some OSes, with no list saying which are on purpose                                                               | cli test        | Open                                             |
 | ISS-121 | On macOS a build unit still in use keeps every earlier rebuild's object files                                                                | tooling         | Open                                             |
+| ISS-122 | `file-collect`'s `pattern` treats `{a,b}` literally, so `*.{png,jpg}` matches nothing and the run exits 0                                    | engine          | Open                                             |
+| ISS-123 | `file-list` uses an absolute `base` as written, though its docs say absolute paths and `..` are refused                                      | engine security | Scheduled ([plan](decisions/project-recipes.md)) |
+| ISS-124 | `bnto install` hands a recipe's `binary` to the package manager unchecked, with no `--`                                                      | cli security    | Scheduled ([plan](decisions/project-recipes.md)) |
+| ISS-125 | Recipe text reaches the terminal unescaped: a `name` holding ESC or `\r` rewrites the consent prompt                                         | cli security    | Scheduled ([plan](decisions/project-recipes.md)) |
+| ISS-126 | A relative `BNTO_HOME` resolves against the current folder, making that folder's `.bnto/` the bnto home                                      | cli security    | Scheduled ([plan](decisions/project-recipes.md)) |
+| ISS-127 | The CLI's trust file, user `.env` and output folder ignore the config's `paths.home`                                                         | cli             | Scheduled ([plan](decisions/project-recipes.md)) |
 
 ---
 
@@ -417,3 +424,57 @@ On macOS, dev builds keep each unit's object files in `deps/` beside the binary,
 
 - **Fix:** within a unit still in use, delete the objects the current binary doesn't reference. First find out how rustc names them (`<unit>.<cgu hash>.<suffix>.rcgu.o`) and which ones a link uses: the binary's debug map lists its objects (`dsymutil -s` or `nm -ap` shows the `N_OSO` entries). Check that a backtrace still shows file and line after pruning.
 - **Regression test:** a fixture unit with objects from two rebuilds, of which the binary's debug map names one set; the prune removes the other.
+
+### ISS-122: `file-collect`'s `pattern` treats `{a,b}` literally
+
+**Found:** November 3, 2026 (building an example project for [project-recipes.md](decisions/project-recipes.md)); [request](requests/2026-11-03-project-recipes.md).
+
+`bnto-file/src/glob.rs` makes only `*` and `?` special; every other character is literal. A `file-collect` with `"pattern": "*.{png,jpg,jpeg}"` over a folder of PNG and JPEG files collects nothing: the run exits 0, writes 0 files, and `bnto check` passes the recipe. Brace alternation is in most glob dialects users know (bash, `globset`, VS Code), so a recipe author writes it and gets a silent no-op.
+
+- **Fix:** support `{a,b}` alternation in `glob.rs` (no nesting needed), or refuse a pattern holding `{` in validation with a hint to use `file-filter`'s regex mode. Update `file-collect`'s and `file-filter`'s param docs to say which.
+- **Regression test:** `*.{png,jpg}` matches `a.png` and `b.jpg`, not `c.gif`; or validation refuses it, naming the param.
+
+### ISS-123: `file-list` uses an absolute `base` as written
+
+**Found:** November 3, 2026 (security review of [project-recipes.md](decisions/project-recipes.md)); [request](requests/2026-11-03-project-recipes.md).
+
+`file-list`'s `base` param says "absolute paths and \"..\" are refused" (`bnto-file/src/list/params.rs`, `base_param`), but `ListParams::read` checks nothing and `base_dir` (`list/mod.rs`) uses it as `PathBuf::from(base)`. Repro: a recipe with `"base": "/some/abs/folder", "paths": ["secret.txt"]` prints `Listed 1 path under /some/abs/folder` and passes the file on. A relative `base` also resolves against the process's folder, not `ctx.work_dir()`.
+
+- **Fix:** refuse an absolute `base` or one with a `..` component in `ListParams::read`, and join a relative one to `ctx.work_dir()`. Project-recipes step 7f.
+- **Regression test:** an absolute `base` and `../x` are each refused naming the param; a relative `base` lists under a context whose working folder differs from the process's.
+
+### ISS-124: `bnto install` hands a recipe's `binary` to the package manager unchecked
+
+**Found:** November 3, 2026 (security review of [project-recipes.md](decisions/project-recipes.md)); [request](requests/2026-11-03-project-recipes.md).
+
+`package_manager::install_command` puts the recipe's `requires[].binary` straight into `brew install <binary>`, `sudo apt install -y <binary>` and so on, with no check and no `--`. A name with `/` is never found on PATH, so it's planned for install, and Homebrew reads `owner/tap/formula` as "tap that GitHub repo and run its formula". The plan is printed and confirmed unless `--yes`; with `--yes` it runs. Today that needs the user to run `bnto install` on a recipe they chose, but project recipes would put a cloned repo's names into `bnto install --all`.
+
+- **Fix:** refuse a `binary` outside `^[A-Za-z0-9][A-Za-z0-9._+-]*$` before planning, and put `--` before the package name where the manager accepts it. Project-recipes step 7e.
+- **Regression test:** `owner/tap/x`, `-o something` and an empty name are refused before any step is planned.
+
+### ISS-125: Recipe text reaches the terminal unescaped
+
+**Found:** November 3, 2026 (security review of [project-recipes.md](decisions/project-recipes.md)); [request](requests/2026-11-03-project-recipes.md).
+
+The consent prompt prints the recipe's `name` and its shell commands as written (`trust.rs` `prompt_consent`, `consent_lines.rs`). Repro: a library shell recipe named `"Nice\u001b[2K\rEVIL"`; `echo n | bnto run esc` writes `Recipe: Nice` + `ESC [2K \r` + `EVIL` to stderr, so a terminal erases the line and shows only `EVIL`. A script line can hide a command the same way. `bnto list`, `info` and `doctor` print recipe metadata the same way.
+
+- **Fix:** one function that shows C0/C1 control characters visibly (`\e`, `\r`) and flags bidi overrides, used everywhere bnto prints recipe text. Project-recipes step 7c.
+- **Regression test:** the repro's name and a script holding ESC show escaped in the prompt and `bnto info`.
+
+### ISS-126: A relative `BNTO_HOME` resolves against the current folder
+
+**Found:** November 3, 2026 (security review of [project-recipes.md](decisions/project-recipes.md)); [request](requests/2026-11-03-project-recipes.md).
+
+`BntoPaths::resolve` (`storage/paths.rs`) takes `BNTO_HOME` as written, so `BNTO_HOME=.bnto bnto list` run inside a folder with `.bnto/recipes/sneaky.bnto.json` lists `sneaky` as a library recipe and creates `config.toml`, `state/`, `cache/` and `output/` there. That folder's `state/trusted.json` becomes the trust store. With no home folder at all, `storage::ensure_ready` (`storage/mod.rs`, every command) and the TUI (`tui/app/init.rs`) fall back to a relative `.bnto`. Once repos ship a `.bnto/` folder, that makes a repo's recipes trusted library recipes.
+
+- **Fix:** refuse a relative or empty `BNTO_HOME` and config `paths.home` with a clear error, and drop both relative fallbacks. Project-recipes step 7d.
+- **Regression test:** `BNTO_HOME=.bnto` and `BNTO_HOME=` are each refused; an absolute one still works.
+
+### ISS-127: The CLI's trust file, user `.env` and output folder ignore the config's `paths.home`
+
+**Found:** November 3, 2026 (security review of [project-recipes.md](decisions/project-recipes.md)); [request](requests/2026-11-03-project-recipes.md).
+
+`bnto run` and `dry-run` load approvals from `BntoPaths::resolve().trusted_file()` (`consent.rs`), which doesn't apply `config.toml`'s `paths.home`. The TUI uses `model.paths.trusted_file()`, built after `with_config_override` (`tui/app/init.rs`). With `paths.home` set, an approval given in the TUI doesn't count for `bnto run`, and the other way round. `NativeContext::current_dir` (`context.rs`, used by the CLI and the TUI's bridge) also takes `home_dir` and `output_dir` from `BntoPaths::resolve()`, and `load_user_dotenv` reads `<home>/.env` from it, so a run reads the default home's `.env` and writes to its `output/` (found by a cold review of the design, from the code).
+
+- **Fix:** resolve the bnto home in one place, after the config override, and build the trust file, the context's home and output folder and the user `.env` from it. Project-recipes step 7b.
+- **Regression test:** with `paths.home` set, an approval recorded by one surface is seen by the other, and a run reads `<paths.home>/.env` and defaults its output under `<paths.home>/output`.

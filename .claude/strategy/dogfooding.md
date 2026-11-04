@@ -1,31 +1,37 @@
 # Dogfooding bnto in its own repo
 
 **Created:** October 23, 2026
-**Status:** Phase 1 done (October 23, 2026); Phase 2 waits for Ryan's go-ahead. The working tracker for this effort: update the table below in every PR that moves a row.
+**Status:** Phase 1 done (October 23, 2026). Phase 2 in progress: 6a and 6b merged; project recipes (7a-7j) are on one branch, `feat/project-recipes` ([project-recipes.md](../decisions/project-recipes.md)). The working tracker for this effort: update the table below in every PR that moves a row.
 **Related:** [recipes/README.md](../../recipes/README.md) (the dogfood recipes), [core-principles.md](core-principles.md), [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md)
 
 ## Tracker
 
 Recipes first, using `shell-run` where bnto has no node yet; then each product gap gets built and swaps into its recipe. Stop for Ryan's go-ahead between phases.
 
-| #   | PR                                                 | Branch                         | Status        |
-| --- | -------------------------------------------------- | ------------------------------ | ------------- |
-| 0   | Record the dogfooding plan                         | `docs/dogfooding-plan`         | Merged (#725) |
-| 1   | Delete the unused web assets                       | `chore/delete-unused-assets`   | Merged (#726) |
-| 2   | Fail on unused web assets, check assets on web PRs | `feat/unused-assets-check`     | Merged (#728) |
-| 3   | Split `node_types.rs` under 400 production lines   | `refactor/split-node-types`    | Merged (#727) |
-| 3b  | Move the TUI's terminal setup out of `tui/mod.rs`  | `refactor/tui-terminal-module` | Merged (#729) |
-| 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Merged (#731) |
-| 5   | Verify a release shipped                           | `feat/release-verify`          | Merged (#730) |
-| 6a  | Stop sending custom recipe names in telemetry      | `fix/telemetry-custom-slugs`   | Merged (#734) |
-| 6b  | Keep `test_list_command` out of the real `~/.bnto` | `test/list-sandboxed`          | Merged (#735) |
-| 7a  | Source kinds and project consent                   | `feat/recipe-source-kinds`     | Not started   |
-| 7b  | Load project recipes from `.bnto/recipes/`         | `feat/project-recipes`         | Not started   |
-| 7c  | Project recipes in the TUI                         | `feat/tui-project-recipes`     | Not started   |
-| 7d  | Move bnto's dogfood recipes to `.bnto/recipes/`    | `chore/move-dogfood-recipes`   | Not started   |
-| 8   | `file-inspect` line count, replacing the awk step  | `feat/file-inspect-line-count` | Not started   |
-| 9   | Content search, replacing the grep steps           | `feat/content-search`          | Not started   |
-| 10  | `http-request` node, replacing the curl steps      | `feat/http-request`            | Not started   |
+| #   | PR                                                   | Branch                         | Status        |
+| --- | ---------------------------------------------------- | ------------------------------ | ------------- |
+| 0   | Record the dogfooding plan                           | `docs/dogfooding-plan`         | Merged (#725) |
+| 1   | Delete the unused web assets                         | `chore/delete-unused-assets`   | Merged (#726) |
+| 2   | Fail on unused web assets, check assets on web PRs   | `feat/unused-assets-check`     | Merged (#728) |
+| 3   | Split `node_types.rs` under 400 production lines     | `refactor/split-node-types`    | Merged (#727) |
+| 3b  | Move the TUI's terminal setup out of `tui/mod.rs`    | `refactor/tui-terminal-module` | Merged (#729) |
+| 4   | Enforce the Rust file-size limit                     | `feat/rust-file-size-check`    | Merged (#731) |
+| 5   | Verify a release shipped                             | `feat/release-verify`          | Merged (#730) |
+| 6a  | Stop sending custom recipe names in telemetry        | `fix/telemetry-custom-slugs`   | Merged (#734) |
+| 6b  | Keep `test_list_command` out of the real `~/.bnto`   | `test/list-sandboxed`          | Merged (#735) |
+| 7a  | Record the project-recipes design                    | `feat/project-recipes`         | In progress   |
+| 7b  | Consent by where a recipe came from                  | `feat/project-recipes`         | Not started   |
+| 7c  | Consent prompt shows origin, steps and flagged paths | `feat/project-recipes`         | Not started   |
+| 7d  | Find the project root                                | `feat/project-recipes`         | Not started   |
+| 7e  | Load project recipes from `.bnto/recipes/`           | `feat/project-recipes`         | Not started   |
+| 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Not started   |
+| 7g  | Run project recipes at the project root              | `feat/project-recipes`         | Not started   |
+| 7h  | The TUI editor keeps a recipe's source               | `feat/project-recipes`         | Not started   |
+| 7i  | Project pane in the TUI                              | `feat/project-recipes`         | Not started   |
+| 7j  | Move bnto's dogfood recipes to `.bnto/recipes/`      | `feat/project-recipes`         | Not started   |
+| 8   | `file-inspect` line count, replacing the awk step    | `feat/file-inspect-line-count` | Not started   |
+| 9   | Content search, replacing the grep steps             | `feat/content-search`          | Not started   |
+| 10  | `http-request` node, replacing the curl steps        | `feat/http-request`            | Not started   |
 
 ```
 Phase 0  record the plan
@@ -33,7 +39,7 @@ Phase 1  1 delete assets ─► 2 unused-assets check
          3 split node_types.rs, 3b tui/mod.rs ─► 4 Rust size limit
          5 release-verify                          (independent)
 Phase 2  6a telemetry · 6b list test                (independent)
-         7a source kinds ─► 7b load ─► 7c TUI ─► 7d move recipes
+         7a-7j project recipes, one branch (project-recipes.md)
 Phase 3  8 (after 4) · 9 (after 2) · 10 (after 5)
 ```
 
@@ -64,7 +70,7 @@ Git hooks stay shell scripts: a hook can't count on a contributor having a built
 - **Optimizing SVGs isn't worth it.** bnto's own `optimize-svg` over all 39 SVGs saved 1.5% (1.87 MB to 1.84 MB). The WebPs were already made with cwebp.
 - **The Rust 400-production-line limit wasn't enforced** (only TypeScript's, through ESLint `max-lines`). One file was over: `bnto-core/src/metadata/node_types.rs` (451). **Decided: split it** (PR 3), then enforce the limit (PR 4). Counting strictly for PR 4 found a second, `bnto/src/tui/mod.rs` (406), which an early `#[cfg(test)] use` had hidden from a "count up to the first `#[cfg(test)]`" rule (PR 3b).
 - **Checking a release was manual.** After v0.18.0, crates.io, the GitHub Release and the production deploy were checked by hand (PR 5).
-- **Repo recipes are invisible to bnto.** `RecipeCatalog::load` reads only bundled recipes and the user's library, so `bnto list` and `bnto tui` can't see them (PRs 7a-7d).
+- **Repo recipes are invisible to bnto.** `RecipeCatalog::load` reads only bundled recipes and the user's library, so `bnto list` and `bnto tui` can't see them (7a-7j).
 - **Existing issues found along the way:** telemetry sends custom recipe names and run-by-path file paths as `slug` (PR 6a), and `test_list_command` reads the developer's real `~/.bnto` (PR 6b).
 
 ## Not dogfooded, on purpose
@@ -74,14 +80,11 @@ Git hooks stay shell scripts: a hook can't count on a contributor having a built
 - **Test fixture generation,** which is circular (rule 5).
 - **Image and SVG optimization of the site,** which measured negligible savings.
 
-## Project recipes (PRs 7a-7d)
+## Project recipes (7a-7j)
 
-When bnto runs inside a git repo, it also loads `*.bnto.json` from `<git root>/.bnto/recipes/`. That folder name, like `.github/workflows`, means a repo's unrelated `recipes/` folder is never picked up. bnto's own dogfood recipes move there in 7d. The full design goes in a decision record (`.claude/decisions/project-recipes.md`), reviewed by `/security-engineer`, before 7a.
+When bnto runs inside a project, it also loads `*.bnto.json` from the nearest `<project>/.bnto/recipes/`, shows them in `bnto list` and a TUI Project pane, and runs them at the project root. A project recipe never overrides a built-in or library recipe, and asks for consent on its first run. bnto's own dogfood recipes move there in 7j.
 
-- **A project recipe never overrides a bundled or library slug.** Otherwise a cloned repo could shadow `compress-images` with `file-delete` steps, and running it inside that repo would delete files with no prompt. A colliding project recipe is skipped; `bnto list`, `doctor` and a run of that slug say so.
-- **Every project recipe asks consent on its first run,** even without shell steps (hash-approved like library shell recipes). It came from a repo the user cloned, not from their own library. Running a recipe by file path keeps today's shell-only rule.
-- **Discovery** walks up from the current directory to the first `.git` dir or file (worktrees and submodules), spawning no `git` process. It happens in `main.rs` and at TUI launch, not inside `RecipeCatalog::load`, so tests that load the catalog from inside this repo don't pick up its recipes.
-- **CI and Task keep running dogfood recipes by path:** a slug would need consent, and CI can't answer a prompt.
+The design, its security review, and the ten-step plan are in [project-recipes.md](../decisions/project-recipes.md). It changes the earlier sketch here in two ways: a project needn't be a git repo, and project recipes run at the project root. Ryan chose to ship all ten steps on one branch, `feat/project-recipes`, as one PR to `main` released as a new version; each row moves when its step is pushed to that branch.
 
 ## Product gaps this surfaces (PRs 8-10)
 

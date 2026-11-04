@@ -279,7 +279,7 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 **Next: Sprint 17 — BRU File Ecosystem + Engine Polish.** Achieve BRU (Bulk Rename Utility) composable file operations goal: 4 new file processors (file-filter, file-collect, file-copy, file-inspect) that chain together for BRU-level power. Parallel engine polish (execution progress Phase 1, secrets Phase 1, recipe trust/consent). Image crop/rotate. Format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes.
 
-**In flight (October 2026): dogfooding bnto in its own repo.** Dogfood recipes for unused web assets, the Rust file-size limit and release verification, then project recipes (`.bnto/recipes/` in `bnto list` and the TUI), then the nodes they show are missing. PR-by-PR tracker: [dogfooding.md](strategy/dogfooding.md#tracker).
+**In flight (October 2026): dogfooding bnto in its own repo.** Dogfood recipes for unused web assets, the Rust file-size limit and release verification, then project recipes (`.bnto/recipes/` in `bnto list` and the TUI, one feature branch: [project-recipes.md](decisions/project-recipes.md), [request](requests/2026-11-03-project-recipes.md)), then the nodes they show are missing. PR-by-PR tracker: [dogfooding.md](strategy/dogfooding.md#tracker).
 
 **Done (October 2026): Keep Awake + conditional steps.** A built-in keep-awake recipe on macOS, Linux and Windows, built on a `when` step guard, scoped fields, recipe OS support, OS-scoped dependencies and PowerShell script mode (11 PRs, #662-#715). Record and follow-ups: [keep-awake-recipe.md](strategy/keep-awake-recipe.md).
 
