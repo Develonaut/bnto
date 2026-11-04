@@ -2,6 +2,7 @@
 // opens the shipped recipe, and Library opens the user's copy.
 
 use super::*;
+use crate::catalog::SourceKind;
 use crate::storage::config::TomlConfig;
 use crate::storage::paths::BntoPaths;
 use crate::tui::screens::home::HomePane;
@@ -51,7 +52,7 @@ fn opening_it_from_the_recipes_pane_opens_the_shipped_recipe() {
     let app = update(app, AppMessage::HomeConfirm);
     let detail = app.detail.expect("detail opened");
     assert_eq!(detail.name, "Compress Images");
-    assert!(detail.is_bundled);
+    assert_eq!(detail.kind, SourceKind::Bundled);
 }
 
 #[test]
@@ -68,5 +69,5 @@ fn opening_it_from_the_library_opens_the_users_copy() {
     let app = update(app, AppMessage::LibraryConfirm);
     let detail = app.detail.expect("detail opened");
     assert_eq!(detail.name, "My Compress");
-    assert!(!detail.is_bundled);
+    assert_eq!(detail.kind, SourceKind::Library);
 }

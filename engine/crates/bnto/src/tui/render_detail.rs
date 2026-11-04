@@ -109,7 +109,7 @@ fn lead_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
     let mut lines: Vec<Line> = Vec::new();
 
     // Recipe header — trust badge from catalog source.
-    let badge = trust::trust_badge(detail.is_bundled, detail.has_shell);
+    let badge = trust::trust_badge(&detail.kind, detail.has_shell);
     let mut header = vec![
         Span::raw("  "),
         Span::styled(detail.name.as_str(), theme.heading()),

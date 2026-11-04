@@ -55,6 +55,27 @@ impl BntoPaths {
         }
     }
 
+    /// `resolve()`, else a relative `.bnto` when the platform has no home
+    /// folder (ISS-126: project-recipes step 7d removes that fallback).
+    pub fn resolve_or_relative() -> Self {
+        Self::resolve().unwrap_or_else(|| Self {
+            home: PathBuf::from(".bnto"),
+        })
+    }
+
+    /// This home, moved to where its own `config.toml`'s `paths.home` says.
+    pub fn configured(self) -> Self {
+        let config = super::config::TomlConfig::load(&self);
+        self.with_config_override(&config)
+    }
+
+    /// `resolve()`, then `configured()`: the one bnto home every surface
+    /// uses, so the CLI and the TUI read one trust file, one user `.env` and
+    /// one output folder (ISS-127).
+    pub fn resolve_configured() -> Option<Self> {
+        Self::resolve().map(Self::configured)
+    }
+
     /// Path to the main config file.
     pub fn config_file(&self) -> PathBuf {
         self.home.join("config.toml")
@@ -217,6 +238,26 @@ mod tests {
         paths
             .ensure_dirs()
             .expect("second call should also succeed");
+    }
+
+    #[test]
+    fn configured_follows_the_homes_own_config() {
+        let default = tempfile::tempdir().unwrap();
+        let moved = tempfile::tempdir().unwrap();
+        let config = format!("[paths]\nhome = '{}'\n", moved.path().display());
+        std::fs::write(default.path().join("config.toml"), config).unwrap();
+        let paths = paths_from_root(default.path()).configured();
+        assert_eq!(paths.home, moved.path());
+        assert_eq!(
+            paths.trusted_file(),
+            moved.path().join("state").join("trusted.json")
+        );
+    }
+
+    #[test]
+    fn configured_keeps_a_home_without_an_override() {
+        let home = tempfile::tempdir().unwrap();
+        assert_eq!(paths_from_root(home.path()).configured().home, home.path());
     }
 
     #[test]

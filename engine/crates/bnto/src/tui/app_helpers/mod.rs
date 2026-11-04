@@ -33,6 +33,6 @@ pub(crate) use quit::{request_quit, settle_pending_exit};
 pub(crate) use results::{handle_open_file, handle_open_folder};
 pub(crate) use settings::{
     handle_open_settings_picker, handle_settings_path_confirmed, handle_telemetry_toggled,
-    handle_theme_changed,
+    handle_theme_changed, settings_for,
 };
 pub(crate) use wizard::{handle_open_wizard, handle_wizard, handle_wizard_form};

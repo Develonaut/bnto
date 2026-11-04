@@ -7,7 +7,7 @@ use std::time::Instant;
 use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use colored::Colorize;
 
-use crate::catalog::RecipeCatalog;
+use crate::catalog::{RecipeCatalog, SourceKind};
 use crate::consent::check_trust;
 use crate::dry_run_hint::DryRunHint;
 use crate::run_output::write_output;
@@ -67,7 +67,7 @@ pub fn run_recipe(
     catalog: &RecipeCatalog,
 ) {
     let verdict = RunVerdict::new(flags.json);
-    let raw_json = read_recipe(recipe_path, catalog, &verdict);
+    let (raw_json, kind) = read_recipe(recipe_path, catalog, &verdict);
     refuse_unsupported_host(recipe_path, &raw_json, &verdict);
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
@@ -83,7 +83,7 @@ pub fn run_recipe(
     prepared.definition_json = definition_json;
     let (ctx, target) = run_context(output_override, flags, time_limit, &prepared, &verdict);
     let given = DryRunHint::new(recipe_path, param_overrides, flags.vars);
-    check_trust(&raw_json, &given, flags.yes, catalog);
+    check_trust(&raw_json, &given, flags.yes, &kind);
     print_run_banner(recipe_path, &raw_json, &prepared);
     let stats = run_stats(recipe_path, &prepared, param_overrides, catalog);
     log_run_start(logger, &stats);
@@ -143,8 +143,13 @@ fn refuse_unsupported_host(recipe_path: &str, raw_json: &str, verdict: &RunVerdi
     }
 }
 
-/// The recipe's JSON (`recipe_source`'s slug-else-path), or the run fails.
-fn read_recipe(recipe_path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> String {
+/// The recipe's JSON (`recipe_source`'s slug-else-path) and where it came
+/// from, or the run fails.
+fn read_recipe(
+    recipe_path: &str,
+    catalog: &RecipeCatalog,
+    verdict: &RunVerdict,
+) -> (String, SourceKind) {
     verdict.or_fail(
         recipe_source::read_recipe(recipe_path, catalog),
         "Error reading recipe:",

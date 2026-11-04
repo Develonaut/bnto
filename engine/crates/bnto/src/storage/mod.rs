@@ -18,9 +18,7 @@ pub use runner::MigrationError;
 /// Called once in `main()` before command dispatch. Returns resolved
 /// paths for use by logger, TUI, trust store, etc.
 pub fn ensure_ready() -> Result<BntoPaths, MigrationError> {
-    let paths = BntoPaths::resolve().unwrap_or_else(|| BntoPaths {
-        home: std::path::PathBuf::from(".bnto"),
-    });
+    let paths = BntoPaths::resolve_or_relative();
     paths.ensure_dirs()?;
     runner::run_pending(&paths, migrations::MIGRATIONS)?;
     Ok(paths)

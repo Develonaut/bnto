@@ -1,20 +1,24 @@
 // How a recipe argument on the command line becomes recipe JSON, the one
-// rule `bnto run`, `bnto dry-run` and `bnto install` share.
+// rule `bnto run`, `bnto dry-run` and `bnto install` share, and where that
+// JSON came from, which decides its consent.
 
-use crate::catalog::RecipeCatalog;
+use crate::catalog::{RecipeCatalog, SourceKind};
 
 /// A slug in the catalog, else a `.bnto.json` path read from disk. A slug
-/// wins over a file of the same name.
-pub fn read_recipe(arg: &str, catalog: &RecipeCatalog) -> std::io::Result<String> {
+/// wins over a file of the same name. The kind is how it resolved: the
+/// catalog entry's source, or `Path` for a file.
+pub fn read_recipe(arg: &str, catalog: &RecipeCatalog) -> std::io::Result<(String, SourceKind)> {
     match catalog.resolve(arg) {
-        Some(entry) => Ok(entry.definition_json.clone()),
-        None => std::fs::read_to_string(arg),
+        Some(entry) => Ok((entry.definition_json.clone(), entry.source.kind())),
+        None => Ok((std::fs::read_to_string(arg)?, SourceKind::Path)),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::catalog::{CatalogEntry, RecipeSource};
+    use std::path::PathBuf;
 
     fn catalog() -> (tempfile::TempDir, RecipeCatalog) {
         let library = tempfile::tempdir().unwrap();
@@ -22,12 +26,43 @@ mod tests {
         (library, catalog)
     }
 
+    fn entry(slug: &str, source: RecipeSource) -> CatalogEntry {
+        CatalogEntry {
+            slug: slug.into(),
+            name: slug.into(),
+            description: String::new(),
+            category: String::new(),
+            tags: Vec::new(),
+            definition_json: format!(r#"{{"name":"{slug}"}}"#),
+            source,
+        }
+    }
+
     #[test]
     fn a_slug_reads_the_catalog_definition() {
         let (_library, catalog) = catalog();
-        let json = read_recipe("compress-images", &catalog).unwrap();
+        let (json, kind) = read_recipe("compress-images", &catalog).unwrap();
         let expected = &catalog.resolve("compress-images").unwrap().definition_json;
         assert_eq!(&json, expected);
+        assert_eq!(kind, SourceKind::Bundled);
+    }
+
+    #[test]
+    fn a_library_slug_is_a_library_recipe() {
+        let (library, _) = catalog();
+        std::fs::write(library.path().join("mine.bnto.json"), r#"{"name":"Mine"}"#).unwrap();
+        let catalog = RecipeCatalog::load(library.path());
+        let (_, kind) = read_recipe("mine", &catalog).unwrap();
+        assert_eq!(kind, SourceKind::Library);
+    }
+
+    #[test]
+    fn a_project_slug_is_a_project_recipe_of_its_root() {
+        let root = PathBuf::from("project");
+        let source = RecipeSource::Project(root.clone());
+        let catalog = RecipeCatalog::bundled_only().with_entry(entry("tidy", source));
+        let (_, kind) = read_recipe("tidy", &catalog).unwrap();
+        assert_eq!(kind, SourceKind::Project(root));
     }
 
     #[test]
@@ -36,8 +71,25 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("mine.bnto.json");
         std::fs::write(&path, r#"{"name":"Mine"}"#).unwrap();
-        let json = read_recipe(path.to_str().unwrap(), &catalog).unwrap();
+        let (json, kind) = read_recipe(path.to_str().unwrap(), &catalog).unwrap();
         assert_eq!(json, r#"{"name":"Mine"}"#);
+        assert_eq!(kind, SourceKind::Path);
+    }
+
+    #[test]
+    fn a_path_spelled_like_a_slug_gets_the_kind_it_resolved_to() {
+        // A path argument whose text is a built-in's slug runs the built-in
+        // (a slug wins), so it gets the built-in's kind. A path holding a
+        // built-in's slug, but naming a file, is a by-path recipe.
+        let (_library, catalog) = catalog();
+        let (_, kind) = read_recipe("compress-images", &catalog).unwrap();
+        assert_eq!(kind, SourceKind::Bundled);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("compress-images");
+        std::fs::write(&path, r#"{"name":"Mine"}"#).unwrap();
+        let (json, kind) = read_recipe(path.to_str().unwrap(), &catalog).unwrap();
+        assert_eq!(json, r#"{"name":"Mine"}"#);
+        assert_eq!(kind, SourceKind::Path);
     }
 
     #[test]

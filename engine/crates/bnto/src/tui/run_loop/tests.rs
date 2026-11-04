@@ -240,3 +240,39 @@ fn quitting_waits_for_a_write_in_progress_and_starts_no_new_one() {
     });
     assert!(gate.enter().is_none(), "a write started after quitting");
 }
+
+/// `home`'s `config.toml`, moving the bnto home to `to`.
+fn move_home(home: &std::path::Path, to: &std::path::Path) {
+    std::fs::create_dir_all(home).unwrap();
+    // A TOML literal string, so a Windows path's `\` stays as written.
+    let config = format!("version = 3\n\n[paths]\nhome = '{}'\n", to.display());
+    std::fs::write(home.join("config.toml"), config).unwrap();
+}
+
+#[test]
+fn the_tui_applies_the_home_override_once_as_bnto_run_does() {
+    // ISS-127: `main` hands `bnto tui` paths it already moved (default → M).
+    // A config in M naming N must not move the TUI on to N, or its approvals
+    // land in a trust file `bnto run` never reads.
+    let (default, moved, further) = (tempdir(), tempdir(), tempdir());
+    move_home(default.path(), moved.path());
+    move_home(moved.path(), further.path());
+    let default_paths = crate::storage::BntoPaths {
+        home: default.path().to_path_buf(),
+    };
+    // What `main`'s `init_storage` hands on, and what `bnto run`'s consent
+    // reads (`BntoPaths::resolve_configured` with BNTO_HOME at `default`).
+    let cli_paths = default_paths.configured();
+    assert_eq!(cli_paths.home, moved.path());
+    let model = super::new_model(
+        ThemeVariant::LosAngeles,
+        None,
+        false,
+        Some(cli_paths.clone()),
+    );
+    assert_eq!(model.paths.trusted_file(), cli_paths.trusted_file());
+}
+
+fn tempdir() -> tempfile::TempDir {
+    tempfile::tempdir().unwrap()
+}

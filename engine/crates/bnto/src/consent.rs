@@ -1,4 +1,4 @@
-// `shell-run` consent gate for `bnto run` and `bnto dry-run`.
+// Consent gate for `bnto run` and `bnto dry-run`.
 //
 // The decision itself lives in `trust_gate` (shared with the TUI); this
 // module asks on the terminal and exits when the user declines.
@@ -7,31 +7,27 @@ use std::process;
 
 use colored::Colorize;
 
-use crate::catalog::RecipeCatalog;
+use crate::catalog::SourceKind;
 use crate::dry_run_hint::DryRunHint;
 use crate::{storage, trust, trust_gate};
 
-/// Check trust level for a recipe and prompt for consent if needed.
+/// Check trust level for a recipe and prompt for consent if needed. `kind`
+/// is where the recipe came from (`recipe_source::read_recipe`), and
+/// approvals live in the configured bnto home's trust file, as the TUI's do.
 ///
 /// Exits the process when the user declines, suggesting the `bnto dry-run`
 /// that inspects the same recipe with the same `-p` and `--vars` (`given`).
-pub fn check_trust(
-    raw_json: &str,
-    given: &DryRunHint,
-    skip_consent: bool,
-    catalog: &RecipeCatalog,
-) {
+pub fn check_trust(raw_json: &str, given: &DryRunHint, skip_consent: bool, kind: &SourceKind) {
     if skip_consent {
         return;
     }
     let recipe_arg = given.recipe_arg;
-    let trust_path = storage::BntoPaths::resolve().map(|p| p.trusted_file());
+    let trust_path = storage::BntoPaths::resolve_configured().map(|p| p.trusted_file());
     let store = trust_path
         .as_ref()
         .map(|p| trust::TrustStore::load(p))
         .unwrap_or_default();
-    let is_bundled = catalog.is_bundled(recipe_arg);
-    let Some(request) = trust_gate::consent_needed(raw_json, recipe_arg, is_bundled, &store) else {
+    let Some(request) = trust_gate::consent_needed(raw_json, recipe_arg, kind, &store) else {
         return;
     };
     if !trust::prompt_consent(&request.recipe_name, &request.commands) {

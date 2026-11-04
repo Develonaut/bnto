@@ -16,6 +16,7 @@ mod check_edges;
 mod check_folders;
 mod check_run_time;
 mod cli_commands;
+mod config_home;
 mod copy_held_files;
 mod dogfood_recipes;
 mod dry_run_footer;

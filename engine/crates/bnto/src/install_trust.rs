@@ -6,13 +6,15 @@
 // for shell-run nodes): bundled recipes are reviewed and shipped with the
 // binary; library recipes and `.bnto.json` paths are not.
 
-use crate::catalog::{CatalogEntry, RecipeCatalog, RecipeSource};
+use crate::catalog::{CatalogEntry, RecipeCatalog, RecipeSource, SourceKind};
 use crate::install_plan::InstallStep;
+use crate::recipe_source::read_recipe;
 
 /// True when every recipe that can contribute install hints is bundled.
 ///
-/// A single slug is trusted only if it resolves to a bundled recipe. `--all`
-/// is trusted unless some non-bundled catalog entry declares `requires`.
+/// A single recipe argument is trusted only if it resolves to a bundled
+/// recipe (`read_recipe`'s kind, not the argument's spelling). `--all` is
+/// trusted unless some non-bundled catalog entry declares `requires`.
 pub fn hints_trusted(recipe_slug: Option<&str>, all: bool, catalog: &RecipeCatalog) -> bool {
     if all {
         return catalog
@@ -20,7 +22,9 @@ pub fn hints_trusted(recipe_slug: Option<&str>, all: bool, catalog: &RecipeCatal
             .iter()
             .all(|e| e.source == RecipeSource::Bundled || !declares_requires(e));
     }
-    recipe_slug.is_some_and(|slug| catalog.is_bundled(slug))
+    recipe_slug.is_some_and(|arg| {
+        read_recipe(arg, catalog).is_ok_and(|(_, kind)| kind == SourceKind::Bundled)
+    })
 }
 
 /// Whether a catalog entry's definition has a non-empty `requires` array.
@@ -83,6 +87,21 @@ mod tests {
             .unwrap()
             .slug;
         assert!(!hints_trusted(Some(slug), false, &catalog));
+    }
+
+    #[test]
+    fn project_slug_is_not_trusted() {
+        let entry = CatalogEntry {
+            slug: "tidy".into(),
+            name: "Tidy".into(),
+            description: String::new(),
+            category: String::new(),
+            tags: Vec::new(),
+            definition_json: r#"{"name":"Tidy","nodes":[]}"#.into(),
+            source: RecipeSource::Project(std::path::PathBuf::from("project")),
+        };
+        let catalog = RecipeCatalog::bundled_only().with_entry(entry);
+        assert!(!hints_trusted(Some("tidy"), false, &catalog));
     }
 
     #[test]

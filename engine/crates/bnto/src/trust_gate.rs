@@ -1,9 +1,10 @@
 // Whether a recipe may run as-is or needs the user's consent first — the
 // one decision `bnto run`, `bnto dry-run` and the TUI share, so no surface
-// can run a library recipe's commands without asking.
+// can run a library recipe's commands, or any project recipe, without asking.
 
 use std::path::Path;
 
+use crate::catalog::SourceKind;
 use crate::trust::{self, TrustLevel, TrustStore};
 
 /// What the user is asked to approve before an untrusted recipe runs.
@@ -17,18 +18,19 @@ pub struct ConsentRequest {
 }
 
 /// The consent the recipe in `raw_json` still needs, or `None` when it may
-/// run: bundled, no shell steps, or this exact definition already approved.
-/// Unparseable JSON needs none here; the run itself refuses it.
+/// run: bundled, a library or by-path recipe with no shell steps, or this
+/// exact definition already approved (`trust::trust_level`). Unparseable
+/// JSON needs none here; the run itself refuses it.
 pub fn consent_needed(
     raw_json: &str,
     fallback_name: &str,
-    is_bundled: bool,
+    kind: &SourceKind,
     store: &TrustStore,
 ) -> Option<ConsentRequest> {
     let def: bnto_core::PipelineDefinition = serde_json::from_str(raw_json).ok()?;
     let hash = trust::definition_hash(raw_json);
     let has_shell = trust::has_shell_commands(&def.nodes);
-    if trust::trust_level(is_bundled, has_shell, store, &hash) == TrustLevel::Trusted {
+    if trust::trust_level(kind, has_shell, store, &hash) == TrustLevel::Trusted {
         return None;
     }
     Some(ConsentRequest {
@@ -74,8 +76,13 @@ mod tests {
 
     #[test]
     fn untrusted_shell_recipe_needs_consent() {
-        let request = consent_needed(SHELL_RECIPE, "probe", false, &TrustStore::default())
-            .expect("a library shell recipe must ask");
+        let request = consent_needed(
+            SHELL_RECIPE,
+            "probe",
+            &SourceKind::Library,
+            &TrustStore::default(),
+        )
+        .expect("a library shell recipe must ask");
         assert_eq!(request.recipe_name, "Probe");
         assert_eq!(request.commands, vec!["git --version"]);
         assert_eq!(request.hash, trust::definition_hash(SHELL_RECIPE));
@@ -84,7 +91,12 @@ mod tests {
     #[test]
     fn bundled_recipes_run_without_asking() {
         assert_eq!(
-            consent_needed(SHELL_RECIPE, "probe", true, &TrustStore::default()),
+            consent_needed(
+                SHELL_RECIPE,
+                "probe",
+                &SourceKind::Bundled,
+                &TrustStore::default()
+            ),
             None
         );
     }
@@ -92,7 +104,12 @@ mod tests {
     #[test]
     fn recipes_without_shell_steps_run_without_asking() {
         assert_eq!(
-            consent_needed(PLAIN_RECIPE, "plain", false, &TrustStore::default()),
+            consent_needed(
+                PLAIN_RECIPE,
+                "plain",
+                &SourceKind::Library,
+                &TrustStore::default()
+            ),
             None
         );
     }
@@ -101,7 +118,10 @@ mod tests {
     fn an_approved_definition_runs_without_asking() {
         let mut store = TrustStore::default();
         store.approve(trust::definition_hash(SHELL_RECIPE));
-        assert_eq!(consent_needed(SHELL_RECIPE, "probe", false, &store), None);
+        assert_eq!(
+            consent_needed(SHELL_RECIPE, "probe", &SourceKind::Library, &store),
+            None
+        );
     }
 
     #[test]
@@ -109,7 +129,47 @@ mod tests {
         let mut store = TrustStore::default();
         store.approve(trust::definition_hash(SHELL_RECIPE));
         let edited = SHELL_RECIPE.replace("--version", "--help");
-        assert!(consent_needed(&edited, "probe", false, &store).is_some());
+        assert!(consent_needed(&edited, "probe", &SourceKind::Library, &store).is_some());
+    }
+
+    fn project() -> SourceKind {
+        SourceKind::Project(std::path::PathBuf::from("project"))
+    }
+
+    #[test]
+    fn a_project_recipe_without_shell_steps_needs_consent() {
+        let request = consent_needed(PLAIN_RECIPE, "plain", &project(), &TrustStore::default())
+            .expect("a project recipe must ask, shell or not");
+        assert_eq!(request.recipe_name, "Plain");
+        assert!(request.commands.is_empty());
+        assert_eq!(request.hash, trust::definition_hash(PLAIN_RECIPE));
+    }
+
+    #[test]
+    fn an_approved_project_recipe_runs_without_asking() {
+        let mut store = TrustStore::default();
+        store.approve(trust::definition_hash(PLAIN_RECIPE));
+        assert_eq!(
+            consent_needed(PLAIN_RECIPE, "plain", &project(), &store),
+            None
+        );
+    }
+
+    #[test]
+    fn an_edited_project_recipe_asks_again() {
+        let mut store = TrustStore::default();
+        store.approve(trust::definition_hash(PLAIN_RECIPE));
+        let edited = PLAIN_RECIPE.replace("Plain", "Plainer");
+        assert!(consent_needed(&edited, "plain", &project(), &store).is_some());
+    }
+
+    #[test]
+    fn by_path_recipes_without_shell_steps_run_without_asking() {
+        let store = TrustStore::default();
+        assert_eq!(
+            consent_needed(PLAIN_RECIPE, "plain", &SourceKind::Path, &store),
+            None
+        );
     }
 
     #[test]

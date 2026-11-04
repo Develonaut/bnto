@@ -5,22 +5,25 @@
 // refused, and the approval is pinned to the filled values (SEC-29). It runs
 // on the bridge thread: preparing inputs walks picked folders.
 
-use std::path::PathBuf;
 use std::sync::mpsc;
 
 use super::BridgeEvent;
+use crate::catalog::SourceKind;
 use crate::fill_with::FillWith;
 use crate::input::{self, PreparedInput};
 use crate::recipe_output_dir::recipe_output_dir;
+use crate::storage::BntoPaths;
 use crate::trust::TrustStore;
 use crate::{trust_gate, unfilled_fields, vars};
 
-/// What deciding consent needs from the UI thread: whether the definition is
-/// the shipped one (only the catalog knows), and where approvals are kept.
+/// What deciding consent needs from the UI thread: where the definition came
+/// from (only the catalog knows), and the session's bnto home. Approvals are
+/// kept in its trust file, and the run's context is built in it too, so a
+/// run and its consent never see two homes (ISS-127).
 #[derive(Debug, Clone)]
 pub struct ConsentCheck {
-    pub bundled: bool,
-    pub trusted_file: PathBuf,
+    pub kind: SourceKind,
+    pub paths: BntoPaths,
 }
 
 /// A run that passed its checks and may start.
@@ -68,8 +71,8 @@ fn allowed(
     slug: &str,
     consent: &ConsentCheck,
 ) -> bool {
-    let store = TrustStore::load(&consent.trusted_file);
-    let Some(request) = trust_gate::consent_needed(definition_json, slug, consent.bundled, &store)
+    let store = TrustStore::load(&consent.paths.trusted_file());
+    let Some(request) = trust_gate::consent_needed(definition_json, slug, &consent.kind, &store)
     else {
         return true;
     };

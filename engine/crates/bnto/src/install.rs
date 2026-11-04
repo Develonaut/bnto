@@ -309,7 +309,8 @@ fn exit_still_missing(still_missing: &[&DependencyStatus]) -> ! {
 
 /// Look up recipe JSON (a slug, else a path), exiting when it's neither.
 fn read_recipe_json(slug: &str, catalog: &RecipeCatalog) -> String {
-    crate::recipe_source::read_recipe(slug, catalog).unwrap_or_else(|_| {
+    let read = crate::recipe_source::read_recipe(slug, catalog);
+    read.map(|(json, _)| json).unwrap_or_else(|_| {
         eprintln!("{} Unknown recipe: {slug}", "Error:".red());
         eprintln!("Run {} to see available recipes.", "bnto list".cyan());
         std::process::exit(1);

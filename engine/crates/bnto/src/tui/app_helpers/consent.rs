@@ -1,20 +1,21 @@
 // Consent before a TUI run (SEC-19). The run's bridge checks the run first,
-// as `bnto run` does (ISS-77), then for an untrusted shell recipe asks here
+// as `bnto run` does (ISS-77), then for a recipe that needs consent asks here
 // and waits: the execution screen holds the run until the user allows its
 // commands, and only then does the bridge go on.
 
 use super::super::app::AppModel;
 use super::super::bridge::ConsentCheck;
 use super::super::screens::execution::{ExecutionModel, ExecutionStatus};
-use crate::catalog::RecipeSource;
+use crate::catalog::{RecipeSource, SourceKind};
 use crate::trust_gate::{self, ConsentRequest};
 
-/// What the run's bridge needs to decide consent: whether `definition_json`
-/// is the shipped recipe, and where approvals are kept.
+/// What the run's bridge needs to decide consent: where `definition_json`
+/// came from, and the session's home, where approvals are kept and the run's
+/// context is built.
 pub(crate) fn consent_check(model: &AppModel, slug: &str, definition_json: &str) -> ConsentCheck {
     ConsentCheck {
-        bundled: is_bundled_definition(model, slug, definition_json),
-        trusted_file: model.paths.trusted_file(),
+        kind: source_kind(model, slug, definition_json),
+        paths: model.paths.clone(),
     }
 }
 
@@ -25,14 +26,23 @@ pub(crate) fn hold(model: AppModel, request: ConsentRequest) -> AppModel {
     AppModel { execution, ..model }
 }
 
-/// Bundled means the exact shipped definition, not just its slug: an
-/// edited copy run from the editor, or a library recipe of the same slug,
-/// keeps the slug but not the review.
-fn is_bundled_definition(model: &AppModel, slug: &str, definition_json: &str) -> bool {
-    model
-        .catalog
+/// Where `definition_json` came from, failing closed. Bundled only for the
+/// exact shipped definition: an edited copy run from the editor keeps the
+/// slug but not the review. Never weaker than what the slug runs: a project
+/// slug keeps the project rule even when its text differs (an edited or
+/// reloaded copy). Anything else is held to the library's rule.
+fn source_kind(model: &AppModel, slug: &str, definition_json: &str) -> SourceKind {
+    let catalog = &model.catalog;
+    let shipped = catalog
         .resolve_bundled(slug)
-        .is_some_and(|e| e.source == RecipeSource::Bundled && e.definition_json == definition_json)
+        .is_some_and(|e| e.source == RecipeSource::Bundled && e.definition_json == definition_json);
+    if shipped {
+        return SourceKind::Bundled;
+    }
+    match catalog.resolve(slug).map(|e| e.source.kind()) {
+        Some(project @ SourceKind::Project(_)) => project,
+        _ => SourceKind::Library,
+    }
 }
 
 /// The user allowed the commands: remember the approval and let it run.

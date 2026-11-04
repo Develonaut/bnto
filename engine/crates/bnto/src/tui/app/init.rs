@@ -23,13 +23,25 @@ impl AppModel {
     /// If `recipe_json` is Some, opens the recipe in the editor.
     /// If `new_recipe` is true, opens a blank editor.
     pub fn new(variant: ThemeVariant, recipe_json: Option<String>, new_recipe: bool) -> Self {
-        let paths = BntoPaths::resolve().unwrap_or_else(|| BntoPaths {
-            home: std::path::PathBuf::from(".bnto"),
-        });
-        Self::with_paths(variant, recipe_json, new_recipe, paths)
+        let default = BntoPaths::resolve_or_relative();
+        // The configured home, as `main` hands `bnto tui` (ISS-127).
+        let paths = default.clone().configured();
+        Self::with_paths(variant, recipe_json, new_recipe, paths).with_config_home(default)
     }
 
-    /// Create a new app with explicit storage paths.
+    /// This model with `home` as the home whose `config.toml` sets
+    /// `paths.home`, when that's not the session's own home.
+    pub fn with_config_home(self, home: BntoPaths) -> Self {
+        Self {
+            config_home: home,
+            ..self
+        }
+    }
+
+    /// Create a new app with explicit storage paths, already moved to the
+    /// config's `paths.home` (`BntoPaths::configured`): applying it again
+    /// would follow a moved home's own config somewhere `bnto run` never
+    /// looks (ISS-127).
     ///
     /// Loads TOML config from `paths.config_file()`. Falls back to
     /// defaults on any error.
@@ -42,8 +54,6 @@ impl AppModel {
         let _ = paths.ensure_dirs();
         let toml_config = TomlConfig::load(&paths);
         let effective_variant = effective_variant(variant, &toml_config);
-        // Apply config home override — if paths.home is set, use that as the root.
-        let paths = paths.with_config_override(&toml_config);
         let editor = initial_editor(new_recipe, recipe_json);
         Self::assemble(effective_variant, toml_config, paths, editor)
     }
@@ -82,6 +92,7 @@ impl AppModel {
             editor,
             wizard: None,
             toml_config,
+            config_home: paths.clone(),
             paths,
             status_message: None,
             update_notice: None,

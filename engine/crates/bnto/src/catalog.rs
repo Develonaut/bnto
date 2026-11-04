@@ -2,7 +2,7 @@
 //
 // Consumers resolve recipes through the catalog. No special treatment for
 // bundled vs library recipes — the source field is only used for trust
-// classification.
+// classification (`SourceKind`).
 
 use std::path::{Path, PathBuf};
 
@@ -14,6 +14,37 @@ pub enum RecipeSource {
     Bundled,
     /// Loaded from the user's library directory. May need consent for shell commands.
     Library(PathBuf),
+    /// Loaded from a project's `.bnto/recipes/`; holds the project root.
+    /// Always needs consent until its definition is approved.
+    Project(PathBuf),
+}
+
+impl RecipeSource {
+    /// The trust class of a recipe loaded from this source.
+    pub fn kind(&self) -> SourceKind {
+        match self {
+            Self::Bundled => SourceKind::Bundled,
+            Self::Library(_) => SourceKind::Library,
+            Self::Project(root) => SourceKind::Project(root.clone()),
+        }
+    }
+}
+
+/// Where the recipe a run uses came from, which decides when it needs
+/// consent (`trust::trust_level`). It follows how the recipe resolved (a
+/// catalog entry, else a file), never the argument's spelling.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SourceKind {
+    /// Shipped with the binary: reviewed, never asks.
+    Bundled,
+    /// The user's own library: asks only for shell steps.
+    Library,
+    /// A project's `.bnto/recipes/` (the project root): a cloned repo's
+    /// recipe can move or delete files without a shell, so it always asks.
+    Project(PathBuf),
+    /// A `.bnto.json` named by path: asks only for shell steps, so Task and
+    /// CI runs by path never meet a prompt they can't answer.
+    Path,
 }
 
 /// A recipe entry in the catalog. Source-agnostic — consumers don't care
@@ -92,8 +123,9 @@ impl RecipeCatalog {
         self.builtins.iter().find(|e| e.slug == slug)
     }
 
-    /// Whether the recipe a slug runs is bundled (for trust classification
-    /// only): false when a library recipe overrides the built-in.
+    /// Whether the recipe a slug runs is bundled (telemetry's recipe label):
+    /// false when a library recipe overrides the built-in. Consent goes by
+    /// `recipe_source::read_recipe`'s `SourceKind` instead.
     pub fn is_bundled(&self, slug: &str) -> bool {
         self.entries
             .iter()
@@ -109,6 +141,14 @@ impl RecipeCatalog {
     pub(crate) fn bundled_only() -> Self {
         let empty = tempfile::tempdir().expect("create an empty library dir");
         Self::load(empty.path())
+    }
+
+    /// This catalog with `entry` added to what its slug runs, for tests of
+    /// sources nothing loads yet (a project's recipes).
+    pub(crate) fn with_entry(mut self, entry: CatalogEntry) -> Self {
+        self.entries.retain(|e| e.slug != entry.slug);
+        self.entries.push(entry);
+        self
     }
 }
 
@@ -286,6 +326,16 @@ mod tests {
         assert!(catalog.is_bundled("compress-images"));
         assert!(!catalog.is_bundled("my-custom"));
         assert!(!catalog.is_bundled("nonexistent"));
+    }
+
+    #[test]
+    fn each_source_has_its_trust_kind() {
+        let root = PathBuf::from("project");
+        assert_eq!(RecipeSource::Bundled.kind(), SourceKind::Bundled);
+        let library = RecipeSource::Library(PathBuf::from("mine.bnto.json"));
+        assert_eq!(library.kind(), SourceKind::Library);
+        let project = RecipeSource::Project(root.clone());
+        assert_eq!(project.kind(), SourceKind::Project(root));
     }
 
     #[test]

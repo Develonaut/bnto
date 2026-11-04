@@ -15,6 +15,7 @@ use super::super::super::screens::execution::{ExecutionMessage, ExecutionStatus}
 use super::super::super::screens::preview::PreviewModel;
 use super::super::super::theme::ThemeVariant;
 use super::{consent_check, hold};
+use crate::catalog::{CatalogEntry, RecipeSource};
 use crate::storage::paths::BntoPaths;
 use crate::trust::{TrustStore, definition_hash};
 use crate::trust_gate::{self, ConsentRequest};
@@ -73,8 +74,8 @@ fn key(code: KeyCode) -> KeyEvent {
 fn would_ask(model: &AppModel) -> Option<ConsentRequest> {
     let exec = model.execution.as_ref().expect("a run");
     let check = consent_check(model, &exec.slug, &exec.definition_json);
-    let store = TrustStore::load(&check.trusted_file);
-    trust_gate::consent_needed(&exec.definition_json, &exec.slug, check.bundled, &store)
+    let store = TrustStore::load(&check.paths.trusted_file());
+    trust_gate::consent_needed(&exec.definition_json, &exec.slug, &check.kind, &store)
 }
 
 /// The run held for consent, as the bridge's request does.
@@ -283,5 +284,54 @@ fn a_library_copy_with_a_built_in_slug_still_asks() {
     let copy = shipped_download_video().replace("yt-dlp", "my-dlp");
     let (_dir, model) = model_with_library_copy(&copy);
     let app = run_from_detail(model, "download-video", &copy, false);
+    asks_first(&app);
+}
+
+const PLAIN_RECIPE: &str = r#"{
+    "id": "tidy", "type": "group", "version": "1.0.0", "name": "Tidy",
+    "nodes": [
+        { "id": "r", "type": "file-rename", "version": "1.0.0", "parameters": {} }
+    ]
+}"#;
+
+/// A model whose catalog runs `PLAIN_RECIPE` as the project recipe `tidy`.
+fn model_with_project_recipe() -> (tempfile::TempDir, AppModel) {
+    let (dir, model) = model();
+    let entry = CatalogEntry {
+        slug: "tidy".into(),
+        name: "Tidy".into(),
+        description: String::new(),
+        category: String::new(),
+        tags: Vec::new(),
+        definition_json: PLAIN_RECIPE.into(),
+        source: RecipeSource::Project(dir.path().join("project")),
+    };
+    let catalog = model.catalog.with_entry(entry);
+    (dir, AppModel { catalog, ..model })
+}
+
+#[test]
+fn a_project_recipe_without_shell_steps_asks_first() {
+    let (_dir, model) = model_with_project_recipe();
+    let app = run_from_detail(model, "tidy", PLAIN_RECIPE, false);
+    asks_first(&app);
+}
+
+#[test]
+fn an_approved_project_recipe_starts_without_asking() {
+    let (_dir, model) = model_with_project_recipe();
+    let app = held(run_from_detail(model, "tidy", PLAIN_RECIPE, false));
+    let app = update(app, AppMessage::Execution(ExecutionMessage::AllowCommands));
+    let app = run_from_detail(app, "tidy", PLAIN_RECIPE, false);
+    assert!(would_ask(&app).is_none());
+}
+
+#[test]
+fn a_project_slug_run_with_other_json_still_asks() {
+    // An edited or reloaded copy of a project recipe keeps the project's
+    // rule: it must not fall back to the library's no-shell pass.
+    let (_dir, model) = model_with_project_recipe();
+    let edited = PLAIN_RECIPE.replace("Tidy", "Tidier");
+    let app = run_from_detail(model, "tidy", &edited, false);
     asks_first(&app);
 }

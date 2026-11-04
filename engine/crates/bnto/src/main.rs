@@ -141,11 +141,8 @@ fn install_signal_handler() {
 /// Resolve paths, create dirs, run pending migrations — before anything else.
 fn init_storage() -> Option<storage::BntoPaths> {
     match storage::ensure_ready() {
-        Ok(p) => {
-            // Apply config home override so all derived paths follow it.
-            let config = storage::config::TomlConfig::load(&p);
-            Some(p.with_config_override(&config))
-        }
+        // Apply config home override so all derived paths follow it.
+        Ok(p) => Some(p.configured()),
         Err(e) => {
             eprintln!("{} storage init: {e}", "Warning:".yellow());
             None

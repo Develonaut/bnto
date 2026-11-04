@@ -104,12 +104,18 @@ pub fn spawn_pipeline(
 
 /// Inner bridge logic — runs synchronously on the spawned thread.
 fn run_bridge(tx: mpsc::Sender<BridgeEvent>, job: &BridgeJob) {
-    match NativeContext::current_dir() {
+    match run_context(job) {
         Ok(ctx) => run_bridge_in(&tx, job, ctx.with_dry_run(job.preview_mode)),
         Err(e) => {
             let _ = tx.send(BridgeEvent::Error(e.to_string()));
         }
     }
+}
+
+/// The run's context: the current folder, in the session's home (the one
+/// its consent reads approvals from), not one re-read from `config.toml`.
+fn run_context(job: &BridgeJob) -> Result<NativeContext, BntoError> {
+    NativeContext::current_dir_in(&job.consent.paths)
 }
 
 /// Run `job` in `ctx`. Any failure is reported to the TUI as a single
@@ -346,14 +352,17 @@ mod tests {
     use std::sync::Arc;
     use std::time::{Duration, Instant};
 
+    use crate::catalog::SourceKind;
     use crate::process_registry::ProcessRegistry;
     use crate::tui::screens::results::ResultsModel;
 
     /// Treated as the shipped recipe, so the run never waits for consent.
     fn no_consent() -> ConsentCheck {
         ConsentCheck {
-            bundled: true,
-            trusted_file: PathBuf::from("no-trust-file.json"),
+            kind: SourceKind::Bundled,
+            paths: crate::storage::BntoPaths {
+                home: PathBuf::from("no-home"),
+            },
         }
     }
 
@@ -1072,8 +1081,10 @@ mod tests {
             param_overrides: HashMap::new(),
             preview_mode: false,
             consent: ConsentCheck {
-                bundled: false,
-                trusted_file: trust.path().join("trusted.json"),
+                kind: SourceKind::Library,
+                paths: crate::storage::BntoPaths {
+                    home: trust.path().to_path_buf(),
+                },
             },
         }
     }
@@ -1085,6 +1096,21 @@ mod tests {
             run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
         });
         (rx, handle)
+    }
+
+    #[test]
+    fn a_runs_context_is_in_the_home_its_consent_reads() {
+        // ISS-127: the session's home, not one re-read from config.toml, so a
+        // home changed in Settings mid-session can't split a run from its
+        // consent. Real runs resolve elsewhere: this temp home is neither.
+        use bnto_core::ProcessContext;
+        let home = tempfile::tempdir().unwrap();
+        let job = untrusted_job(String::new(), &home);
+        let ctx = run_context(&job).unwrap();
+        assert_eq!(ctx.home_dir(), Some(home.path()));
+        assert_eq!(ctx.output_dir(), Some(home.path().join("output")));
+        let trusted = home.path().join("state").join("trusted.json");
+        assert_eq!(job.consent.paths.trusted_file(), trusted);
     }
 
     #[test]

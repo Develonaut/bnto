@@ -207,7 +207,7 @@ src/
 +-- cli.rs                 # clap definitions for every subcommand
 +-- dispatch.rs            # Routes a parsed subcommand to its implementation
 +-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
-+-- recipe_source.rs       # A recipe argument to JSON: a catalog slug, else a file path (run, dry-run, install)
++-- recipe_source.rs       # A recipe argument to JSON and its source kind: a catalog slug, else a file path (run, dry-run, install)
 +-- host_support.rs        # Refuses a recipe with no steps for this OS; the [macOS]-style badge
 +-- run_output.rs          # Writes run results and prints the summary
 +-- run_verdict.rs         # A run's last stderr line and its `--json` summary line, from one RunSummary
@@ -215,7 +215,7 @@ src/
 +-- run_watchdog.rs        # Kills a run's child processes once its time limit passes (run, TUI, dry-run preview)
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run or dry run
 +-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
-+-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
++-- consent.rs             # Consent gate by source kind (run + dry-run); a project recipe asks even without shell steps
 +-- dry_run_hint.rs        # The quoted commands bnto suggests: a declined run's `bnto dry-run …`, a dry run's `Run with: bnto run …`
 +-- run_input.rs           # What a suggested `bnto run` ends with by input mode: nothing, `<url>`, `<text>` or `<files...>`
 +-- shell_word.rs          # Quotes an argument as one sh, zsh or PowerShell word, for printed command lines

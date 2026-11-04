@@ -8,30 +8,30 @@
 
 Recipes first, using `shell-run` where bnto has no node yet; then each product gap gets built and swaps into its recipe. Stop for Ryan's go-ahead between phases.
 
-| #   | PR                                                   | Branch                         | Status        |
-| --- | ---------------------------------------------------- | ------------------------------ | ------------- |
-| 0   | Record the dogfooding plan                           | `docs/dogfooding-plan`         | Merged (#725) |
-| 1   | Delete the unused web assets                         | `chore/delete-unused-assets`   | Merged (#726) |
-| 2   | Fail on unused web assets, check assets on web PRs   | `feat/unused-assets-check`     | Merged (#728) |
-| 3   | Split `node_types.rs` under 400 production lines     | `refactor/split-node-types`    | Merged (#727) |
-| 3b  | Move the TUI's terminal setup out of `tui/mod.rs`    | `refactor/tui-terminal-module` | Merged (#729) |
-| 4   | Enforce the Rust file-size limit                     | `feat/rust-file-size-check`    | Merged (#731) |
-| 5   | Verify a release shipped                             | `feat/release-verify`          | Merged (#730) |
-| 6a  | Stop sending custom recipe names in telemetry        | `fix/telemetry-custom-slugs`   | Merged (#734) |
-| 6b  | Keep `test_list_command` out of the real `~/.bnto`   | `test/list-sandboxed`          | Merged (#735) |
-| 7a  | Record the project-recipes design                    | `feat/project-recipes`         | In progress   |
-| 7b  | Consent by where a recipe came from                  | `feat/project-recipes`         | Not started   |
-| 7c  | Consent prompt shows origin, steps and flagged paths | `feat/project-recipes`         | Not started   |
-| 7d  | Find the project root                                | `feat/project-recipes`         | Not started   |
-| 7e  | Load project recipes from `.bnto/recipes/`           | `feat/project-recipes`         | Not started   |
-| 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Not started   |
-| 7g  | Run project recipes at the project root              | `feat/project-recipes`         | Not started   |
-| 7h  | The TUI editor keeps a recipe's source               | `feat/project-recipes`         | Not started   |
-| 7i  | Project pane in the TUI                              | `feat/project-recipes`         | Not started   |
-| 7j  | Move bnto's dogfood recipes to `.bnto/recipes/`      | `feat/project-recipes`         | Not started   |
-| 8   | `file-inspect` line count, replacing the awk step    | `feat/file-inspect-line-count` | Not started   |
-| 9   | Content search, replacing the grep steps             | `feat/content-search`          | Not started   |
-| 10  | `http-request` node, replacing the curl steps        | `feat/http-request`            | Not started   |
+| #   | PR                                                   | Branch                         | Status           |
+| --- | ---------------------------------------------------- | ------------------------------ | ---------------- |
+| 0   | Record the dogfooding plan                           | `docs/dogfooding-plan`         | Merged (#725)    |
+| 1   | Delete the unused web assets                         | `chore/delete-unused-assets`   | Merged (#726)    |
+| 2   | Fail on unused web assets, check assets on web PRs   | `feat/unused-assets-check`     | Merged (#728)    |
+| 3   | Split `node_types.rs` under 400 production lines     | `refactor/split-node-types`    | Merged (#727)    |
+| 3b  | Move the TUI's terminal setup out of `tui/mod.rs`    | `refactor/tui-terminal-module` | Merged (#729)    |
+| 4   | Enforce the Rust file-size limit                     | `feat/rust-file-size-check`    | Merged (#731)    |
+| 5   | Verify a release shipped                             | `feat/release-verify`          | Merged (#730)    |
+| 6a  | Stop sending custom recipe names in telemetry        | `fix/telemetry-custom-slugs`   | Merged (#734)    |
+| 6b  | Keep `test_list_command` out of the real `~/.bnto`   | `test/list-sandboxed`          | Merged (#735)    |
+| 7a  | Record the project-recipes design                    | `feat/project-recipes`         | Done (on branch) |
+| 7b  | Consent by where a recipe came from                  | `feat/project-recipes`         | Done (on branch) |
+| 7c  | Consent prompt shows origin, steps and flagged paths | `feat/project-recipes`         | Not started      |
+| 7d  | Find the project root                                | `feat/project-recipes`         | Not started      |
+| 7e  | Load project recipes from `.bnto/recipes/`           | `feat/project-recipes`         | Not started      |
+| 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Not started      |
+| 7g  | Run project recipes at the project root              | `feat/project-recipes`         | Not started      |
+| 7h  | The TUI editor keeps a recipe's source               | `feat/project-recipes`         | Not started      |
+| 7i  | Project pane in the TUI                              | `feat/project-recipes`         | Not started      |
+| 7j  | Move bnto's dogfood recipes to `.bnto/recipes/`      | `feat/project-recipes`         | Not started      |
+| 8   | `file-inspect` line count, replacing the awk step    | `feat/file-inspect-line-count` | Not started      |
+| 9   | Content search, replacing the grep steps             | `feat/content-search`          | Not started      |
+| 10  | `http-request` node, replacing the curl steps        | `feat/http-request`            | Not started      |
 
 ```
 Phase 0  record the plan

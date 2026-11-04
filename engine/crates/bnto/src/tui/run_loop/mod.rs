@@ -94,7 +94,9 @@ fn new_model(
     paths: Option<BntoPaths>,
 ) -> AppModel {
     match paths {
-        Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p),
+        // `main` moved `p` already; the default home's config moved it.
+        Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p)
+            .with_config_home(BntoPaths::resolve_or_relative()),
         None => AppModel::new(variant, recipe_json, new_recipe),
     }
 }
