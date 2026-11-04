@@ -94,7 +94,7 @@ fn leaves_folder(value: &str) -> Option<PathFlag> {
             .split(['/', '\\'])
             .any(|s| s.eq_ignore_ascii_case(name))
     };
-    if is_absolute_anywhere(value) {
+    if bnto_core::is_absolute_anywhere(value) {
         Some(PathFlag::Absolute)
     } else if segment("..") {
         Some(PathFlag::ParentDir)
@@ -127,14 +127,7 @@ pub fn fragment_flag(value: &str, replacement: bool) -> Option<PathFlag> {
 /// not under `~`, and not filled when it runs.
 pub fn is_relative(value: &str) -> bool {
     let value = value.trim();
-    !is_absolute_anywhere(value) && !value.starts_with('~') && !value.starts_with("{{")
-}
-
-/// `/x`, `\x`, `C:x` or `C:\x`, whichever OS reads it.
-fn is_absolute_anywhere(value: &str) -> bool {
-    let bytes = value.as_bytes();
-    let drive = bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':';
-    value.starts_with(['/', '\\']) || drive || Path::new(value).is_absolute()
+    !bnto_core::is_absolute_anywhere(value) && !value.starts_with('~') && !value.starts_with("{{")
 }
 
 /// Whether `root/value`, through any link on the way, lands outside `root`.

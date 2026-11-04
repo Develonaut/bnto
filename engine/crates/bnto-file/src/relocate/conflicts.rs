@@ -38,7 +38,7 @@ fn shared_targets(moves: &[Move]) -> Vec<String> {
             format!(
                 "{} would all be renamed to {}",
                 sources(&group),
-                group[0].dest.display()
+                bnto_core::display_path(&group[0].dest)
             )
         })
         .collect()
@@ -58,8 +58,8 @@ fn occupied_targets(moves: &[Move]) -> Vec<String> {
         .map(|m| {
             format!(
                 "{} would replace {}, which isn't being renamed away",
-                m.src.display(),
-                m.dest.display()
+                bnto_core::display_path(&m.src),
+                bnto_core::display_path(&m.dest)
             )
         })
         .collect()
@@ -77,7 +77,10 @@ fn grouped(moves: &[Move], key_of: impl Fn(&Move) -> String) -> Vec<Vec<&Move>> 
 }
 
 fn sources(group: &[&Move]) -> String {
-    let names: Vec<String> = group.iter().map(|m| m.src.display().to_string()).collect();
+    let names: Vec<String> = group
+        .iter()
+        .map(|m| bnto_core::display_path(&m.src))
+        .collect();
     names.join(", ")
 }
 

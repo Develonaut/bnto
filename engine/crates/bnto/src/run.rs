@@ -228,7 +228,7 @@ fn run_target(
         mode: def
             .as_ref()
             .map_or_else(|| "write".to_string(), bnto_core::resolve_output_mode),
-        // Priority chain: explicit --output > recipe directory param > default "."
+        // Priority chain: explicit --output > recipe directory param > working folder
         output_dir: resolve_effective_output_dir(output_override, def_json, ctx, &prepared.files)?,
         dry_run,
         time_limit,
@@ -302,7 +302,7 @@ fn fail_run(logger: &Arc<dyn Logger>, e: &bnto_core::BntoError, verdict: &RunVer
 /// 1. Explicit `--output` flag (highest priority)
 /// 2. Recipe's output node `directory` parameter, every placeholder filled
 ///    (an `Err` names each one nothing fills)
-/// 3. Default: current directory (".")
+/// 3. Default: the run's working folder, in full
 fn resolve_effective_output_dir(
     output_override: Option<&str>,
     definition_json: &str,
@@ -312,8 +312,11 @@ fn resolve_effective_output_dir(
     if let Some(dir) = output_override {
         return Ok(dir.to_string());
     }
-    let dir = crate::recipe_output_dir::recipe_output_dir(definition_json, process_ctx, files)?;
-    Ok(dir.unwrap_or_else(|| ".".to_string()))
+    use crate::recipe_output_dir::{default_output_dir, recipe_output_dir};
+    match recipe_output_dir(definition_json, process_ctx, files)? {
+        Some(dir) => Ok(dir),
+        None => default_output_dir(process_ctx),
+    }
 }
 
 /// Print `<recipe> with N files...` (or the input mode label).

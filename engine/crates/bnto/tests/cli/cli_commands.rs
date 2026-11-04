@@ -484,13 +484,14 @@ fn run_list_collect_copy(root: &std::path::Path, dest: &std::path::Path) -> std:
     let sandbox = Sandbox::new();
     let vars_dir = temp_output_dir();
     let vars_file = vars_dir.path().join("vars.json");
-    let body = serde_json::json!({ "Root": root.to_str().unwrap() }).to_string();
+    let body = serde_json::json!({ "Root": "." }).to_string();
     std::fs::write(&vars_file, body).unwrap();
     let out = temp_output_dir();
     let dest_param = format!("copy:destination={}", dest.to_str().unwrap());
     let recipe = custom_recipe_path("file-list-collect-copy");
     sandbox
         .command()
+        .current_dir(root)
         .args(["run", &recipe, "--yes"])
         .args(["--vars", vars_file.to_str().unwrap(), "-p", &dest_param])
         .args(["-o", out.path().to_str().unwrap()])
@@ -550,10 +551,11 @@ fn run_assert_references(present: &[&str]) -> std::process::Output {
         std::fs::write(path, "ref").unwrap();
     }
     let vars = root.path().join("vars.json");
-    let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
+    let body = serde_json::json!({ "Root": "." }).to_string();
     std::fs::write(&vars, body).unwrap();
     sandbox
         .command()
+        .current_dir(root.path())
         .args(["run", &custom_recipe_path("assert-references"), "--yes"])
         .args(["--vars", vars.to_str().unwrap()])
         .output()
@@ -599,10 +601,11 @@ fn run_report_fixture(fixture: &str) -> (std::process::Output, String) {
         std::fs::write(path, "ref").unwrap();
     }
     let vars = root.path().join("vars.json");
-    let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
+    let body = serde_json::json!({ "Root": "." }).to_string();
     std::fs::write(&vars, body).unwrap();
     let output = sandbox
         .command()
+        .current_dir(root.path())
         .args(["run", &custom_recipe_path(fixture), "--yes"])
         .args(["--vars", vars.to_str().unwrap()])
         .output()
@@ -918,7 +921,7 @@ fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
     std::fs::write(root.path().join("leftover.txt"), "left behind").unwrap();
     let vars = serde_json::json!({
         "Tools": tools.path().to_str().unwrap(),
-        "Root": root.path().to_str().unwrap(),
+        "Root": ".",
     });
     let vars_file = root.path().join("vars.json");
     std::fs::write(&vars_file, vars.to_string()).unwrap();
@@ -926,6 +929,7 @@ fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
     let dest_param = format!("copy:destination={}", dest.path().to_str().unwrap());
     let output = sandbox
         .command()
+        .current_dir(root.path())
         .args([
             "run",
             &custom_recipe_path("shell-missing-tool-cleanup"),

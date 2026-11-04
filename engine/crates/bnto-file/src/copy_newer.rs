@@ -37,7 +37,7 @@ pub(crate) fn process_newer(
     if dest_path.is_dir() {
         return Err(BntoError::InvalidInput(format!(
             "destination {} is a directory, not a file",
-            dest_path.display()
+            bnto_core::display_path(dest_path)
         )));
     }
     let outcome = decide(src, dest_path, tolerance_ms(&input.params)?)?;
@@ -111,7 +111,10 @@ fn outcome_metadata(outcome: Outcome) -> serde_json::Map<String, serde_json::Val
 
 fn mtime_ms(path: &Path) -> Result<i128, BntoError> {
     let meta = fs::metadata(path).map_err(|e| {
-        BntoError::ProcessingFailed(format!("Failed to stat {}: {e}", path.display()))
+        BntoError::ProcessingFailed(format!(
+            "Failed to stat {}: {e}",
+            bnto_core::display_path(path)
+        ))
     })?;
     let t = FileTime::from_last_modification_time(&meta);
     Ok(i128::from(t.unix_seconds()) * 1000 + i128::from(t.nanoseconds() / 1_000_000))
@@ -133,7 +136,10 @@ fn decide(src: &Path, dest: &Path, tolerance_ms: u64) -> Result<Outcome, BntoErr
 }
 
 fn io_fail(what: &str, path: &Path, e: std::io::Error) -> BntoError {
-    BntoError::ProcessingFailed(format!("Failed to {what} {}: {e}", path.display()))
+    BntoError::ProcessingFailed(format!(
+        "Failed to {what} {}: {e}",
+        bnto_core::display_path(path)
+    ))
 }
 
 /// Write the source bytes into the existing target file (not remove+recreate,

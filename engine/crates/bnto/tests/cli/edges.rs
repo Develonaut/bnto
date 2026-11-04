@@ -25,9 +25,10 @@ fn root_fixture() -> tempfile::TempDir {
 fn run(recipe: &str, root: &Path, out: &Path, extra: &[&str]) -> Output {
     let vars_dir = temp_output_dir();
     let vars_file = vars_dir.path().join("vars.json");
-    let body = serde_json::json!({ "Root": root.to_str().unwrap() }).to_string();
+    let body = serde_json::json!({ "Root": "." }).to_string();
     std::fs::write(&vars_file, body).unwrap();
     Command::new(bnto_bin())
+        .current_dir(root)
         .args(["run", recipe, "--yes"])
         .args(["--vars", vars_file.to_str().unwrap()])
         .args(["-o", out.to_str().unwrap()])

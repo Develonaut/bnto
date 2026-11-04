@@ -24,7 +24,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | 7c  | Consent prompt shows origin, steps and flagged paths | `feat/project-recipes`         | Done (on branch) |
 | 7d  | Find the project root                                | `feat/project-recipes`         | Done (on branch) |
 | 7e  | Load project recipes from `.bnto/recipes/`           | `feat/project-recipes`         | Not started      |
-| 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Not started      |
+| 7f  | Nodes resolve paths against the working folder       | `feat/project-recipes`         | Done (on branch) |
 | 7k  | Confine project recipes at run time                  | `feat/project-recipes`         | Not started      |
 | 7g  | Run project recipes at the project root              | `feat/project-recipes`         | Not started      |
 | 7h  | The TUI editor keeps a recipe's source               | `feat/project-recipes`         | Not started      |

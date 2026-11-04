@@ -42,7 +42,8 @@ fn refuse_missing(files: &[BatchFile]) -> Result<(), BntoError> {
         .iter()
         .filter_map(|f| match &f.data {
             FileData::Path(path) if !path.exists() => {
-                Some(format!("{} ({})", f.filename, path.display()))
+                let name = bnto_core::display_text(&f.filename);
+                Some(format!("{name} ({})", bnto_core::display_path(path)))
             }
             _ => None,
         })
@@ -78,7 +79,10 @@ fn write_all<W: Write>(
 /// One file's bytes onto `out`; a disk file is copied through a buffer.
 fn append<W: Write>(file: &BatchFile, out: &mut W) -> Result<(), BntoError> {
     let failed = |e: std::io::Error| {
-        BntoError::ProcessingFailed(format!("Cannot join {}: {e}", file.filename))
+        BntoError::ProcessingFailed(format!(
+            "Cannot join {}: {e}",
+            bnto_core::display_text(&file.filename)
+        ))
     };
     match &file.data {
         FileData::Bytes(bytes) => out.write_all(bytes).map_err(failed),

@@ -105,10 +105,11 @@ impl NodeProcessor for FileList {
     }
 }
 
-/// `base`, or the work dir when it isn't set.
+/// `base` under the work dir (`read` refused one that leaves it), or the
+/// work dir when it isn't set.
 fn base_dir(params: &ListParams, ctx: &dyn ProcessContext) -> Result<PathBuf, BntoError> {
     match &params.base {
-        Some(base) => Ok(PathBuf::from(base)),
+        Some(base) => bnto_core::in_work_dir("base", base, ctx),
         None => ctx.work_dir().map(Path::to_path_buf),
     }
 }
@@ -118,10 +119,16 @@ fn read_lists(files: &[BatchFile]) -> Result<Vec<String>, BntoError> {
     let mut raw = Vec::new();
     for file in files {
         let bytes = file.data.to_bytes().map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to read path list {}: {e}", file.filename))
+            BntoError::ProcessingFailed(format!(
+                "Failed to read path list {}: {e}",
+                bnto_core::display_text(&file.filename)
+            ))
         })?;
         let text = std::str::from_utf8(&bytes).map_err(|_| {
-            BntoError::InvalidInput(format!("Path list {} is not UTF-8 text", file.filename))
+            BntoError::InvalidInput(format!(
+                "Path list {} is not UTF-8 text",
+                bnto_core::display_text(&file.filename)
+            ))
         })?;
         raw.extend(entries::split_list(text));
     }
@@ -129,10 +136,12 @@ fn read_lists(files: &[BatchFile]) -> Result<Vec<String>, BntoError> {
 }
 
 fn refused(bad: &[String]) -> String {
-    let quoted: Vec<String> = bad.iter().map(|p| format!("\"{p}\"")).collect();
+    let quoted = |p: &String| format!("\"{}\"", bnto_core::display_text(p));
+    let quoted: Vec<String> = bad.iter().map(quoted).collect();
     format!(
-        "File list refused: {} would leave the base folder (absolute, a drive, or \"..\")",
-        quoted.join(", ")
+        "File list refused: {} would leave the base folder ({})",
+        quoted.join(", "),
+        bnto_core::LEAVES_FOLDER_WHY
     )
 }
 

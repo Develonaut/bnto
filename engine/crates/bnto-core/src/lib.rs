@@ -139,6 +139,18 @@ pub mod slash_path;
 /// A name's stem and extension, read from its last path segment only.
 pub mod split_extension;
 
+/// A file name less its `.` and empty segments.
+pub mod dot_segments;
+
+/// Recipe text made safe to print: control and hiding characters shown.
+pub mod display_text;
+
+/// Whether a file name joined onto a folder would land outside it.
+pub mod leaves_folder;
+
+/// A param's path placed under the run's working folder.
+pub mod work_dir_path;
+
 /// Params a recipe gives a node that the node doesn't declare.
 pub mod undeclared_params;
 
@@ -171,6 +183,8 @@ pub use command_options::CommandOptions;
 pub use context::{NoopContext, ProcessContext};
 pub use definition::{Definition, Edge, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;
+pub use display_text::{display_lines, display_path, display_text};
+pub use dot_segments::without_dot_segments;
 pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSource};
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
@@ -179,6 +193,7 @@ pub use executor::template::{build_input_metadata, build_node_outputs_for_input}
 pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use file_data::FileData;
 pub use graph::{Flow, GraphError, LevelGraph, Source, level_errors, level_flow};
+pub use leaves_folder::{LEAVES_FOLDER_WHY, is_absolute_anywhere, leaves_folder};
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
     Constraints, Dependency, HostPlatform, InputCardinality, InstallHints, NodeCategory,
@@ -200,6 +215,7 @@ pub use secrets::SecretDef;
 pub use slash_path::slash_path;
 pub use split_extension::{file_extension, file_stem, split_extension};
 pub use version::{VersionCheckResult, VersionConstraint, check_version};
+pub use work_dir_path::in_work_dir;
 
 // =============================================================================
 // Shared Constants

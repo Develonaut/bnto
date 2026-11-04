@@ -79,9 +79,12 @@ fn group_value(value: Option<&Value>) -> Value {
 fn add_to(group: &mut Group, file: &BatchFile, sum: &[String]) -> Result<(), String> {
     group.count += 1;
     for (field, total) in sum.iter().zip(group.totals.iter_mut()) {
-        total
-            .add(file.metadata.get(field))
-            .map_err(|why| format!("{}: sum field \"{field}\": {why}", file.filename))?;
+        total.add(file.metadata.get(field)).map_err(|why| {
+            format!(
+                "{}: sum field \"{field}\": {why}",
+                crate::display_text(&file.filename)
+            )
+        })?;
     }
     Ok(())
 }

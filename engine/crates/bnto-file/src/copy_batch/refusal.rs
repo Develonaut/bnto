@@ -24,7 +24,7 @@ pub(crate) fn refuse_replacing_read_files(
     ctx: &dyn ProcessContext,
 ) -> Result<(), BntoError> {
     let inputs: Vec<&NodeInput> = files.iter().map(|f| &f.input).collect();
-    let conflicts = conflicts(&inputs, ctx);
+    let conflicts = conflicts(&inputs, ctx)?;
     if conflicts.is_empty() {
         return Ok(());
     }
@@ -44,7 +44,7 @@ fn refused(listing: &str, earlier: &[PathBuf]) -> String {
     // Indented once more, so the paths sit under their heading.
     let copied: Vec<String> = earlier
         .iter()
-        .map(|p| format!("  {}", p.display()))
+        .map(|p| format!("  {}", bnto_core::display_path(p)))
         .collect();
     let copied = relocate::listing(&copied, ("file", "files"));
     format!(
@@ -54,8 +54,11 @@ fn refused(listing: &str, earlier: &[PathBuf]) -> String {
 }
 
 /// One line per copy that would replace a file another file is read from.
-fn conflicts(inputs: &[&NodeInput], ctx: &dyn ProcessContext) -> Vec<String> {
-    let dests: Vec<PathBuf> = inputs.iter().map(|input| dest_path(input)).collect();
+fn conflicts(inputs: &[&NodeInput], ctx: &dyn ProcessContext) -> Result<Vec<String>, BntoError> {
+    let dests = inputs
+        .iter()
+        .map(|input| dest_path(input, ctx))
+        .collect::<Result<Vec<PathBuf>, BntoError>>()?;
     let replaced: Vec<Option<&Path>> = inputs
         .iter()
         .zip(&dests)
@@ -71,7 +74,7 @@ fn conflicts(inputs: &[&NodeInput], ctx: &dyn ProcessContext) -> Vec<String> {
         };
         Some(conflict(inputs[i], dest, &reader))
     };
-    replaced.iter().enumerate().filter_map(line).collect()
+    Ok(replaced.iter().enumerate().filter_map(line).collect())
 }
 
 /// Whether copying `input` to `dest` replaces the file there: `overwrite`
@@ -91,12 +94,14 @@ fn replaces(input: &NodeInput, dest: &Path) -> bool {
 /// One refusal line: the destination, what would be copied over it, and the
 /// name of the file read from it.
 fn conflict(input: &NodeInput, dest: &Path, reader: &str) -> String {
+    // Recipe text (paths, names), escaped where the refusal is built.
     let from = match &input.data {
-        FileData::Path(src) => src.display().to_string(),
-        _ => input.filename.clone(),
+        FileData::Path(src) => bnto_core::display_path(src),
+        _ => bnto_core::display_text(&input.filename).into_owned(),
     };
     format!(
-        "{}: copying {from} over it would replace the file {reader} is read from",
-        dest.display(),
+        "{}: copying {from} over it would replace the file {} is read from",
+        bnto_core::display_path(dest),
+        bnto_core::display_text(reader),
     )
 }

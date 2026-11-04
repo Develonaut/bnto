@@ -3,6 +3,7 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+use crate::display_text::{display_path, display_text};
 use bnto_core::PipelineResult;
 use bnto_core::processor::FileData;
 use bnto_file::relocate::{Move, check_platform_name};
@@ -36,7 +37,7 @@ pub(super) fn plan(result: &PipelineResult) -> Result<Plan, String> {
 fn plan_one(data: &FileData, name: &str, seen: &mut HashSet<PathBuf>) -> Result<Move, String> {
     let src = source_path(data)?;
     if !seen.insert(src.clone()) {
-        let why = format!("{} is in the run more than once", src.display());
+        let why = format!("{} is in the run more than once", display_path(&src));
         return Err(refused(&why));
     }
     let dest = dest_beside(&src, name)?;
@@ -68,8 +69,12 @@ fn leaf(name: &str) -> Result<&str, String> {
         .file_name()
         .and_then(|n| n.to_str())
         .filter(|leaf| !leaf.contains(['/', '\\']))
-        .ok_or_else(|| refused(&format!("\"{name}\" has no usable file name")))?;
-    check_platform_name(leaf).map_err(|why| refused(&format!("\"{leaf}\" {why}")))?;
+        .ok_or_else(|| {
+            let name = display_text(name);
+            refused(&format!("\"{name}\" has no usable file name"))
+        })?;
+    check_platform_name(leaf)
+        .map_err(|why| refused(&format!("\"{}\" {why}", display_text(leaf))))?;
     Ok(leaf)
 }
 

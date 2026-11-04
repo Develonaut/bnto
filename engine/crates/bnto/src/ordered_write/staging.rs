@@ -19,6 +19,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 
+use crate::display_text::display_path;
 use bnto_file::STAGED_COPIES_PREFIX;
 
 /// The staged copies of one write.
@@ -45,7 +46,7 @@ impl Staging {
         let name = format!("{}-{}", self.count, leaf.unwrap_or_default());
         let copy = self.dir()?.join(name);
         std::fs::copy(file, &copy)
-            .map_err(|e| format!("Cannot set {} aside for the swap: {e}", file.display()))?;
+            .map_err(|e| format!("Cannot set {} aside for the swap: {e}", display_path(file)))?;
         self.count += 1;
         Ok(copy)
     }
@@ -76,7 +77,7 @@ impl Staging {
             format!(
                 "Every file was written, but the folder of copies set aside for a swap, \
                  {}, could not be removed ({e}); delete it by hand",
-                path.display()
+                display_path(&path)
             )
         })
     }
@@ -89,7 +90,7 @@ impl Staging {
                 .map_err(|e| {
                     format!(
                         "Cannot create a staging folder in {}: {e}",
-                        self.root.display()
+                        display_path(&self.root)
                     )
                 })?;
             lock_live().push(made.path().to_path_buf());
@@ -167,7 +168,7 @@ fn kept_lines(dirs: &[PathBuf]) -> Vec<String> {
     let line = |d: &PathBuf| {
         format!(
             "a write didn't finish; copies set aside for a swap are kept in {}",
-            d.display()
+            display_path(d)
         )
     };
     dirs.iter().map(line).collect()

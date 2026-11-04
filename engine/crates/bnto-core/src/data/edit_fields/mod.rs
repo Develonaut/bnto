@@ -138,8 +138,9 @@ fn edit_file(
     once: Scope<'_>,
 ) -> Result<OutputFile, BntoError> {
     let item = placeholder::file_item(&f.metadata, once.item);
-    let set = fill::fill_values(&params.values, &f.filename, &item, once)
-        .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", f.filename)))?;
+    let set = fill::fill_values(&params.values, &f.filename, &item, once).map_err(|why| {
+        BntoError::InvalidInput(format!("{}: {why}", crate::display_text(&f.filename)))
+    })?;
     let mut metadata = if params.keep_only_set {
         serde_json::Map::new()
     } else {

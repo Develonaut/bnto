@@ -5,7 +5,7 @@
 // File data passes through unchanged — this is a placement node. It runs as a
 // batch, so every copy is checked before any runs (`copy_batch`).
 
-use crate::copy_batch::{copy_each, per_file, refuse_replacing_read_files};
+use crate::copy_batch::{copy_each, per_file, refuse_bad_names, refuse_replacing_read_files};
 use crate::copy_newer::{DEFAULT_TOLERANCE_MS, OUTCOME_KEYS, process_newer};
 use bnto_core::metadata::{
     Constraints, InputCardinality, NodeCategory, NodeMetadata, OptionEntry, ParamCondition,
@@ -72,6 +72,7 @@ impl NodeProcessor for FileCopy {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let files = per_file(input, ctx)?;
+        refuse_bad_names(&files)?;
         refuse_replacing_read_files(&files, ctx)?;
         copy_each(files, ctx, |input| self.process(input, progress, ctx))
     }
@@ -92,8 +93,9 @@ impl NodeProcessor for FileCopy {
             .unwrap_or(true);
 
         let conflict = conflict_mode(&input.params);
-        let dest_path = dest_path(&input);
-        let dest_dir = Path::new(destination(&input.params));
+        let dest_path = dest_path(&input, ctx)?;
+        let dest_dir = dest_dir(&input.params, ctx)?;
+        let dest_dir = dest_dir.as_path();
 
         // A dry run decides each file against the destination as it stands, so two
         // inputs sharing a destination name both decide against the empty slot
@@ -105,16 +107,14 @@ impl NodeProcessor for FileCopy {
             if create_dirs {
                 if !dry_run {
                     std::fs::create_dir_all(dest_dir).map_err(|e| {
-                        BntoError::ProcessingFailed(format!(
-                            "Failed to create directory {}: {e}",
-                            dest_dir.display()
-                        ))
+                        let at = shown(dest_dir);
+                        BntoError::ProcessingFailed(format!("Failed to create directory {at}: {e}"))
                     })?;
                 }
             } else {
+                let at = shown(dest_dir);
                 return Err(BntoError::InvalidInput(format!(
-                    "Destination directory does not exist: {}",
-                    dest_dir.display()
+                    "Destination directory does not exist: {at}"
                 )));
             }
         }
@@ -126,7 +126,7 @@ impl NodeProcessor for FileCopy {
         }
 
         // Handle conflicts.
-        let final_path = resolve_conflict(&dest_path, conflict)?;
+        let final_path = resolve_conflict(&dest_path, dest_dir, conflict)?;
 
         // Write the file (if not skipped).
         if let Some(path) = final_path.as_ref().filter(|_| !dry_run) {
@@ -168,7 +168,7 @@ fn write_copy(input: &NodeInput, path: &Path, ctx: &dyn ProcessContext) -> Resul
         && !parent.exists()
     {
         std::fs::create_dir_all(parent).map_err(|e| {
-            let at = parent.display();
+            let at = shown(parent);
             BntoError::ProcessingFailed(format!("Failed to create parent dir {at}: {e}"))
         })?;
     }
@@ -187,10 +187,15 @@ fn write_copy(input: &NodeInput, path: &Path, ctx: &dyn ProcessContext) -> Resul
 /// that's gone (ISS-83), else the destination.
 fn copy_error(data: &FileData, path: &Path, e: std::io::Error) -> BntoError {
     let message = match data {
-        FileData::Path(src) if !src.exists() => format!("{} doesn't exist", src.display()),
-        _ => format!("Failed to write {}: {e}", path.display()),
+        FileData::Path(src) if !src.exists() => format!("{} doesn't exist", shown(src)),
+        _ => format!("Failed to write {}: {e}", shown(path)),
     };
     BntoError::ProcessingFailed(message)
+}
+
+/// `path` as an error shows it: recipe text, escaped where the error is built.
+pub(crate) fn shown(path: &Path) -> String {
+    bnto_core::display_path(path)
 }
 
 /// The `destination` folder, `.` when unset.
@@ -201,9 +206,19 @@ fn destination(params: &serde_json::Map<String, serde_json::Value>) -> &str {
         .unwrap_or(".")
 }
 
-/// Where `input` lands before conflict handling: its name under `destination`.
-pub(crate) fn dest_path(input: &NodeInput) -> PathBuf {
-    Path::new(destination(&input.params)).join(&input.filename)
+/// The `destination` folder, a relative one under the run's working folder.
+fn dest_dir(
+    params: &serde_json::Map<String, serde_json::Value>,
+    ctx: &dyn ProcessContext,
+) -> Result<PathBuf, BntoError> {
+    bnto_core::in_work_dir("destination", destination(params), ctx)
+}
+
+/// Where `input` lands before conflict handling: its name under
+/// `destination`, less the name's `.` segments, so `./a.txt` plans as `a.txt`.
+pub(crate) fn dest_path(input: &NodeInput, ctx: &dyn ProcessContext) -> Result<PathBuf, BntoError> {
+    let name = bnto_core::without_dot_segments(&input.filename);
+    Ok(dest_dir(&input.params, ctx)?.join(name.as_ref()))
 }
 
 /// The `conflict` mode, `skip` when unset.
@@ -295,51 +310,58 @@ fn build_copy_params() -> Vec<ParameterDef> {
 
 // --- Conflict Resolution ---
 
-/// Resolve filename conflicts in the destination directory.
+/// Resolve filename conflicts under `dest_dir`, where `dest_path` (a file
+/// name joined onto it, checked by `refuse_bad_names`) lands.
 ///
 /// Returns `Some(path)` to write to, or `None` if the file should be skipped.
-#[expect(clippy::too_many_lines)]
 fn resolve_conflict(
     dest_path: &Path,
+    dest_dir: &Path,
     conflict_mode: &str,
-) -> Result<Option<std::path::PathBuf>, BntoError> {
-    if !dest_path.exists() {
-        // No conflict — write to the target path.
-        return Ok(Some(dest_path.to_path_buf()));
+) -> Result<Option<PathBuf>, BntoError> {
+    let chosen = match conflict_mode {
+        _ if !dest_path.exists() => Some(dest_path.to_path_buf()),
+        "overwrite" => Some(dest_path.to_path_buf()),
+        "rename" => Some(free_name(dest_path, dest_dir)?),
+        // "skip" (default) — don't write, just pass through.
+        _ => None,
+    };
+    if let Some(path) = &chosen {
+        debug_assert!(
+            path.starts_with(dest_dir) && path != dest_dir,
+            "{} isn't under {}",
+            path.display(),
+            dest_dir.display()
+        );
     }
+    Ok(chosen)
+}
 
-    match conflict_mode {
-        "overwrite" => Ok(Some(dest_path.to_path_buf())),
-        "rename" => {
-            // Append a numeric suffix until we find a free name.
-            let stem = dest_path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("file");
-            let ext = dest_path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            let parent = dest_path.parent().unwrap_or(Path::new("."));
-
-            for i in 1..1000 {
-                let new_name = if ext.is_empty() {
-                    format!("{stem}_{i}")
-                } else {
-                    format!("{stem}_{i}.{ext}")
-                };
-                let candidate = parent.join(&new_name);
-                if !candidate.exists() {
-                    return Ok(Some(candidate));
-                }
-            }
-
-            Err(BntoError::ProcessingFailed(
+/// `dest_path` with the first numeric suffix (`a_1.txt`) no file holds, in
+/// the folder the name puts it in. That folder is taken under `dest_dir`
+/// rather than from `dest_path` alone, so even a name that is the folder
+/// itself can't put the copy beside it.
+fn free_name(dest_path: &Path, dest_dir: &Path) -> Result<PathBuf, BntoError> {
+    let stem = dest_path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("file");
+    let ext = dest_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    let parent = dest_path
+        .parent()
+        .filter(|p| p.starts_with(dest_dir))
+        .unwrap_or(dest_dir);
+    (1..1000)
+        .map(|i| match ext {
+            "" => parent.join(format!("{stem}_{i}")),
+            _ => parent.join(format!("{stem}_{i}.{ext}")),
+        })
+        .find(|candidate| !candidate.exists())
+        .ok_or_else(|| {
+            BntoError::ProcessingFailed(
                 "Could not find a free filename after 999 attempts".to_string(),
-            ))
-        }
-        _ => {
-            // "skip" (default) — don't write, just pass through.
-            Ok(None)
-        }
-    }
+            )
+        })
 }
 
 // --- Tests ---
@@ -609,7 +631,7 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("new.txt");
 
-        let result = resolve_conflict(&path, "skip").unwrap();
+        let result = resolve_conflict(&path, dir.path(), "skip").unwrap();
         assert_eq!(result, Some(path));
     }
 
@@ -619,8 +641,29 @@ mod tests {
         let path = dir.path().join("existing.txt");
         fs::write(&path, b"data").unwrap();
 
-        let result = resolve_conflict(&path, "skip").unwrap();
+        let result = resolve_conflict(&path, dir.path(), "skip").unwrap();
         assert_eq!(result, None, "Skip should return None for existing file");
+    }
+
+    #[test]
+    fn test_rename_keeps_a_name_in_its_own_subfolder() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("sub/a.txt");
+        fs::create_dir_all(dir.path().join("sub")).unwrap();
+        fs::write(&path, b"data").unwrap();
+        let result = resolve_conflict(&path, dir.path(), "rename").unwrap();
+        assert_eq!(result, Some(dir.path().join("sub/a_1.txt")));
+    }
+
+    #[test]
+    fn test_rename_never_puts_a_copy_beside_the_destination() {
+        // A name that is the destination itself (refused earlier, by
+        // `refuse_bad_names`) still finds its free name inside it.
+        let root = TempDir::new().unwrap();
+        let dest = root.path().join("out");
+        fs::create_dir_all(&dest).unwrap();
+        let free = free_name(&dest, &dest).unwrap();
+        assert_eq!(free, dest.join("out_1"));
     }
 
     // --- conflict: "newer" ---

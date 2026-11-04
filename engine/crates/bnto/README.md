@@ -226,7 +226,7 @@ src/
 +-- fill_fields.rs         # `{{fields.*}}` filled with the values a run uses, for the consent prompt
 +-- path_flag.rs           # Why a path needs a second look: absolute, `..`, `~`, set when run, leaves the project
 +-- path_placeholders.rs   # Which `{{…}}` placeholders can't move a path (ctx.date, time, timestamp, started, platform)
-+-- display_text.rs        # Escapes recipe text before bnto prints it: control characters shown, bidi flagged (ISS-125)
++-- display_text.rs        # Escapes recipe text before bnto prints it (re-exports bnto-core's display_text, ISS-125)
 +-- strip_colours.rs       # Drops SGR colour codes from a command's output before it's escaped
 +-- dry_run_hint.rs        # The quoted commands bnto suggests: a declined run's `bnto dry-run …`, a dry run's `Run with: bnto run …`
 +-- run_input.rs           # What a suggested `bnto run` ends with by input mode: nothing, `<url>`, `<text>` or `<files...>`
@@ -248,10 +248,11 @@ src/
 +-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
 +-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
++-- result_names.rs        # Refuses a result name that leaves the output folder or this OS can't hold (run + TUI)
 +-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
 +-- ordered_write/         # Orders the final write so no copy replaces an input still to be read
 +-- exit_report.rs         # At the end of a stopped run, names kept staging folders and parked files
-+-- recipe_output_dir.rs   # A recipe's own output folder, filled or refused (run + TUI)
++-- recipe_output_dir.rs   # A recipe's own output folder, filled or refused, under the run's working folder (run + TUI), and `bnto run`'s default: the working folder
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (pipeline events -> lines)
 +-- progress_line.rs       # A step's live line: bar of files, or spinner + running message

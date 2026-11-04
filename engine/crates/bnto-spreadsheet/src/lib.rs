@@ -9,6 +9,9 @@ pub mod read;
 pub mod rename;
 pub mod wasm_bridge;
 
+#[cfg(test)]
+mod work_dir_tests;
+
 pub use clean::CleanSpreadsheet;
 pub use convert::ConvertFormat;
 pub use export::SpreadsheetExport;

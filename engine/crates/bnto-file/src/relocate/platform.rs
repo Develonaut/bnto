@@ -35,3 +35,16 @@ pub fn check_platform_name(segment: &str) -> Result<(), &'static str> {
     }
     Ok(())
 }
+
+/// Fail naming the first segment of `name` that can't exist on this OS
+/// (`check_platform_name`), with why: `"CON.txt" is a name Windows reserves
+/// for a device`. `/` and `\` both separate; `.` and empty segments skip.
+pub fn check_platform_segments(name: &str) -> Result<(), String> {
+    let segments = name
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty() && *s != ".");
+    for segment in segments {
+        check_platform_name(segment).map_err(|why| format!("\"{segment}\" {why}"))?;
+    }
+    Ok(())
+}

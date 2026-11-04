@@ -181,7 +181,7 @@ impl Runner {
             let names: Vec<String> = self
                 .parked
                 .iter()
-                .map(|p| p.display().to_string())
+                .map(|p| bnto_core::display_path(p))
                 .collect();
             text.push_str(&format!(
                 "; left under a temporary name: {}",
@@ -198,16 +198,21 @@ fn guarded_rename(src: &Path, dest: &Path) -> Result<(), String> {
     if occupied(dest) && !same_file(src, dest) {
         return Err(format!(
             "Stopped: {} now exists, so {} was not moved onto it",
-            dest.display(),
-            src.display()
+            bnto_core::display_path(dest),
+            bnto_core::display_path(src)
         ));
     }
     if let Some(folder) = dest.parent() {
         std::fs::create_dir_all(folder)
-            .map_err(|e| format!("Cannot create {}: {e}", folder.display()))?;
+            .map_err(|e| format!("Cannot create {}: {e}", bnto_core::display_path(folder)))?;
     }
-    std::fs::rename(src, dest)
-        .map_err(|e| format!("Cannot rename {} → {}: {e}", src.display(), dest.display()))
+    std::fs::rename(src, dest).map_err(|e| {
+        format!(
+            "Cannot rename {} → {}: {e}",
+            bnto_core::display_path(src),
+            bnto_core::display_path(dest)
+        )
+    })
 }
 
 fn temp_path(src: &Path) -> PathBuf {

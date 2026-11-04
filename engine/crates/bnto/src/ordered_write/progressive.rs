@@ -35,6 +35,14 @@ pub fn already_written(paths: &[PathBuf]) -> Vec<PathBuf> {
     found.cloned().collect()
 }
 
+/// What progressive writes put under `dir`, for a refusal that comes
+/// before the final write has its paths (a name it refuses).
+pub fn written_under(dir: &Path) -> Vec<PathBuf> {
+    let written = lock();
+    let found = written.iter().filter(|p| p.starts_with(dir));
+    found.cloned().collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -48,5 +56,19 @@ mod tests {
         assert_eq!(written, std::slice::from_ref(&a));
         forget_progressive(dir.path());
         assert!(already_written(&[a, b]).is_empty());
+    }
+
+    #[test]
+    fn test_written_under_names_only_that_folders_files() {
+        let (dir, other) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+        let (a, b) = (
+            dir.path().join("sub").join("a.txt"),
+            other.path().join("b.txt"),
+        );
+        note_progressive(&a);
+        note_progressive(&b);
+        assert_eq!(written_under(dir.path()), std::slice::from_ref(&a));
+        forget_progressive(dir.path());
+        forget_progressive(other.path());
     }
 }

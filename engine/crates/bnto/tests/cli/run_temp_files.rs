@@ -10,15 +10,25 @@ use helpers::{bnto_bin, custom_recipe_path, temp_output_dir};
 
 /// Run fixture `slug` with the system temp dir pointed at `tmp`.
 fn run_fixture(slug: &str, tmp: &Path, out: &Path, extra: &[&str]) -> Output {
-    Command::new(bnto_bin())
+    fixture_command(slug, tmp, out, extra).output().unwrap()
+}
+
+/// `run_fixture` with `cwd` as the run's working folder.
+fn run_fixture_in(cwd: &Path, slug: &str, tmp: &Path, out: &Path, extra: &[&str]) -> Output {
+    let mut command = fixture_command(slug, tmp, out, extra);
+    command.current_dir(cwd).output().unwrap()
+}
+
+fn fixture_command(slug: &str, tmp: &Path, out: &Path, extra: &[&str]) -> Command {
+    let mut command = Command::new(bnto_bin());
+    command
         .env("TMPDIR", tmp)
         .env("TMP", tmp)
         .env("TEMP", tmp)
         .args(["run", &custom_recipe_path(slug), "--yes"])
         .args(extra)
-        .args(["-o", out.to_str().unwrap()])
-        .output()
-        .unwrap()
+        .args(["-o", out.to_str().unwrap()]);
+    command
 }
 
 /// Every entry left directly under `dir`, for a readable assertion message.
@@ -83,12 +93,18 @@ fn test_run_copies_listed_user_files_and_keeps_the_originals() {
     std::fs::write(root.path().join("b.txt"), "beta").unwrap();
     let vars_dir = temp_output_dir();
     let vars_file = vars_dir.path().join("vars.json");
-    let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
+    let body = serde_json::json!({ "Root": "." }).to_string();
     std::fs::write(&vars_file, body).unwrap();
     let tmp = temp_output_dir();
     let out = temp_output_dir();
     let vars_arg = ["--vars", vars_file.to_str().unwrap()];
-    let output = run_fixture("file-list-write", tmp.path(), out.path(), &vars_arg);
+    let output = run_fixture_in(
+        root.path(),
+        "file-list-write",
+        tmp.path(),
+        out.path(),
+        &vars_arg,
+    );
 
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "stderr: {stderr}");

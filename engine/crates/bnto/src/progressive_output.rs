@@ -44,9 +44,15 @@ fn write_progressive_through(
     }
 }
 
-/// Copy one file to its claimed name, unless the name is held or occupied.
+/// Copy one file to its claimed name (less its `.` segments, as the final
+/// write plans it), unless the name is held or occupied, or is one the final
+/// write refuses (ISS-128, `result_names`).
 fn copy_one(dir: &Path, file: &ProgressOutputFile, names: &mut OutputNames) {
-    let claimed = names.claim(dir, &file.name, &file.data);
+    if !crate::result_names::may_write(&file.name) {
+        return;
+    }
+    let name = bnto_core::without_dot_segments(&file.name);
+    let claimed = names.claim(dir, &name, &file.data);
     let path = dir.join(claimed.name);
     if claimed.held || std::fs::symlink_metadata(&path).is_ok() {
         return;
@@ -94,6 +100,20 @@ mod tests {
             std::fs::read(out.path().join("mine.txt")).unwrap(),
             b"user file"
         );
+    }
+
+    #[test]
+    fn copies_nothing_for_a_name_that_would_leave_the_folder() {
+        // ISS-128: the final write refuses the run; this copy runs first.
+        let root = tempfile::tempdir().unwrap();
+        let out = root.path().join("out").join("deep");
+        let files = [
+            output("../escaped.txt", FileData::Bytes(b"x".to_vec())),
+            output("kept.txt", FileData::Bytes(b"k".to_vec())),
+        ];
+        write_progressive_files(out.to_str().unwrap(), &files, &mut OutputNames::default());
+        assert!(!root.path().join("out").join("escaped.txt").exists());
+        assert!(out.join("kept.txt").exists());
     }
 
     #[test]

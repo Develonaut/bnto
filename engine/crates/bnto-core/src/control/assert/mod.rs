@@ -168,7 +168,9 @@ fn reads_file(params: &AssertParams) -> bool {
 fn file_failure(params: &AssertParams, file: &BatchFile, once: Scope<'_>) -> Option<String> {
     let checked = for_file(params, file, once)
         .and_then(|check| compare::compare(&check.value, check.op, &check.expected));
-    checked.err().map(|why| format!("{}: {why}", file.filename))
+    checked
+        .err()
+        .map(|why| format!("{}: {why}", crate::display_text(&file.filename)))
 }
 
 /// The checks a run makes, filled: once, or once per file.
@@ -181,8 +183,9 @@ fn checks(
         return Ok(vec![filled(params, once).map_err(BntoError::InvalidInput)?]);
     }
     let fill = |file: &BatchFile| {
-        for_file(params, file, once)
-            .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", file.filename)))
+        for_file(params, file, once).map_err(|why| {
+            BntoError::InvalidInput(format!("{}: {why}", crate::display_text(&file.filename)))
+        })
     };
     files.iter().map(fill).collect()
 }

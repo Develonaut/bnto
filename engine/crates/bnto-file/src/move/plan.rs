@@ -52,7 +52,10 @@ fn plan_one(
     let segments = segments(name)?;
     let src = canonical_source(src)?;
     if !seen.insert(src.clone()) {
-        return Err(format!("{} is in the run more than once", src.display()));
+        return Err(format!(
+            "{} is in the run more than once",
+            bnto_core::display_path(&src)
+        ));
     }
     root.check_volume(&src)?;
     let mut dest = root.path.clone();
@@ -65,7 +68,8 @@ fn source_path<'a>(data: &'a FileData, name: &str) -> Result<&'a Path, String> {
     match data {
         FileData::Path(src) => Ok(src),
         FileData::Bytes(_) => Err(refused(&format!(
-            "{name} is in memory, not a file on disk; file-move runs on the CLI only"
+            "{} is in memory, not a file on disk; file-move runs on the CLI only",
+            bnto_core::display_text(name)
         ))),
     }
 }
@@ -73,7 +77,7 @@ fn source_path<'a>(data: &'a FileData, name: &str) -> Result<&'a Path, String> {
 /// The parent canonicalized and the file's own name kept, so a symlink is
 /// moved as the link, not as the file it points to.
 fn canonical_source(src: &Path) -> Result<PathBuf, String> {
-    let missing = || format!("{} doesn't exist", src.display());
+    let missing = || format!("{} doesn't exist", bnto_core::display_path(src));
     std::fs::symlink_metadata(src).map_err(|_| missing())?;
     let leaf = src.file_name().ok_or_else(missing)?;
     let folder = src.parent().filter(|p| !p.as_os_str().is_empty());
@@ -85,9 +89,11 @@ fn canonical_source(src: &Path) -> Result<PathBuf, String> {
 /// OS, so one table works everywhere; empty and `.` segments drop out.
 #[expect(clippy::too_many_lines)]
 fn segments(name: &str) -> Result<Vec<&str>, String> {
+    // Recipe text, escaped where the refusal is built (ISS-125).
+    let shown = bnto_core::display_text(name);
     if name.starts_with(['/', '\\']) || has_drive(name) || Path::new(name).is_absolute() {
         return Err(format!(
-            "\"{name}\" is an absolute path; names must be relative to the destination"
+            "\"{shown}\" is an absolute path; names must be relative to the destination"
         ));
     }
     let segments: Vec<&str> = name
@@ -95,15 +101,18 @@ fn segments(name: &str) -> Result<Vec<&str>, String> {
         .filter(|s| !s.is_empty() && *s != ".")
         .collect();
     if segments.is_empty() {
-        return Err(format!("\"{name}\" has no file name"));
+        return Err(format!("\"{shown}\" has no file name"));
     }
     if segments.contains(&"..") {
         return Err(format!(
-            "\"{name}\" climbs out of the destination with \"..\""
+            "\"{shown}\" climbs out of the destination with \"..\""
         ));
     }
     for segment in &segments {
-        check_platform_name(segment).map_err(|why| format!("\"{name}\": \"{segment}\" {why}"))?;
+        check_platform_name(segment).map_err(|why| {
+            let part = bnto_core::display_text(segment);
+            format!("\"{shown}\": \"{part}\" {why}")
+        })?;
     }
     Ok(segments)
 }

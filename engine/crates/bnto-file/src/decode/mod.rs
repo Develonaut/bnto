@@ -78,7 +78,10 @@ impl NodeProcessor for FileDecode {
         let params = DecodeParams::read(&input.params).map_err(BntoError::InvalidInput)?;
         progress.report(0, "Decoding...");
         let text = input.data.into_bytes().map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to read {}: {e}", input.filename))
+            BntoError::ProcessingFailed(format!(
+                "Failed to read {}: {e}",
+                bnto_core::display_text(&input.filename)
+            ))
         })?;
         let data = decode_text(&params, &text, &input.filename)?;
         let filename = output_name::output_name(&input.filename, params.filename.as_deref());

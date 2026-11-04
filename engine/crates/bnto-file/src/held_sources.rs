@@ -19,8 +19,9 @@ pub(crate) fn held_sources<'a>(
         .filter_map(|src| {
             let reader = ctx.held_elsewhere(src)?;
             Some(format!(
-                "{}: a later step still reads it as {reader}, so it can't be {verb}",
-                src.display()
+                "{}: a later step still reads it as {}, so it can't be {verb}",
+                bnto_core::display_path(src),
+                bnto_core::display_text(&reader)
             ))
         })
         .collect()

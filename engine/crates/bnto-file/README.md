@@ -23,6 +23,8 @@ File operation nodes. Rename, filter, sort, decode, collect, copy, delete, inspe
 | `FileList`    | `file-list`    | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder, each with its `full_path`; missing paths skipped and counted, and `entries` lists every path in order with its `full_path` and `status` (`found` / `missing`)                                                                                                                                                                                                                                                                                                                                                                                      | cli          |
 | `FileMove`    | `file-move`    | Move files into folders under a destination by the path in each name; rename only, refuses any run that would replace a file, or move one a later step of the run still reads (another loop iteration's or branch's); once the run passes its time limit no more moves start (a swap under way finishes) and the run fails with the timeout                                                                                                                                                                                                                                                                                                                                 | cli          |
 
+Relative path params (`file-list` and `file-delete` `base`, `file-move` and `file-copy` `destination`) resolve against the run's working folder (`ProcessContext::work_dir`), not whatever folder the process happens to be in. Today the CLI and the TUI set the working folder to the folder they were started in; a project recipe will run at its project's root. A value that starts at a root or names a drive without being a full path on this OS (`\x`, `C:x`) is refused, naming the param. `file-list` refuses a `base` that's absolute or climbs with `..`. A file's name is its path under the folder it lands in, so `file-copy` refuses, before copying anything, a name that is absolute, names a drive or climbs with `..` (which a `file-render` `filename` or a `file-rename` can build), or has a part this OS can't hold as a name (`relocate::check_platform_segments`: `CON`, a trailing dot or space on Windows). The output write in the CLI and the TUI checks the same (`bnto_core::leaves_folder`).
+
 ## Directory Structure
 
 ```
@@ -68,6 +70,7 @@ src/
 ├── copy_batch/       # file-copy as a batch (native-only)
 │   ├── mod.rs              # Per-file inputs, copy each in order
 │   ├── fill.rs             # `{{item.KEY}}` filled per file, a sole placeholder keeps its type
+│   ├── names.rs            # Refuse a name the destination can't take (`relocate::name_refusal`: leaves it, no file name, or not allowed on this OS)
 │   ├── refusal.rs          # Refuse a copy over a file the batch or a later step reads
 │   └── output.rs           # Inherited metadata, files handed over on failure, totals
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
@@ -78,7 +81,7 @@ src/
 ├── list/             # FileList processor (file-list, native-only)
 │   ├── mod.rs              # NodeProcessor impl (batch), outputs + entries / missing metadata
 │   ├── listed.rs           # One listed path: name, `/`-separated full path, found or missing
-│   ├── params.rs           # Parameter schema + typed reads
+│   ├── params.rs           # Parameter schema + typed reads; refuses a `base` that's absolute or has `..`
 │   └── entries.rs          # List splitting; refuses absolute, drive, `..`
 ├── move/             # FileMove processor (file-move, native-only)
 │   ├── mod.rs              # NodeProcessor impl (batch), outputs
@@ -87,7 +90,7 @@ src/
 │   ├── root.rs             # Destination resolution, folder/link/drive checks
 │   └── stopped.rs          # A stopped batch's error: the files under the destination (out of time or a failed rename)
 ├── readers.rs        # Which files a batch reads from a destination (file-copy, output write)
-├── relocate/         # Conflict check, ordered rename runner (optionally checked between moves), parked-file list (file-move, output overwrite)
+├── relocate/         # Conflict check, ordered rename runner (optionally checked between moves), parked-file list (file-move, output overwrite), `name_refusal` for a name joined under a folder (file-copy, output write)
 └── wasm_bridge.rs    # #[wasm_bindgen] bridge functions
 ```
 

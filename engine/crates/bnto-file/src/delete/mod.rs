@@ -102,7 +102,8 @@ impl NodeProcessor for FileDelete {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let params = DeleteParams::read(&input.params).map_err(BntoError::InvalidInput)?;
-        let root = target::base_root(&params.base).map_err(BntoError::InvalidInput)?;
+        let resolved = bnto_core::in_work_dir("base", &params.base, ctx)?;
+        let root = target::base_root(&params.base, &resolved).map_err(BntoError::InvalidInput)?;
         let targets = plan(&input.files, &root, &params.base).map_err(BntoError::InvalidInput)?;
         refuse_held(&targets, ctx)?;
         if !ctx.dry_run()
@@ -143,7 +144,10 @@ fn delete_all(
         if let Target::File(path) = target {
             ctx.check_time_limit().map_err(|e| (i, e))?;
             std::fs::remove_file(path).map_err(|e| {
-                let why = format!("Failed to delete {}: {e}", file.filename);
+                let why = format!(
+                    "Failed to delete {}: {e}",
+                    bnto_core::display_text(&file.filename)
+                );
                 (i, BntoError::ProcessingFailed(why))
             })?;
         }

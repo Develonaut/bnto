@@ -89,7 +89,7 @@ impl NodeProcessor for ReadSpreadsheet {
 fn source_label(format: Format, filename: &str) -> String {
     match format {
         Format::Csv => "CSV".to_string(),
-        Format::Json => format!("JSON array in {filename}"),
+        Format::Json => format!("JSON array in {}", bnto_core::display_text(filename)),
     }
 }
 

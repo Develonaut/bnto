@@ -33,11 +33,23 @@ fn recipe(dir: &Path, steps: &[serde_json::Value]) -> serde_json::Value {
 /// Run `recipe` on `files` inside a fresh sandbox.
 fn run(recipe: &serde_json::Value, files: &[&Path], extra: &[&str]) -> Output {
     let sandbox = Sandbox::new();
+    run_in(&sandbox, sandbox.work_dir(), recipe, files, extra)
+}
+
+/// `run` in `sandbox`, with `cwd` as the run's working folder.
+fn run_in(
+    sandbox: &Sandbox,
+    cwd: &Path,
+    recipe: &serde_json::Value,
+    files: &[&Path],
+    extra: &[&str],
+) -> Output {
     let dir = temp_output_dir();
     let path = dir.path().join("same.bnto.json");
     std::fs::write(&path, recipe.to_string()).unwrap();
     sandbox
         .command()
+        .current_dir(cwd)
         .arg("run")
         .arg(&path)
         .args(files)
@@ -116,10 +128,11 @@ fn test_progressive_loop_output_into_the_listed_folder_leaves_the_files() {
     let (dir, file) = folder();
     let vars = temp_output_dir();
     let vars_file = vars.path().join("vars.json");
-    let body = json!({ "Root": dir.path().to_str().unwrap() }).to_string();
+    let body = json!({ "Root": "." }).to_string();
     std::fs::write(&vars_file, body).unwrap();
     let output = Sandbox::new()
         .command()
+        .current_dir(dir.path())
         .args([
             "run",
             &custom_recipe_path("file-list-loop-progressive"),
@@ -201,8 +214,9 @@ fn test_a_rename_onto_another_inputs_name_keeps_that_inputs_content() {
     assert!(stderr.contains("2 files written"), "{stderr}");
 }
 
-/// `file-list` of `a.txt` and `b.txt` in `dir`, renamed `a` → `b` inside a
-/// progressive loop, written back into `dir`.
+/// `file-list` of `a.txt` and `b.txt` in the working folder (run it in
+/// `dir`), renamed `a` → `b` inside a progressive loop, written back into
+/// `dir`.
 fn progressive_rename_recipe(dir: &Path) -> serde_json::Value {
     let dir = dir.to_str().unwrap();
     json!({
@@ -210,7 +224,7 @@ fn progressive_rename_recipe(dir: &Path) -> serde_json::Value {
         "nodes": [
             { "id": "input", "type": "input", "parameters": { "mode": "none" } },
             { "id": "list", "type": "file-list",
-              "parameters": { "base": dir, "paths": ["a.txt", "b.txt"] } },
+              "parameters": { "paths": ["a.txt", "b.txt"] } },
             { "id": "each", "type": "loop",
               "parameters": { "mode": "forEach", "outputPersistence": "progressive" },
               "nodes": [a_to_b()], "edges": [] },
@@ -230,7 +244,8 @@ fn test_a_progressive_rename_onto_a_later_inputs_name_keeps_its_content() {
     // RED (ISS-48): the first iteration's progressive copy replaced `b.txt`
     // before the second iteration read it.
     let (dir, _) = two_inputs();
-    let output = run(&progressive_rename_recipe(dir.path()), &[], &[]);
+    let recipe = progressive_rename_recipe(dir.path());
+    let output = run_in(&Sandbox::new(), dir.path(), &recipe, &[], &[]);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "stderr: {stderr}");
     assert_eq!(contents(dir.path()), kept_both(), "stderr: {stderr}");
@@ -329,7 +344,7 @@ fn test_a_progressive_refusal_names_what_iterations_already_wrote() {
     let mut recipe = progressive_rename_recipe(inputs.path());
     recipe["nodes"][2]["nodes"] = json!([a_to_sub_b()]);
     recipe["nodes"][3]["parameters"]["directory"] = json!(out.path().to_str().unwrap());
-    let output = run(&recipe, &[], &[]);
+    let output = run_in(&Sandbox::new(), inputs.path(), &recipe, &[], &[]);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "stderr: {stderr}");
     assert!(stderr.contains("one file on disk"), "{stderr}");

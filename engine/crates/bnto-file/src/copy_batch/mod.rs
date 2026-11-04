@@ -12,6 +12,7 @@
 // each file of a per-file node (ISS-60).
 
 mod fill;
+mod names;
 mod output;
 mod refusal;
 
@@ -19,6 +20,7 @@ use bnto_core::processor::{BatchFile, BatchInput, NodeInput, NodeOutput};
 use bnto_core::{BntoError, ProcessContext};
 use serde_json::{Map, Value};
 
+pub(crate) use names::refuse_bad_names;
 pub(crate) use output::combined;
 pub(crate) use refusal::refuse_replacing_read_files;
 

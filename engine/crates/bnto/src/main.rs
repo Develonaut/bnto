@@ -77,6 +77,7 @@ mod progressive_output;
 mod project_root;
 mod recipe_output_dir;
 mod recipe_source;
+mod result_names;
 mod run;
 mod run_input;
 mod run_limit;

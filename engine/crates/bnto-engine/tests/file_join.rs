@@ -10,8 +10,9 @@ use bnto_engine::run_pipeline;
 use serde_json::{Value, json};
 use tempfile::TempDir;
 
-/// A context whose temp files land in its own folder, as a native run's do.
-struct TempCtx(TempDir);
+/// A context whose temp files land in its own folder, as a native run's do,
+/// working in `1` (file-list resolves its paths there).
+struct TempCtx(TempDir, PathBuf);
 
 impl ProcessContext for TempCtx {
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
@@ -28,7 +29,7 @@ impl ProcessContext for TempCtx {
         NoopContext.env_var(key)
     }
     fn work_dir(&self) -> Result<&Path, BntoError> {
-        NoopContext.work_dir()
+        Ok(&self.1)
     }
 }
 
@@ -41,9 +42,9 @@ fn pipeline(steps: Vec<Value>) -> String {
     json!({ "settings": { "iteration": "auto" }, "nodes": nodes }).to_string()
 }
 
-fn list(root: &Path, paths: &[&str]) -> Value {
-    json!({ "id": "list", "type": "file-list",
-            "parameters": { "base": root.to_str().unwrap(), "paths": paths } })
+/// A file-list of `paths` under the run's working folder.
+fn list(paths: &[&str]) -> Value {
+    json!({ "id": "list", "type": "file-list", "parameters": { "paths": paths } })
 }
 
 fn join(separator: &str) -> Value {
@@ -59,8 +60,13 @@ fn notes_and_listing() -> TempDir {
     root
 }
 
-fn run(json: &str, files: Vec<PipelineFile>) -> Result<bnto_core::PipelineResult, BntoError> {
-    let ctx = TempCtx(TempDir::new().unwrap());
+/// Run `json` on `files` with `work` as its working folder.
+fn run(
+    json: &str,
+    work: &Path,
+    files: Vec<PipelineFile>,
+) -> Result<bnto_core::PipelineResult, BntoError> {
+    let ctx = TempCtx(TempDir::new().unwrap(), work.to_path_buf());
     let result = run_pipeline(json, files, &PipelineReporter::new_noop(), &ctx);
     // Read the joined file before the context's temp folder goes.
     result.map(|mut r| {
@@ -80,11 +86,8 @@ fn only_text(result: &bnto_core::PipelineResult) -> String {
 #[test]
 fn test_file_list_then_file_join_joins_in_listed_order() {
     let root = notes_and_listing();
-    let json = pipeline(vec![
-        list(root.path(), &["notes.md", "listing.md"]),
-        join("\n"),
-    ]);
-    let result = run(&json, vec![]).expect("pipeline should succeed");
+    let json = pipeline(vec![list(&["notes.md", "listing.md"]), join("\n")]);
+    let result = run(&json, root.path(), vec![]).expect("pipeline should succeed");
     assert_eq!(
         only_text(&result),
         "# Notes\n\nHand-written.\n\n- a.wav\n- b.wav\n"
@@ -99,12 +102,8 @@ fn test_file_list_then_file_join_joins_in_listed_order() {
 fn test_file_sort_before_file_join_sets_the_order() {
     let root = notes_and_listing();
     let sort = json!({ "id": "sort", "type": "file-sort", "parameters": { "by": "-full_path" } });
-    let json = pipeline(vec![
-        list(root.path(), &["listing.md", "notes.md"]),
-        sort,
-        join(""),
-    ]);
-    let result = run(&json, vec![]).expect("pipeline should succeed");
+    let json = pipeline(vec![list(&["listing.md", "notes.md"]), sort, join("")]);
+    let result = run(&json, root.path(), vec![]).expect("pipeline should succeed");
     assert_eq!(
         only_text(&result),
         "# Notes\n\nHand-written.\n- a.wav\n- b.wav\n"
@@ -122,7 +121,7 @@ fn test_a_file_gone_before_the_join_fails_the_run_naming_it() {
         metadata: serde_json::Map::new(),
     };
     let json = json!({ "nodes": [join("")] }).to_string();
-    let Err(err) = run(&json, vec![file]) else {
+    let Err(err) = run(&json, root.path(), vec![file]) else {
         panic!("the run should fail");
     };
     let message = err.to_string();

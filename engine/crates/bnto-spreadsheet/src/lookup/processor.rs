@@ -55,11 +55,12 @@ impl NodeProcessor for SpreadsheetLookup {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
-        _ctx: &dyn ProcessContext,
+        ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let params = LookupParams::read(&input.params)
             .map_err(|errors| BntoError::InvalidInput(errors.join("; ")))?;
-        let table = load_table(&params.table, &params.key_column)?;
+        let table_path = bnto_core::in_work_dir("table", &params.table, ctx)?;
+        let table = load_table(&table_path, &params.key_column)?;
 
         progress.report(50, "Looking up row...");
         let output = match table.get(lookup_key(&input.filename, params.match_on)) {
