@@ -141,6 +141,27 @@ mod tests {
     use bnto_core::NoopContext;
     use bnto_core::processor::FileData;
 
+    /// A run whose working folder is `0`: file nodes resolve relative params
+    /// against it.
+    #[cfg(feature = "native")]
+    struct InFolder(std::path::PathBuf);
+
+    #[cfg(feature = "native")]
+    impl ProcessContext for InFolder {
+        fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            NoopContext.run_command(cmd, args)
+        }
+        fn temp_file(&self, suffix: &str) -> Result<std::path::PathBuf, BntoError> {
+            NoopContext.temp_file(suffix)
+        }
+        fn env_var(&self, key: &str) -> Option<String> {
+            NoopContext.env_var(key)
+        }
+        fn work_dir(&self) -> Result<&std::path::Path, BntoError> {
+            Ok(&self.0)
+        }
+    }
+
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
@@ -443,8 +464,7 @@ mod tests {
             "settings": { "iteration": "auto" },
             "nodes": [
                 { "id": "input", "type": "input", "parameters": { "mode": "none" } },
-                { "id": "list", "type": "file-list",
-                  "parameters": { "base": tmp.path().to_str().unwrap(), "paths": names } },
+                { "id": "list", "type": "file-list", "parameters": { "paths": names } },
                 { "id": "meta", "type": "file-inspect" },
                 { "id": "output", "type": "output", "parameters": { "mode": "none" } }
             ]
@@ -452,8 +472,8 @@ mod tests {
         .to_string();
 
         let reporter = PipelineReporter::new_noop();
-        let result =
-            run_pipeline(&json, vec![], &reporter, &NoopContext).expect("pipeline should succeed");
+        let ctx = InFolder(tmp.path().to_path_buf());
+        let result = run_pipeline(&json, vec![], &reporter, &ctx).expect("pipeline should succeed");
 
         let folders: Vec<(&str, &serde_json::Value)> = result
             .files
@@ -611,24 +631,24 @@ mod tests {
     }
 
     /// Run file-list (`paths` under `root`) -> file-filter (`.log` only) ->
-    /// file-delete (under `root`), with no input files.
+    /// file-delete (under `root`), with no input files, in a run whose
+    /// working folder is `root`.
     #[cfg(feature = "native")]
     fn run_list_filter_delete(root: &std::path::Path, paths: &[&str]) -> PipelineResult {
-        let root = root.to_str().unwrap();
         let json = serde_json::json!({
             "settings": { "iteration": "auto" },
             "nodes": [
                 { "id": "input", "type": "input", "parameters": { "mode": "none" } },
-                { "id": "list", "type": "file-list",
-                  "parameters": { "base": root, "paths": paths } },
+                { "id": "list", "type": "file-list", "parameters": { "paths": paths } },
                 { "id": "logs", "type": "file-filter", "parameters": { "extensions": "log" } },
-                { "id": "delete", "type": "file-delete", "parameters": { "base": root } },
+                { "id": "delete", "type": "file-delete", "parameters": { "base": "." } },
                 { "id": "output", "type": "output", "parameters": { "mode": "none" } }
             ]
         })
         .to_string();
         let reporter = PipelineReporter::new_noop();
-        run_pipeline(&json, vec![], &reporter, &NoopContext).expect("pipeline should succeed")
+        let ctx = InFolder(root.to_path_buf());
+        run_pipeline(&json, vec![], &reporter, &ctx).expect("pipeline should succeed")
     }
 
     #[test]

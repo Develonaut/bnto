@@ -82,7 +82,8 @@ impl NodeProcessor for SpreadsheetExport {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let params = ExportParams::read(&input.params).map_err(BntoError::InvalidInput)?;
-        write_csv(&params, &input.files)?;
+        let path = bnto_core::in_work_dir("path", &params.path, ctx)?;
+        write_csv(&params, &path, &input.files)?;
         // A dry run writes the CSV too (it's a report of the run), so say so.
         let tag = if ctx.dry_run() {
             " (dry run: no file was changed)"
@@ -95,9 +96,10 @@ impl NodeProcessor for SpreadsheetExport {
     }
 }
 
-/// Write the CSV for `files` to `params.path`.
-fn write_csv(params: &ExportParams, files: &[BatchFile]) -> Result<(), BntoError> {
-    check_target(params)?;
+/// Write the CSV for `files` to `path` (`params.path`, a relative one under
+/// the run's working folder).
+fn write_csv(params: &ExportParams, path: &Path, files: &[BatchFile]) -> Result<(), BntoError> {
+    check_target(params, path)?;
     let items: Vec<Item<'_>> = files
         .iter()
         .map(|f| Item {
@@ -106,14 +108,13 @@ fn write_csv(params: &ExportParams, files: &[BatchFile]) -> Result<(), BntoError
         })
         .collect();
     let text = items_csv(&items, &params.name_column).map_err(|e| cannot_write(params, &e))?;
-    write_replacing(Path::new(&params.path), &text)
+    write_replacing(path, &text)
         .map_err(|e| BntoError::ProcessingFailed(format!("Cannot write {}: {e}", params.path)))
 }
 
 /// The folder must exist, and an existing file is kept unless `overwrite`:
 /// it may be an earlier run's record, the data an undo needs.
-fn check_target(params: &ExportParams) -> Result<(), BntoError> {
-    let path = Path::new(&params.path);
+fn check_target(params: &ExportParams, path: &Path) -> Result<(), BntoError> {
     let folder = path.parent().filter(|p| !p.as_os_str().is_empty());
     if folder.is_some_and(|f| !f.is_dir()) {
         return Err(cannot_write(params, "its folder doesn't exist"));

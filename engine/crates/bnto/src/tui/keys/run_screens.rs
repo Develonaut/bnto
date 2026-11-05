@@ -3,7 +3,7 @@
 use crossterm::event::{KeyCode, KeyEvent};
 
 use super::super::app::{AppMessage, AppModel, Screen};
-use super::super::screens::execution::{ExecutionMessage, ExecutionStatus};
+use super::super::screens::execution::{ConsentScroll, ExecutionMessage, ExecutionStatus};
 use super::super::screens::preview::PreviewMessage;
 use super::super::screens::results::ResultsMessage;
 
@@ -18,7 +18,7 @@ pub(super) fn handle_execution_key(model: &AppModel, key: KeyEvent) -> Option<Ap
         .as_ref()
         .is_some_and(|e| e.status == ExecutionStatus::AwaitingConsent);
     if awaiting {
-        return consent_key(key);
+        return consent_key(model, key);
     }
     let finished = model.execution.as_ref().is_some_and(|e| {
         matches!(
@@ -40,10 +40,16 @@ pub(super) fn handle_execution_key(model: &AppModel, key: KeyEvent) -> Option<Ap
     }
 }
 
-/// While a run awaits consent: `y` allows its commands, `n` or Esc declines.
-fn consent_key(key: KeyEvent) -> Option<AppMessage> {
+/// While a run awaits consent: `y` allows its commands once the prompt has
+/// been read to its end, `n` or Esc declines, and `j`/`k` or the arrows
+/// scroll a prompt taller than the panel, a row at a time.
+fn consent_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let scroll = |way| Some(AppMessage::Execution(ExecutionMessage::ScrollConsent(way)));
+    let read = model.execution.as_ref().is_some_and(|e| e.consent_at_end);
     match key.code {
-        KeyCode::Char('y') | KeyCode::Char('Y') => {
+        KeyCode::Char('j') | KeyCode::Down => scroll(ConsentScroll::Down),
+        KeyCode::Char('k') | KeyCode::Up => scroll(ConsentScroll::Up),
+        KeyCode::Char('y') | KeyCode::Char('Y') if read => {
             Some(AppMessage::Execution(ExecutionMessage::AllowCommands))
         }
         KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {

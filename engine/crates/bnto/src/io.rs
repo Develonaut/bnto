@@ -4,8 +4,10 @@ use std::path::{Path, PathBuf};
 
 use bnto_core::{PipelineFile, PipelineResult};
 
+use crate::display_text::display_text;
 use crate::ordered_write;
 use crate::output_names::{self, Renamed};
+use crate::result_names::check_result_names;
 
 /// Read a file (or directory) from disk into a PipelineFile.
 ///
@@ -55,7 +57,7 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 ///
 /// Names that would land on one file are kept apart (see `output_names`).
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
-    check_file_names(result)?;
+    check_result_names(result, Path::new(output_dir))?;
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
     let (dests, renamed) = destinations(result, output_dir);
@@ -82,7 +84,7 @@ pub struct Placed {
 
 /// What `write_results` would do, writing nothing (a dry run).
 fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
-    check_file_names(result)?;
+    check_result_names(result, Path::new(output_dir))?;
     let (dests, renamed) = destinations(result, output_dir);
     let (paths, held) = split(&dests);
     ordered_write::check(&result.files, &paths, &held)?;
@@ -99,9 +101,19 @@ struct Destination {
 
 /// Each result file's destination under `output_dir`, with the files given a
 /// new name so no two land on one file and none on a file already there.
+/// Names lose their `.` segments first, so `./a.txt` and `a.txt` are one
+/// name, kept apart as any other two.
 fn destinations(result: &PipelineResult, output_dir: &str) -> (Vec<Destination>, Vec<Renamed>) {
     let dir = Path::new(output_dir);
-    let files = result.files.iter().map(|f| (f.name.as_str(), &f.data));
+    let names: Vec<_> = result
+        .files
+        .iter()
+        .map(|f| bnto_core::without_dot_segments(&f.name))
+        .collect();
+    let files = names
+        .iter()
+        .zip(&result.files)
+        .map(|(n, f)| (n.as_ref(), &f.data));
     let (claims, renamed) = output_names::plan(dir, files);
     let dests = claims
         .into_iter()
@@ -121,17 +133,6 @@ fn already_there(result: &PipelineResult, dests: &[Destination]) -> usize {
     files
         .filter(|(file, d)| d.held || file.data.is_at(&d.path))
         .count()
-}
-
-/// Fail on a result file with no name, for a real write and a dry run alike.
-fn check_file_names(result: &PipelineResult) -> Result<(), String> {
-    if result.files.iter().any(|f| f.name.is_empty()) {
-        return Err(
-            "Pipeline produced a file with an empty name — cannot write to output directory"
-                .to_string(),
-        );
-    }
-    Ok(())
 }
 
 // =============================================================================
@@ -250,7 +251,7 @@ pub fn warn_files_left_as_newer(result: &PipelineResult) {
     let newer = files_left_as_newer(result);
     if !newer.is_empty() {
         let warning = "Warning:".yellow().bold();
-        eprintln!("  {warning} {}", newer_warning_text(&newer));
+        eprintln!("  {warning} {}", display_text(&newer_warning_text(&newer)));
     }
 }
 
@@ -284,7 +285,10 @@ pub fn warn_files_without_a_row(result: &PipelineResult) {
     let unmatched = files_without_a_row(result);
     if !unmatched.is_empty() {
         let warning = "Warning:".yellow().bold();
-        eprintln!("  {warning} {}", no_row_warning_text(&unmatched));
+        eprintln!(
+            "  {warning} {}",
+            display_text(&no_row_warning_text(&unmatched))
+        );
     }
 }
 
@@ -304,7 +308,7 @@ pub fn warn_renamed(outcome: &WriteOutcome, dry_run: bool) {
 
     if let WriteOutcome::Written { renamed, .. } = outcome {
         for line in renamed_warning_lines(renamed, dry_run) {
-            eprintln!("  {} {line}", "Warning:".yellow().bold());
+            eprintln!("  {} {}", "Warning:".yellow().bold(), display_text(&line));
         }
     }
 }
@@ -409,6 +413,23 @@ mod tests {
             warnings: vec![],
             node_metadata: Default::default(),
         }
+    }
+
+    #[test]
+    fn test_two_spellings_of_one_name_are_kept_apart() {
+        // `./a.txt` and `a.txt` name one file; planned as two, the second
+        // write would replace the first.
+        let out = tempfile::tempdir().unwrap();
+        let mut result = make_result_with_bytes(b"AAAA", "./a.txt");
+        result
+            .files
+            .extend(make_result_with_bytes(b"BBBB", "a.txt").files);
+        write_results(&result, out.path().to_str().unwrap()).unwrap();
+        let read = |name: &str| std::fs::read_to_string(out.path().join(name)).unwrap();
+        assert_eq!(
+            (read("a.txt"), read("a_1.txt")),
+            ("AAAA".into(), "BBBB".into())
+        );
     }
 
     // --- files_left_as_newer tests ---

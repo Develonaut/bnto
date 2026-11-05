@@ -11,6 +11,7 @@ use super::screens::detail_bridge::BntoFormTheme;
 use super::screens::editor::EditorScreenModel;
 use super::theme::Theme;
 use super::widgets::search_input;
+use crate::display_text::display_text;
 
 /// The question the editor is waiting on, if any: deleting the selected
 /// node, or saving before leaving (Back, or a quit: ISS-98).
@@ -47,12 +48,12 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
         &editor.recipe_name
     };
     lines.push(Line::from(Span::styled(
-        format!("  {name}"),
+        format!("  {}", display_text(name)),
         theme.heading(),
     )));
     if !editor.recipe_description.is_empty() {
         lines.push(Line::from(Span::styled(
-            format!("  {}", editor.recipe_description),
+            format!("  {}", display_text(&editor.recipe_description)),
             theme.muted(),
         )));
     }
@@ -87,8 +88,11 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
 
             lines.push(Line::from(vec![
                 Span::styled(format!("  {marker}{expand_icon}"), name_style),
-                Span::styled(&node.label, name_style),
-                Span::styled(format!("  ({})", node.node_type), theme.muted()),
+                Span::styled(display_text(&node.label), name_style),
+                Span::styled(
+                    format!("  ({})", display_text(&node.node_type)),
+                    theme.muted(),
+                ),
             ]));
 
             // Expanded: show parameters (form controls or static fallback).
@@ -102,7 +106,8 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
                 if has_form {
                     let active = editor_screen.active_form.as_ref().unwrap();
                     let form_theme = BntoFormTheme(theme);
-                    let form_lines = tonkotsu::render_form(&active.form, &form_theme);
+                    let form_lines =
+                        super::form_display::render_shown_form(&active.form, &form_theme);
                     for line in form_lines {
                         // Indent form lines to align with node content.
                         let mut spans = vec![Span::raw("      ")];
@@ -124,8 +129,8 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
                             other => other.to_string(),
                         };
                         lines.push(Line::from(vec![
-                            Span::styled(format!("      {key}: "), theme.muted()),
-                            Span::styled(value_str, theme.text()),
+                            Span::styled(format!("      {}: ", display_text(key)), theme.muted()),
+                            Span::styled(display_text(&value_str).into_owned(), theme.text()),
                         ]));
                     }
                 }
@@ -161,8 +166,11 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
                 };
                 lines.push(Line::from(vec![
                     Span::styled(format!("  {marker}"), style),
-                    Span::styled(&entry.label, style),
-                    Span::styled(format!("  [{}]", entry.category), theme.muted()),
+                    Span::styled(display_text(&entry.label), style),
+                    Span::styled(
+                        format!("  [{}]", display_text(&entry.category)),
+                        theme.muted(),
+                    ),
                 ]));
             }
         }

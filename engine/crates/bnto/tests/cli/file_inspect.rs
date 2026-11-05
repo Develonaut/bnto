@@ -17,10 +17,11 @@ fn test_each_listed_file_reports_its_folder_under_the_list_root() {
     }
     let vars_dir = temp_output_dir();
     let vars_file = vars_dir.path().join("vars.json");
-    let vars = serde_json::json!({ "Root": root.path().to_str().unwrap() });
+    let vars = serde_json::json!({ "Root": "." });
     std::fs::write(&vars_file, vars.to_string()).unwrap();
 
     let output = Command::new(bnto_bin())
+        .current_dir(root.path())
         .args([
             "run",
             &custom_recipe_path("file-list-inspect-folder"),
@@ -69,12 +70,13 @@ fn test_size_and_modified_are_reported_and_the_file_stays_on_disk() {
     let vars_dir = temp_output_dir();
     let vars_file = vars_dir.path().join("vars.json");
     let vars = serde_json::json!({
-        "Root": root.path().to_str().unwrap(),
+        "Root": ".",
         "Dest": dest.path().to_str().unwrap(),
     });
     std::fs::write(&vars_file, vars.to_string()).unwrap();
 
     let output = Command::new(bnto_bin())
+        .current_dir(root.path())
         .args([
             "run",
             &custom_recipe_path("file-list-inspect-move"),

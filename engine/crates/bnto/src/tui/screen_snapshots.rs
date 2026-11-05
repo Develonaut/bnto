@@ -18,8 +18,8 @@ use crate::storage::paths::BntoPaths;
 mod run_states;
 
 use run_states::{
-    LOOP_RECIPE, consent, failed_run, loop_mid_run, many_files, results_with_message,
-    results_written_in_place, running,
+    LOOP_RECIPE, consent, consent_project, failed_run, loop_mid_run, many_files,
+    results_with_message, results_written_in_place, running,
 };
 
 /// The terminal sizes every screen is snapshotted at. 80x24 is the classic
@@ -80,7 +80,12 @@ impl Session {
     }
 
     /// The screen's text, one line per row, trailing spaces trimmed.
-    fn screen(&self, width: u16, height: u16) -> String {
+    fn screen(&mut self, width: u16, height: u16) -> String {
+        // As the run loop does before each draw: fit a consent prompt.
+        if let Some(exec) = self.model.execution.as_mut() {
+            let size = ratatui::layout::Size::new(width, height);
+            super::render_consent::fit_consent(exec, &self.model.theme, size);
+        }
         let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
         terminal.draw(|f| draw_frame(f, &self.model)).unwrap();
         let buffer = terminal.backend().buffer();
@@ -96,7 +101,7 @@ impl Session {
 
 /// Snapshot `session` at every size, with the version masked so a release
 /// bump doesn't rewrite every snapshot.
-fn snapshot(name: &str, session: &Session) {
+fn snapshot(name: &str, session: &mut Session) {
     for (width, height) in SIZES {
         insta::with_settings!({ filters => vec![(r"v\d+\.\d+\.\d+", "v[version]")] }, {
             insta::assert_snapshot!(format!("{name}_{width}x{height}"), session.screen(width, height));
@@ -156,6 +161,7 @@ fn screens() -> Vec<(&'static str, Session)> {
         ("execution_failed", running("{}", &failed_run())),
         ("execution_many_files", many_files()),
         ("execution_consent", consent()),
+        ("execution_consent_project", consent_project()),
         ("results_with_message", results_with_message()),
         ("results_written_in_place", results_written_in_place()),
         ("editor_asking_to_save", editor_asking_to_save()),
@@ -164,8 +170,8 @@ fn screens() -> Vec<(&'static str, Session)> {
 
 #[test]
 fn screens_match_their_snapshots() {
-    for (name, session) in screens() {
-        snapshot(name, &session);
+    for (name, mut session) in screens() {
+        snapshot(name, &mut session);
     }
 }
 
@@ -173,7 +179,7 @@ fn screens_match_their_snapshots() {
 fn the_bottom_bar_status_is_never_overwritten() {
     // Key hints and the status share the bottom row; long hints used to run
     // into the status ("Space se22 recipes").
-    for (name, session) in screens() {
+    for (name, mut session) in screens() {
         for (width, height) in SIZES {
             let screen = session.screen(width, height);
             let bottom = screen.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
@@ -200,7 +206,7 @@ fn the_bottom_bar_status_is_never_overwritten() {
 #[test]
 fn long_descriptions_wrap_instead_of_being_cut() {
     // At 80 columns these used to end at the panel edge mid-word.
-    let session = Session::new().send(AppMessage::RecipeSelected {
+    let mut session = Session::new().send(AppMessage::RecipeSelected {
         slug: "keep-awake".to_string(),
     });
     let words = |text: &str| -> String {
@@ -221,14 +227,155 @@ fn long_descriptions_wrap_instead_of_being_cut() {
 #[test]
 fn run_output_stays_visible_on_a_small_terminal() {
     // A tall FILES list used to take every row, leaving OUTPUT none.
-    let words = |session: &Session| session.screen(80, 24);
+    let words = |mut session: Session| session.screen(80, 24);
     assert!(
-        words(&running(LOOP_RECIPE, &loop_mid_run())).contains("Compressing JPEG (quality: 80)...")
+        words(running(LOOP_RECIPE, &loop_mid_run())).contains("Compressing JPEG (quality: 80)...")
     );
-    assert!(words(&many_files()).contains("Compressing JPEG (quality: 80)..."));
+    assert!(words(many_files()).contains("Compressing JPEG (quality: 80)..."));
     assert!(
-        words(&many_files()).contains("Compressing photo12.jpg..."),
+        words(many_files()).contains("Compressing photo12.jpg..."),
         "the active file stays in view"
     );
-    assert!(words(&running("{}", &failed_run())).contains("fetching page 1..."));
+    assert!(words(running("{}", &failed_run())).contains("fetching page 1..."));
+}
+
+// --- Recipe text shows escaped (ISS-125) ---
+//
+// ratatui drops control characters on its own, but not a bidi override,
+// which reverses the text after it. Each list and the detail show it as
+// `\u{202e}`.
+
+/// A session whose library holds one recipe with a bidi override in its
+/// file name, name and description.
+fn bidi_library() -> Session {
+    let home = tempfile::tempdir().unwrap();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    let json = serde_json::json!({
+        "name": "Nice\u{202e}txt.exe",
+        "metadata": { "description": "Desc\u{202e}riptive" },
+        "nodes": [{ "id": "r", "type": "file-rename", "parameters": {} }]
+    })
+    .to_string();
+    std::fs::write(library.join("evil\u{202e}gpj.bnto.json"), json).unwrap();
+    let paths = BntoPaths {
+        home: home.path().to_path_buf(),
+    };
+    let model = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+    Session { model, _home: home }
+}
+
+fn assert_shown_escaped(screen: &str, what: &str) {
+    assert!(
+        !screen.contains('\u{202e}'),
+        "{what} shows a raw bidi override:\n{screen}"
+    );
+    assert!(
+        screen.contains("\\u{202e}"),
+        "{what} hides the bidi override:\n{screen}"
+    );
+}
+
+#[test]
+fn the_home_library_list_shows_a_bidi_override_escaped() {
+    let screen = bidi_library().screen(120, 36);
+    assert_shown_escaped(&screen, "the home library pane");
+}
+
+#[test]
+fn the_library_screen_shows_a_bidi_override_escaped() {
+    let screen = bidi_library().send(AppMessage::OpenLibrary).screen(120, 36);
+    assert_shown_escaped(&screen, "the library screen");
+    assert!(screen.contains("Nice\\u{202e}txt.exe"), "{screen}");
+    assert!(screen.contains("Desc\\u{202e}riptive"), "{screen}");
+}
+
+#[test]
+fn the_detail_screen_shows_a_bidi_override_escaped() {
+    let mut session = bidi_library()
+        .send(AppMessage::OpenLibrary)
+        .send(AppMessage::LibraryConfirm);
+    let screen = session.screen(120, 36);
+    assert_shown_escaped(&screen, "the detail screen");
+    assert!(screen.contains("Nice\\u{202e}txt.exe"), "{screen}");
+}
+
+#[test]
+fn the_detail_forms_labels_show_a_bidi_override_escaped() {
+    let home = tempfile::tempdir().unwrap();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    let json = serde_json::json!({
+        "name": "Labels",
+        "nodes": [{ "id": "input", "type": "input", "parameters": {
+            "mode": "url", "label": "Link\u{202e}lmth.exe", "placeholder": "Paste\u{202e}here"
+        } }]
+    })
+    .to_string();
+    std::fs::write(library.join("labels.bnto.json"), json).unwrap();
+    let paths = BntoPaths {
+        home: home.path().to_path_buf(),
+    };
+    let model = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+    let session = Session { model, _home: home };
+    let mut session = session
+        .send(AppMessage::OpenLibrary)
+        .send(AppMessage::LibraryConfirm);
+    let screen = session.screen(120, 36);
+    assert_shown_escaped(&screen, "the detail form");
+    assert!(screen.contains("Link\\u{202e}lmth.exe"), "{screen}");
+}
+
+#[test]
+fn the_editor_shows_recipe_text_escaped() {
+    let mut session = Session::new();
+    let mut editor = bnto_core::editor::EditorModel::new();
+    editor.recipe_name = "Draft\u{202e}x".into();
+    editor.recipe_description = "Desc\u{202e}y".into();
+    editor.nodes.push(bnto_core::editor::EditorNode {
+        id: "n".into(),
+        node_type: "file-rename\u{202e}".into(),
+        label: "Label\u{202e}z".into(),
+        params: Default::default(),
+        expanded: false,
+    });
+    session.model.screen = Screen::Editor {
+        from: DetailOrigin::Home,
+    };
+    session.model.editor = Some(EditorScreenModel::new(editor));
+    let screen = session.screen(120, 36);
+    assert_shown_escaped(&screen, "the editor");
+    for text in [
+        "Draft\\u{202e}x",
+        "Desc\\u{202e}y",
+        "Label\\u{202e}z",
+        "file-rename\\u{202e}",
+    ] {
+        assert!(screen.contains(text), "{text}:\n{screen}");
+    }
+}
+
+#[test]
+fn a_detail_form_value_shows_escaped() {
+    let home = tempfile::tempdir().unwrap();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    let json = serde_json::json!({
+        "name": "Values",
+        "nodes": [{ "id": "s", "type": "shell-run",
+            "fields": { "fmt": { "type": "string", "label": "Format", "default": "a\u{202e}b" } },
+            "parameters": { "command": "echo", "args": ["{{fields.fmt}}"] } }]
+    })
+    .to_string();
+    std::fs::write(library.join("values.bnto.json"), json).unwrap();
+    let paths = BntoPaths {
+        home: home.path().to_path_buf(),
+    };
+    let model = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+    let mut session = Session { model, _home: home }
+        .send(AppMessage::OpenLibrary)
+        .send(AppMessage::LibraryConfirm);
+    let screen = session.screen(120, 36);
+    assert_shown_escaped(&screen, "the detail form's value");
+    assert!(screen.contains("a\\u{202e}b"), "{screen}");
 }

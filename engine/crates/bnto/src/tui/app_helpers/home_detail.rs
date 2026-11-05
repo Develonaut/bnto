@@ -277,8 +277,8 @@ pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel 
 /// Handle execution messages — cancel navigates back to detail.
 #[expect(clippy::too_many_lines)]
 pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppModel {
-    if matches!(msg, ExecutionMessage::AllowCommands) {
-        return consent::handle_allow(model);
+    if consent::is_consent_message(&msg) {
+        return consent::handle_message(model, msg);
     }
     if matches!(msg, ExecutionMessage::Cancel) {
         let (slug, from) = match &model.screen {

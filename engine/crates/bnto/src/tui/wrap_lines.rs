@@ -66,13 +66,23 @@ fn words(line: &Line<'_>) -> Vec<(String, Style)> {
         .collect()
 }
 
-/// `word` cut into pieces no wider than `max` (most words are one piece).
+/// `word` cut into pieces no wider than `max` columns (most words are one
+/// piece). Measured in display width, so a double-width character counts
+/// two; a character wider than `max` gets a piece of its own.
 fn split_to_fit(word: &str, max: usize) -> Vec<String> {
-    let chars: Vec<char> = word.chars().collect();
-    chars
-        .chunks(max.max(1))
-        .map(|chunk| chunk.iter().collect())
-        .collect()
+    let mut pieces = vec![String::new()];
+    let mut used = 0;
+    for c in word.chars() {
+        let width = Span::raw(c.to_string()).width();
+        let last = pieces.last_mut().expect("never empty");
+        if used + width > max && !last.is_empty() {
+            pieces.push(String::new());
+            used = 0;
+        }
+        pieces.last_mut().expect("never empty").push(c);
+        used += width;
+    }
+    pieces
 }
 
 /// A row being filled: its indent, then words separated by single spaces.
@@ -116,6 +126,24 @@ mod tests {
 
     fn text(lines: &[Line]) -> Vec<String> {
         lines.iter().map(|l| l.to_string()).collect()
+    }
+
+    #[test]
+    fn a_long_word_of_wide_characters_splits_by_display_width() {
+        // Each CJK character takes two columns: split by count, a row would
+        // run past the panel and its end would never show.
+        let word = "日本語のコマンド名前長い".to_string() + "-tail";
+        let rows = wrap_lines(vec![Line::from(format!("  {word}"))], 10);
+        for row in &rows {
+            assert!(
+                row.width() <= 10,
+                "{:?} is {} wide",
+                row.to_string(),
+                row.width()
+            );
+        }
+        let shown: String = text(&rows).concat().replace(' ', "");
+        assert_eq!(shown, word);
     }
 
     #[test]

@@ -10,8 +10,9 @@ use bnto_engine::run_pipeline;
 use serde_json::{Value, json};
 use tempfile::TempDir;
 
-/// A context whose temp files land in its own folder, as a native run's do.
-struct TempCtx(TempDir);
+/// A context whose temp files land in its own folder, as a native run's do,
+/// working in `1` (file-list resolves its paths there).
+struct TempCtx(TempDir, PathBuf);
 
 impl ProcessContext for TempCtx {
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
@@ -28,7 +29,7 @@ impl ProcessContext for TempCtx {
         NoopContext.env_var(key)
     }
     fn work_dir(&self) -> Result<&Path, BntoError> {
-        NoopContext.work_dir()
+        Ok(&self.1)
     }
 }
 
@@ -46,9 +47,9 @@ fn pipeline(steps: Vec<Value>, edges: &[(&str, &str)]) -> String {
     json!({ "settings": { "iteration": "auto" }, "nodes": nodes, "edges": edges }).to_string()
 }
 
-fn list(id: &str, root: &Path, paths: &[&str]) -> Value {
-    json!({ "id": id, "type": "file-list",
-            "parameters": { "base": root.to_str().unwrap(), "paths": paths } })
+/// A file-list of `paths` under the run's working folder.
+fn list(id: &str, paths: &[&str]) -> Value {
+    json!({ "id": id, "type": "file-list", "parameters": { "paths": paths } })
 }
 
 /// A file-render with no items: one file holding just `text`.
@@ -64,8 +65,9 @@ fn notes_and_listing() -> TempDir {
     root
 }
 
-fn run(json: &str) -> PipelineResult {
-    let ctx = TempCtx(TempDir::new().unwrap());
+/// Run `json` with `work` as its working folder.
+fn run(json: &str, work: &Path) -> PipelineResult {
+    let ctx = TempCtx(TempDir::new().unwrap(), work.to_path_buf());
     let result = run_pipeline(json, vec![], &PipelineReporter::new_noop(), &ctx);
     // Read every file before the context's temp folder goes.
     let mut result = result.expect("pipeline should succeed");
@@ -87,11 +89,11 @@ fn test_a_file_list_with_no_incoming_edge_lists_only_its_own_paths() {
     let json = pipeline(
         vec![
             render("emit", "paths.txt", "listing.md\n"),
-            list("fresh", root.path(), &["notes.md"]),
+            list("fresh", &["notes.md"]),
         ],
         &[("input", "emit"), ("emit", "output"), ("fresh", "output")],
     );
-    let result = run(&json);
+    let result = run(&json, root.path());
     let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
     assert_eq!(names, vec!["paths.txt", "notes.md"]);
 }
@@ -106,7 +108,7 @@ fn test_file_join_joins_its_fan_in_in_edge_order() {
         vec![
             // file-render ends its header with a newline of its own.
             render("listing", "listing.md", "- a.wav\n- b.wav"),
-            list("notes", root.path(), &["notes.md"]),
+            list("notes", &["notes.md"]),
             join,
         ],
         &[
@@ -116,7 +118,7 @@ fn test_file_join_joins_its_fan_in_in_edge_order() {
             ("join", "output"),
         ],
     );
-    let result = run(&json);
+    let result = run(&json, root.path());
     assert_eq!(result.files.len(), 1);
     assert_eq!(text(&result, "README.md"), "# Notes\n\n- a.wav\n- b.wav\n");
 }

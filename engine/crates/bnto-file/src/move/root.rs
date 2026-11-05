@@ -15,23 +15,27 @@ pub(super) struct Root {
 }
 
 impl Root {
-    /// Resolve `destination`. A missing one is fine when `createDirs` is on:
-    /// the nearest folder above it that exists is canonicalized instead.
+    /// Resolve `destination` (already under the run's working folder when
+    /// the param is relative). A missing one is fine when `createDirs` is
+    /// on: the nearest folder above it that exists is canonicalized instead.
     #[expect(clippy::too_many_lines)]
-    pub(super) fn resolve(destination: &str, create_dirs: bool) -> Result<Self, String> {
-        let abs = std::path::absolute(destination)
-            .map_err(|e| format!("destination {destination} can't be resolved: {e}"))?;
+    pub(super) fn resolve(destination: &Path, create_dirs: bool) -> Result<Self, String> {
+        let abs = std::path::absolute(destination).map_err(|e| {
+            let at = bnto_core::display_path(destination);
+            format!("destination {at} can't be resolved: {e}")
+        })?;
         let path = if abs.exists() {
             if !abs.is_dir() {
-                return Err(format!("destination {} is not a folder", abs.display()));
+                let at = bnto_core::display_path(&abs);
+                return Err(format!("destination {at} is not a folder"));
             }
             canonical(&abs)?
         } else if create_dirs {
             canonical_missing(&abs)?
         } else {
+            let at = bnto_core::display_path(&abs);
             return Err(format!(
-                "destination {} doesn't exist and createDirs is off",
-                abs.display()
+                "destination {at} doesn't exist and createDirs is off"
             ));
         };
         Ok(Self {
@@ -47,8 +51,8 @@ impl Root {
         match (&self.volume, volume(src)) {
             (Some(root), Some(src_volume)) if *root != src_volume => Err(format!(
                 "{} is on a different drive from {}; file-move only renames, it never copies",
-                src.display(),
-                self.path.display()
+                bnto_core::display_path(src),
+                bnto_core::display_path(&self.path)
             )),
             _ => Ok(()),
         }
@@ -78,19 +82,22 @@ impl Root {
             return Ok(()); // the root itself is new, so is everything under it
         };
         if !existing.is_dir() {
-            return Err(format!("{} is a file, not a folder", existing.display()));
+            return Err(format!(
+                "{} is a file, not a folder",
+                bnto_core::display_path(existing)
+            ));
         }
         if existing != folder && !self.create_dirs {
             return Err(format!(
                 "folder {} doesn't exist and createDirs is off",
-                folder.display()
+                bnto_core::display_path(folder)
             ));
         }
         if !canonical(existing)?.starts_with(&self.path) {
             return Err(format!(
                 "{} leads outside {} (a link or junction)",
-                existing.display(),
-                self.path.display()
+                bnto_core::display_path(existing),
+                bnto_core::display_path(&self.path)
             ));
         }
         Ok(())
@@ -98,25 +105,27 @@ impl Root {
 }
 
 fn canonical(path: &Path) -> Result<PathBuf, String> {
-    std::fs::canonicalize(path).map_err(|e| format!("{} can't be resolved: {e}", path.display()))
+    std::fs::canonicalize(path)
+        .map_err(|e| format!("{} can't be resolved: {e}", bnto_core::display_path(path)))
 }
 
 /// Canonicalize the nearest folder above `abs` that exists and re-append the
 /// missing rest, which may not climb with "..".
 fn canonical_missing(abs: &Path) -> Result<PathBuf, String> {
+    let shown = bnto_core::display_path;
     let base = abs
         .ancestors()
         .find(|a| a.exists())
-        .ok_or_else(|| format!("no part of {} exists", abs.display()))?;
+        .ok_or_else(|| format!("no part of {} exists", shown(abs)))?;
     if !base.is_dir() {
-        return Err(format!("{} is a file, not a folder", base.display()));
+        return Err(format!("{} is a file, not a folder", shown(base)));
     }
     let rest = abs.strip_prefix(base).unwrap_or(Path::new(""));
     let mut path = canonical(base)?;
     for part in rest.components() {
         match part {
             Component::Normal(name) => path.push(name),
-            _ => return Err(format!("destination {} climbs with \"..\"", abs.display())),
+            _ => return Err(format!("destination {} climbs with \"..\"", shown(abs))),
         }
     }
     Ok(path)

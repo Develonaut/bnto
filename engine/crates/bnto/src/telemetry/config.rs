@@ -62,12 +62,16 @@ impl TelemetryConfig {
 /// Config file path: `<config dir>/bnto/telemetry.json` (`~/.config` on
 /// Linux, `~/Library/Application Support` on macOS). Unit tests get none, so
 /// loading falls back to defaults and saving does nothing: a test that
-/// toggles telemetry must never rewrite the developer's own choice.
+/// toggles telemetry must never rewrite the developer's own choice. None
+/// too when the config dir is relative.
 pub fn config_path() -> Option<PathBuf> {
     if cfg!(test) {
         return None;
     }
-    dirs::config_dir().map(|d| d.join("bnto").join("telemetry.json"))
+    // A relative `$HOME` would read the working folder's file (ISS-126).
+    dirs::config_dir()
+        .filter(|d| d.is_absolute())
+        .map(|d| d.join("bnto").join("telemetry.json"))
 }
 
 #[cfg(test)]

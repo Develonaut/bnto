@@ -17,9 +17,6 @@ use bnto_engine::{create_registry, recipes::builtin_recipes};
 use serde_json::Value;
 use tempfile::TempDir;
 
-/// Params naming a place on disk; relative ones are moved into the sandbox.
-const PATH_PARAMS: &[&str] = &["base", "destination", "path", "table"];
-
 /// Files the fixtures list, move, copy or delete under their `Root` var.
 const SANDBOX_FILES: &[&str] = &[
     "a.txt",
@@ -162,33 +159,13 @@ fn has_edges(value: &Value) -> bool {
     own || nested
 }
 
-/// Point every var and relative path param into the sandbox. `None` for a
-/// fixture that isn't JSON (a `bnto check` fixture can be broken on purpose).
-fn sandboxed(json: &str, root: &Path) -> Option<Value> {
+/// Point every var into the sandbox, the run's working folder, where the
+/// nodes resolve every relative path param. `None` for a fixture that isn't
+/// JSON (a `bnto check` fixture can be broken on purpose).
+fn sandboxed(json: &str) -> Option<Value> {
     let mut value: Value = serde_json::from_str(json).ok()?;
-    let root_str = root.to_string_lossy().into_owned();
-    let _ = bnto_core::vars::apply_vars(&mut value, &|_| Some(root_str.clone()));
-    move_paths(&mut value, root);
+    let _ = bnto_core::vars::apply_vars(&mut value, &|_| Some(".".to_string()));
     Some(value)
-}
-
-fn move_paths(value: &mut Value, root: &Path) {
-    match value {
-        Value::Object(map) => {
-            for (key, v) in map.iter_mut() {
-                match v {
-                    Value::String(s) if PATH_PARAMS.contains(&key.as_str()) => {
-                        if Path::new(s.as_str()).is_relative() {
-                            *s = root.join(s.as_str()).to_string_lossy().into_owned();
-                        }
-                    }
-                    _ => move_paths(v, root),
-                }
-            }
-        }
-        Value::Array(items) => items.iter_mut().for_each(|v| move_paths(v, root)),
-        _ => {}
-    }
 }
 
 /// The input files for one run: one test asset copied into the sandbox, or none.
@@ -261,7 +238,7 @@ fn assert_equivalent_on(asset: Option<(&str, &str)>) -> (usize, usize) {
     };
     let (mut with_edges, mut succeeded) = (0, 0);
     for (name, json) in definitions() {
-        let Some(def) = sandboxed(&json, &sandbox.root) else {
+        let Some(def) = sandboxed(&json) else {
             continue;
         };
         if !edges_follow_node_order(&def) {

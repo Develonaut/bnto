@@ -204,10 +204,16 @@ fn parse_all_files(input: &BatchInput) -> Result<Vec<ParsedCsv>, BntoError> {
 
     for file in &input.files {
         let bytes = file.data.to_bytes().map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to read '{}': {e}", file.filename))
+            BntoError::ProcessingFailed(format!(
+                "Failed to read '{}': {e}",
+                bnto_core::display_text(&file.filename)
+            ))
         })?;
         let csv_text = std::str::from_utf8(&bytes).map_err(|e| {
-            BntoError::InvalidInput(format!("File '{}' is not valid UTF-8: {e}", file.filename))
+            BntoError::InvalidInput(format!(
+                "File '{}' is not valid UTF-8: {e}",
+                bnto_core::display_text(&file.filename)
+            ))
         })?;
 
         if csv_text.trim().is_empty() {

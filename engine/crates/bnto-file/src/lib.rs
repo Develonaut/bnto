@@ -89,6 +89,8 @@ mod held_by;
 mod in_loop;
 #[cfg(test)]
 mod time_runs_out;
+#[cfg(test)]
+mod work_dir_tests;
 
 /// Name prefix of the folder the CLI and TUI output step sets files aside in
 /// to run a swap of writes (hidden on Unix, not on Windows). A finished write

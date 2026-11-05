@@ -2,7 +2,7 @@
 //
 // Consumers resolve recipes through the catalog. No special treatment for
 // bundled vs library recipes — the source field is only used for trust
-// classification.
+// classification (`SourceKind`).
 
 use std::path::{Path, PathBuf};
 
@@ -14,6 +14,52 @@ pub enum RecipeSource {
     Bundled,
     /// Loaded from the user's library directory. May need consent for shell commands.
     Library(PathBuf),
+    /// Loaded from a project's `.bnto/recipes/`. Always needs consent until
+    /// its definition is approved.
+    Project {
+        /// The project root, which the recipe's paths are judged against.
+        root: PathBuf,
+        /// The recipe file, which the consent prompt names.
+        file: PathBuf,
+    },
+}
+
+impl RecipeSource {
+    /// The trust class of a recipe loaded from this source.
+    pub fn kind(&self) -> SourceKind {
+        match self {
+            Self::Bundled => SourceKind::Bundled,
+            Self::Library(file) => SourceKind::Library(Some(file.clone())),
+            Self::Project { root, file } => SourceKind::Project {
+                root: root.clone(),
+                file: Some(file.clone()),
+            },
+        }
+    }
+}
+
+/// Where the recipe a run uses came from, which decides when it needs
+/// consent (`trust::trust_level`). It follows how the recipe resolved (a
+/// catalog entry, else a file), never the argument's spelling. Each kind
+/// carries the file the definition was read from, when there is one, so the
+/// consent prompt can name it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SourceKind {
+    /// Shipped with the binary: reviewed, never asks.
+    Bundled,
+    /// The user's own library: asks only for shell steps. `None` when what
+    /// runs isn't the file's text (an edit in the TUI) or has no file.
+    Library(Option<PathBuf>),
+    /// A project's `.bnto/recipes/`: a cloned repo's recipe can move or
+    /// delete files without a shell, so it always asks. `file` is `None`
+    /// when what runs isn't the file's text (an edit in the TUI).
+    Project {
+        root: PathBuf,
+        file: Option<PathBuf>,
+    },
+    /// A `.bnto.json` named by path: asks only for shell steps, so Task and
+    /// CI runs by path never meet a prompt they can't answer.
+    Path(PathBuf),
 }
 
 /// A recipe entry in the catalog. Source-agnostic — consumers don't care
@@ -45,10 +91,20 @@ impl RecipeCatalog {
     /// slug runs (the user's copy overrides the bundled recipe), but the
     /// built-in stays in `bundled()` for the TUI's Recipes pane.
     pub fn load(library_dir: &Path) -> Self {
+        Self::with_library(load_library(library_dir))
+    }
+
+    /// The bundled recipes alone, when there's no bnto home to hold a
+    /// library (its storage couldn't be set up).
+    pub fn without_library() -> Self {
+        Self::with_library(Vec::new())
+    }
+
+    /// The bundled recipes with `library_entries` over them.
+    fn with_library(library_entries: Vec<CatalogEntry>) -> Self {
         let mut builtins = load_bundled();
         builtins.sort_by(|a, b| a.category.cmp(&b.category).then(a.slug.cmp(&b.slug)));
         let mut entries = builtins.clone();
-        let library_entries = load_library(library_dir);
 
         // Library overrides bundled: remove bundled entries whose slugs
         // collide with library entries, then append library entries.
@@ -92,8 +148,9 @@ impl RecipeCatalog {
         self.builtins.iter().find(|e| e.slug == slug)
     }
 
-    /// Whether the recipe a slug runs is bundled (for trust classification
-    /// only): false when a library recipe overrides the built-in.
+    /// Whether the recipe a slug runs is bundled (telemetry's recipe label):
+    /// false when a library recipe overrides the built-in. Consent goes by
+    /// `recipe_source::read_recipe`'s `SourceKind` instead.
     pub fn is_bundled(&self, slug: &str) -> bool {
         self.entries
             .iter()
@@ -109,6 +166,14 @@ impl RecipeCatalog {
     pub(crate) fn bundled_only() -> Self {
         let empty = tempfile::tempdir().expect("create an empty library dir");
         Self::load(empty.path())
+    }
+
+    /// This catalog with `entry` added to what its slug runs, for tests of
+    /// sources nothing loads yet (a project's recipes).
+    pub(crate) fn with_entry(mut self, entry: CatalogEntry) -> Self {
+        self.entries.retain(|e| e.slug != entry.slug);
+        self.entries.push(entry);
+        self
     }
 }
 
@@ -192,6 +257,19 @@ mod tests {
             r#"{{"id":"{slug}","name":"{name}","metadata":{{"description":"Test recipe","category":"{category}","tags":["test"]}},"nodes":[]}}"#,
         );
         std::fs::write(dir.join(format!("{slug}.bnto.json")), json).unwrap();
+    }
+
+    #[test]
+    fn without_library_holds_the_bundled_recipes_alone() {
+        let catalog = RecipeCatalog::without_library();
+        assert!(!catalog.all().is_empty());
+        assert!(
+            catalog
+                .all()
+                .iter()
+                .all(|e| e.source == RecipeSource::Bundled)
+        );
+        assert_eq!(catalog.all().len(), catalog.bundled().len());
     }
 
     #[test]
@@ -286,6 +364,27 @@ mod tests {
         assert!(catalog.is_bundled("compress-images"));
         assert!(!catalog.is_bundled("my-custom"));
         assert!(!catalog.is_bundled("nonexistent"));
+    }
+
+    #[test]
+    fn each_source_has_its_trust_kind() {
+        let root = PathBuf::from("project");
+        let file = root.join(".bnto/recipes/tidy.bnto.json");
+        assert_eq!(RecipeSource::Bundled.kind(), SourceKind::Bundled);
+        let mine = PathBuf::from("mine.bnto.json");
+        let library = RecipeSource::Library(mine.clone());
+        assert_eq!(library.kind(), SourceKind::Library(Some(mine)));
+        let project = RecipeSource::Project {
+            root: root.clone(),
+            file: file.clone(),
+        };
+        assert_eq!(
+            project.kind(),
+            SourceKind::Project {
+                root,
+                file: Some(file)
+            }
+        );
     }
 
     #[test]

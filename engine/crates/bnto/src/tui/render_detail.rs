@@ -22,6 +22,7 @@ use super::screens::detail_bridge::BntoFormTheme;
 use super::theme::Theme;
 use super::widgets::file_list;
 use super::wrap_lines::wrap_lines;
+use crate::display_text::display_text;
 
 /// Render the recipe detail screen.
 #[expect(clippy::too_many_lines)]
@@ -109,10 +110,10 @@ fn lead_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
     let mut lines: Vec<Line> = Vec::new();
 
     // Recipe header — trust badge from catalog source.
-    let badge = trust::trust_badge(detail.is_bundled, detail.has_shell);
+    let badge = trust::trust_badge(&detail.kind, detail.has_shell);
     let mut header = vec![
         Span::raw("  "),
-        Span::styled(detail.name.as_str(), theme.heading()),
+        Span::styled(display_text(&detail.name), theme.heading()),
         Span::raw("  "),
         Span::styled(format!("[{badge}]"), theme.category()),
     ];
@@ -122,7 +123,7 @@ fn lead_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
     lines.push(Line::from(header));
     lines.push(Line::from(vec![
         Span::raw("  "),
-        Span::styled(detail.description.as_str(), theme.muted()),
+        Span::styled(display_text(&detail.description), theme.muted()),
     ]));
     lines.push(Line::from(""));
 
@@ -201,7 +202,7 @@ fn lead_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
 
 /// The form's fields, rendered by tonkotsu and indented to the panel padding.
 fn form_lines(detail: &DetailModel, theme: &Theme) -> Vec<Line<'static>> {
-    tonkotsu::render_form(&detail.form, &BntoFormTheme(theme))
+    super::form_display::render_shown_form(&detail.form, &BntoFormTheme(theme))
         .into_iter()
         .map(|line| {
             let mut spans = vec![Span::raw("  ")];

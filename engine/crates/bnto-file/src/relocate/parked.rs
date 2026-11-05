@@ -35,7 +35,7 @@ impl Registry {
         if self.closed {
             return Err(format!(
                 "Stopped: the run is ending, so nothing was moved to {}",
-                temp.display()
+                bnto_core::display_path(temp)
             ));
         }
         rename()?;

@@ -58,7 +58,10 @@ impl<'a> Walker<'a> {
     /// tree keeps moving; the reporter throttles what reaches the user.
     pub(super) fn walk(&mut self, dir: &Path) -> Result<(), BntoError> {
         let entries = std::fs::read_dir(dir).map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to read directory {}: {e}", dir.display()))
+            BntoError::ProcessingFailed(format!(
+                "Failed to read directory {}: {e}",
+                bnto_core::display_path(dir)
+            ))
         })?;
         let label = self.folder_label(dir);
         for entry in entries {

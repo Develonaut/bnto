@@ -28,6 +28,7 @@ use std::path::{Path, PathBuf};
 use bnto_core::processor::FileData;
 
 use super::aliases::shown;
+use crate::display_text::display_path;
 
 /// The empty placeholders this run created, until each write releases its own.
 pub struct Claims {
@@ -81,7 +82,7 @@ impl Claims {
                 Ok(())
             }
             Err(e) if e.kind() == ErrorKind::AlreadyExists => Err(self.clash(path)),
-            Err(e) => Err(format!("Cannot create {}: {e}", path.display())),
+            Err(e) => Err(format!("Cannot create {}: {e}", display_path(path))),
         }
     }
 
@@ -96,7 +97,7 @@ impl Claims {
             .map(Path::to_path_buf)
             .collect();
         std::fs::create_dir_all(parent)
-            .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
+            .map_err(|e| format!("Cannot create {}: {e}", display_path(parent)))?;
         made.reverse();
         self.dirs.extend(made);
         Ok(())
@@ -114,7 +115,7 @@ impl Claims {
             ),
             None => format!(
                 "{} appeared after the run planned its writes",
-                path.display()
+                display_path(path)
             ),
         };
         format!("Output refused, nothing was written: 1 conflict\n  {detail}")

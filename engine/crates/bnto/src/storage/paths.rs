@@ -3,7 +3,11 @@
 // Single `~/.bnto/` home directory. Replaces the previous XDG-split
 // model with a simpler, more discoverable layout.
 
+use std::ffi::OsString;
 use std::path::PathBuf;
+
+use super::absolute_home::{HomeError, absolute_home};
+use super::config::TomlConfig;
 
 /// Resolved paths for all bnto storage directories.
 ///
@@ -32,27 +36,39 @@ pub struct BntoPaths {
 impl BntoPaths {
     /// Resolve the bnto home directory.
     ///
-    /// Priority: `BNTO_HOME` env var > `~/.bnto/`.
-    /// Returns `None` only if the platform can't determine a home directory.
-    pub fn resolve() -> Option<Self> {
-        let home = std::env::var_os("BNTO_HOME")
-            .map(PathBuf::from)
-            .or_else(|| dirs::home_dir().map(|h| h.join(".bnto")))?;
-        Some(Self { home })
+    /// Priority: `BNTO_HOME` env var > `~/.bnto/`. Refused unless absolute
+    /// (ISS-126), and when the platform has no home folder.
+    pub fn resolve() -> Result<Self, HomeError> {
+        let home = home_from(std::env::var_os("BNTO_HOME"), dirs::home_dir())?;
+        Ok(Self { home })
     }
 
     /// Apply a config home override if set.
     ///
     /// Call after loading config from the default home. If `paths.home`
     /// is set in the config, returns a new `BntoPaths` rooted there.
-    /// All derived paths (recipes, logs, cache) follow the new root.
-    pub fn with_config_override(self, config: &super::config::TomlConfig) -> Self {
-        match config.paths.home.as_deref().filter(|s| !s.is_empty()) {
-            Some(home) => Self {
-                home: PathBuf::from(home),
-            },
-            None => self,
-        }
+    /// All derived paths (recipes, logs, cache) follow the new root. An
+    /// empty or relative `paths.home` is refused (ISS-126).
+    pub fn with_config_override(self, config: &TomlConfig) -> Result<Self, HomeError> {
+        let Some(home) = config.paths.home.as_deref() else {
+            return Ok(self);
+        };
+        let setting = || format!("paths.home in {}", self.config_file().display());
+        let home = absolute_home(PathBuf::from(home), setting)?;
+        Ok(Self { home })
+    }
+
+    /// This home, moved to where its own `config.toml`'s `paths.home` says.
+    pub fn configured(self) -> Result<Self, HomeError> {
+        let config = TomlConfig::load(&self);
+        self.with_config_override(&config)
+    }
+
+    /// `resolve()`, then `configured()`: the one bnto home every surface
+    /// uses, so the CLI and the TUI read one trust file, one user `.env` and
+    /// one output folder (ISS-127).
+    pub fn resolve_configured() -> Result<Self, HomeError> {
+        Self::resolve()?.configured()
     }
 
     /// Path to the main config file.
@@ -109,6 +125,20 @@ impl BntoPaths {
     }
 }
 
+/// The bnto home `BNTO_HOME` names, else `.bnto` in the platform's home
+/// folder; either must be absolute (`dirs` takes a relative `$HOME` as is).
+fn home_from(bnto_home: Option<OsString>, platform: Option<PathBuf>) -> Result<PathBuf, HomeError> {
+    match bnto_home {
+        Some(value) => absolute_home(PathBuf::from(value), || "BNTO_HOME".into()),
+        None => {
+            let home = platform.ok_or(HomeError::NoHome)?;
+            // The error shows the value to fix (`$HOME`), not the joined path.
+            let home = absolute_home(home, || "the home folder ($HOME)".into())?;
+            Ok(home.join(".bnto"))
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -121,11 +151,11 @@ mod tests {
     }
 
     #[test]
-    fn resolve_returns_some() {
+    fn resolve_returns_a_home() {
         unsafe {
             std::env::remove_var("BNTO_HOME");
         }
-        assert!(BntoPaths::resolve().is_some());
+        assert!(BntoPaths::resolve().is_ok());
     }
 
     #[test]
@@ -220,32 +250,93 @@ mod tests {
     }
 
     #[test]
+    fn configured_follows_the_homes_own_config() {
+        let default = tempfile::tempdir().unwrap();
+        let moved = tempfile::tempdir().unwrap();
+        let config = format!("[paths]\nhome = '{}'\n", moved.path().display());
+        std::fs::write(default.path().join("config.toml"), config).unwrap();
+        let paths = paths_from_root(default.path()).configured().unwrap();
+        assert_eq!(paths.home, moved.path());
+        assert_eq!(
+            paths.trusted_file(),
+            moved.path().join("state").join("trusted.json")
+        );
+    }
+
+    #[test]
+    fn configured_keeps_a_home_without_an_override() {
+        let home = tempfile::tempdir().unwrap();
+        assert_eq!(
+            paths_from_root(home.path()).configured().unwrap().home,
+            home.path()
+        );
+    }
+
+    #[test]
     fn with_config_override_applies_custom_home() {
         let original = paths_from_root(std::path::Path::new("/default"));
+        let custom = tempfile::tempdir().unwrap();
         let mut config = crate::storage::config::TomlConfig::default();
-        config.paths.home = Some("/custom/bnto".into());
-        let overridden = original.with_config_override(&config);
-        assert_eq!(overridden.home, std::path::PathBuf::from("/custom/bnto"));
-        assert_eq!(
-            overridden.recipes_dir(),
-            std::path::PathBuf::from("/custom/bnto/recipes")
-        );
+        config.paths.home = Some(custom.path().to_string_lossy().into_owned());
+        let overridden = original.with_config_override(&config).unwrap();
+        assert_eq!(overridden.home, custom.path());
+        assert_eq!(overridden.recipes_dir(), custom.path().join("recipes"));
     }
 
     #[test]
     fn with_config_override_keeps_default_when_none() {
         let original = paths_from_root(std::path::Path::new("/default"));
         let config = crate::storage::config::TomlConfig::default();
-        let same = original.with_config_override(&config);
+        let same = original.with_config_override(&config).unwrap();
         assert_eq!(same.home, std::path::PathBuf::from("/default"));
     }
 
     #[test]
-    fn with_config_override_ignores_empty_string() {
-        let original = paths_from_root(std::path::Path::new("/default"));
-        let mut config = crate::storage::config::TomlConfig::default();
-        config.paths.home = Some(String::new());
-        let same = original.with_config_override(&config);
-        assert_eq!(same.home, std::path::PathBuf::from("/default"));
+    fn with_config_override_refuses_an_empty_or_relative_home() {
+        // ISS-126: either would resolve against the current folder.
+        let tmp = tempfile::tempdir().unwrap();
+        for home in ["", ".bnto", "rel/bnto"] {
+            let mut config = crate::storage::config::TomlConfig::default();
+            config.paths.home = Some(home.into());
+            let err = paths_from_root(tmp.path())
+                .with_config_override(&config)
+                .unwrap_err();
+            let message = err.to_string();
+            assert!(message.starts_with("paths.home in "), "{message}");
+            assert!(message.contains("must be an absolute path"), "{message}");
+        }
+    }
+
+    #[test]
+    fn a_relative_or_empty_bnto_home_is_refused() {
+        let platform = Some(PathBuf::from("/Users/me"));
+        for value in [".bnto", ""] {
+            let err = home_from(Some(value.into()), platform.clone()).unwrap_err();
+            assert!(err.to_string().starts_with("BNTO_HOME must be"), "{err}");
+        }
+    }
+
+    #[test]
+    fn an_absolute_bnto_home_is_used() {
+        let tmp = tempfile::tempdir().unwrap();
+        let home = home_from(Some(tmp.path().into()), None).unwrap();
+        assert_eq!(home, tmp.path());
+    }
+
+    #[test]
+    fn without_bnto_home_the_platform_home_is_used() {
+        let tmp = tempfile::tempdir().unwrap();
+        let home = home_from(None, Some(tmp.path().into())).unwrap();
+        assert_eq!(home, tmp.path().join(".bnto"));
+    }
+
+    #[test]
+    fn no_home_at_all_is_refused_not_made_relative() {
+        assert_eq!(home_from(None, None), Err(HomeError::NoHome));
+        let relative = home_from(None, Some(PathBuf::from("me"))).unwrap_err();
+        assert_eq!(
+            relative.to_string(),
+            r#"the home folder ($HOME) must be an absolute path, got "me""#
+        );
     }
 }

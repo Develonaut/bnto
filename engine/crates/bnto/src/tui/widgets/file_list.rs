@@ -11,6 +11,7 @@ use ratatui::text::{Line, Span};
 use super::super::format::format_size;
 use super::super::screens::picker::FileEntry;
 use super::super::theme::Theme;
+use crate::display_text::display_text;
 
 /// Render the file list with cursor and selection markers.
 ///
@@ -62,11 +63,12 @@ pub fn render_file_list<'a>(
 
             let mut spans = vec![
                 Span::styled(format!("  {marker}{icon}"), name_style),
-                Span::styled(entry.name.clone(), name_style),
+                Span::styled(display_text(&entry.name).into_owned(), name_style),
             ];
 
             // Symlink target indicator
             if let Some(target) = &entry.symlink_target {
+                let target = display_text(target).into_owned();
                 spans.push(Span::styled(format!(" -> {target}"), theme.muted()));
             }
 
@@ -121,6 +123,23 @@ mod tests {
                 symlink_target: None,
             },
         ]
+    }
+
+    #[test]
+    fn a_file_name_with_a_bidi_override_shows_it_escaped() {
+        let entry = FileEntry {
+            name: "photo\u{202e}gpj.exe".into(),
+            is_dir: false,
+            path: PathBuf::from("/x"),
+            size: None,
+            permissions: None,
+            symlink_target: Some("t\u{202e}x".into()),
+        };
+        let lines = render_file_list(&[entry], 0, &BTreeSet::new(), &theme(), true);
+        let text = lines[0].to_string();
+        assert!(!text.contains('\u{202e}'), "{text}");
+        assert!(text.contains("photo\\u{202e}gpj.exe"), "{text}");
+        assert!(text.contains("t\\u{202e}x"), "{text}");
     }
 
     #[test]

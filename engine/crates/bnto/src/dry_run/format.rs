@@ -1,16 +1,20 @@
 // Dry-run output formatting — print results to stdout with colored output.
+// Recipe text (name, description, steps, commands, names) is escaped before
+// it's printed (`display_text`, ISS-125).
 
 use colored::Colorize;
 
 use super::DryRunResult;
+#[cfg(test)]
 use super::shell::format_command_line;
+use crate::display_text::display_text;
 use crate::dry_run_hint::DryRunHint;
 
 /// Print dry-run results to stdout with colored formatting. `given` is what
 /// the dry run was given, which the `Run with:` footer repeats.
 pub fn print_dry_run(given: &DryRunHint, result: &DryRunResult) {
-    println!("\n{}", result.name.bold());
-    println!("{}\n", result.description);
+    println!("\n{}", display_text(&result.name).bold());
+    println!("{}\n", display_text(&result.description));
 
     print_dependencies(result);
     print_shell_commands(result);
@@ -27,9 +31,9 @@ fn print_dependencies(result: &DryRunResult) {
         let version = if dep.version.is_empty() {
             String::new()
         } else {
-            format!(" ({})", dep.version)
+            format!(" ({})", display_text(&dep.version))
         };
-        println!("    {}{version}", dep.binary.yellow());
+        println!("    {}{version}", display_text(&dep.binary).yellow());
     }
     println!();
 }
@@ -59,24 +63,43 @@ fn print_shell_commands(result: &DryRunResult) {
 
     println!("  {}", "Commands:".dimmed());
     for cmd in &result.shell_commands {
-        println!("\n    {} ({})", cmd.node_name.cyan(), cmd.node_id.dimmed());
-        println!("    {} {}", "$".dimmed(), format_command_line(cmd).bold());
-        println!("    {}  {}", "Output:".dimmed(), cmd.output_mode);
+        print_command(cmd);
+    }
+}
 
-        if !cmd.unresolved.is_empty() {
-            println!(
-                "    {}  {} (resolved at runtime)",
-                "Placeholders:".dimmed(),
-                cmd.unresolved.join(", ").yellow()
-            );
-        }
-        if let Some(reason) = &cmd.skipped {
-            println!(
-                "    {}  {}",
-                "Skipped on this host:".dimmed(),
-                reason.yellow()
-            );
-        }
+/// One shell step: its id, command line, output mode, env and notes.
+fn print_command(cmd: &super::shell::ShellCommandInfo) {
+    let (name, id) = (display_text(&cmd.node_name), display_text(&cmd.node_id));
+    println!("\n    {} ({})", name.cyan(), id.dimmed());
+    let line = super::shown_line::shown_command_line(cmd);
+    println!("    {} {}", "$".dimmed(), line.bold());
+    println!(
+        "    {}  {}",
+        "Output:".dimmed(),
+        display_text(&cmd.output_mode)
+    );
+    print_command_notes(cmd);
+}
+
+/// A step's env, its placeholders filled when it runs, and why it's skipped.
+fn print_command_notes(cmd: &super::shell::ShellCommandInfo) {
+    if !cmd.env.is_empty() {
+        let env = display_text(&cmd.env.join(", ")).into_owned();
+        println!("    {}  {env}", "Env:".dimmed());
+    }
+    if !cmd.unresolved.is_empty() {
+        println!(
+            "    {}  {} (resolved at runtime)",
+            "Placeholders:".dimmed(),
+            display_text(&cmd.unresolved.join(", ")).yellow()
+        );
+    }
+    if let Some(reason) = &cmd.skipped {
+        println!(
+            "    {}  {}",
+            "Skipped on this host:".dimmed(),
+            display_text(reason).yellow()
+        );
     }
 }
 
@@ -96,13 +119,13 @@ fn print_file_previews(result: &DryRunResult) {
     for preview in &result.file_previews {
         if preview.original == preview.result {
             // No change — just show the filename.
-            println!("    {}", preview.result.dimmed());
+            println!("    {}", display_text(&preview.result).dimmed());
         } else {
             println!(
                 "    {}  {}  {}",
-                preview.original,
+                display_text(&preview.original),
                 "→".dimmed(),
-                preview.result.green()
+                display_text(&preview.result).green()
             );
         }
     }
@@ -110,7 +133,7 @@ fn print_file_previews(result: &DryRunResult) {
 
 fn print_footer(given: &DryRunHint, result: &DryRunResult) {
     if let Some(output_dir) = &result.output_dir {
-        println!("\n  {}  {output_dir}", "Output:".dimmed());
+        println!("\n  {}  {}", "Output:".dimmed(), display_text(output_dir));
     }
     if let Some(ms) = result.duration_ms {
         println!("  {}  {ms}ms", "Preview time:".dimmed());
@@ -124,10 +147,8 @@ fn print_footer(given: &DryRunHint, result: &DryRunResult) {
         );
     }
 
-    println!(
-        "\n{}",
-        format!("Run with: {}", given.run_command(result.input_mode)).dimmed()
-    );
+    let run = format!("Run with: {}", given.run_command(result.input_mode));
+    println!("\n{}", display_text(&run).dimmed());
 }
 
 /// What the run's time limit does, after the `Time limit:` label.
@@ -214,6 +235,7 @@ mod tests {
             description: "Download a video".into(),
             dependencies: vec![],
             shell_commands: vec![ShellCommandInfo {
+                env: Vec::new(),
                 node_id: "dl".into(),
                 node_name: "download".into(),
                 command: "yt-dlp".into(),

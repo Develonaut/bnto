@@ -24,7 +24,7 @@ use crate::scratch::RunScratch;
 /// Env var resolution order (first match wins):
 /// 1. System environment (`std::env::var`)
 /// 2. Project `.env` file in the working directory
-/// 3. User dotenv at `~/.bnto/.env`
+/// 3. User dotenv at `<bnto home>/.env` (`~/.bnto/.env` unless moved)
 pub struct NativeContext {
     work_dir: PathBuf,
     /// Bnto home directory (~/.bnto/).
@@ -46,11 +46,21 @@ pub struct NativeContext {
 }
 
 impl NativeContext {
-    /// Create a context rooted at the given working directory with resolved paths.
-    #[allow(dead_code)]
+    /// Create a context rooted at the given working directory, taking the
+    /// bnto home, its output folder and its user `.env` from `paths`.
     pub fn new(work_dir: PathBuf, paths: &crate::storage::BntoPaths) -> Self {
+        let user_env = load_dotenv_file(&paths.home.join(".env"));
+        Self::with_user_env(work_dir, paths, user_env)
+    }
+
+    /// A context in `work_dir` with `paths`' home and output folder and the
+    /// given user env; the project `.env` comes from `work_dir`.
+    fn with_user_env(
+        work_dir: PathBuf,
+        paths: &crate::storage::BntoPaths,
+        user_env: HashMap<String, String>,
+    ) -> Self {
         let project_env = load_dotenv_file(&work_dir.join(".env"));
-        let user_env = load_user_dotenv();
         Self {
             work_dir,
             home_dir: paths.home.clone(),
@@ -63,38 +73,32 @@ impl NativeContext {
         }
     }
 
-    /// Create a context using the current working directory.
-    ///
-    /// Resolves bnto paths from `BntoPaths::resolve()`. If paths
-    /// can't be determined, home_dir/output_dir fall back to temp dir.
-    #[expect(clippy::too_many_lines)]
+    /// Create a context using the current working directory and the
+    /// configured bnto home (`BntoPaths::resolve_configured`, ISS-127).
+    /// `main` exits before any command when the home can't be resolved or
+    /// isn't absolute (ISS-126); code run outside `main` that meets one falls
+    /// back to a temp dir and reads no user `.env`: on a shared temp dir
+    /// another user could plant one.
     pub fn current_dir() -> Result<Self, BntoError> {
-        let work_dir = std::env::current_dir().map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to get current directory: {e}"))
-        })?;
-        let project_env = load_dotenv_file(&work_dir.join(".env"));
-        let user_env = load_user_dotenv();
-        let (home_dir, output_dir) = match crate::storage::BntoPaths::resolve() {
-            Some(p) => {
-                let output = p.output_dir();
-                (p.home, output)
-            }
-            None => {
-                let tmp = std::env::temp_dir().join("bnto");
-                let output = tmp.join("output");
-                (tmp, output)
-            }
+        match crate::storage::BntoPaths::resolve_configured() {
+            Ok(paths) => Self::current_dir_in(&paths),
+            Err(_) => Ok(Self::without_home(cwd()?, &std::env::temp_dir())),
+        }
+    }
+
+    /// A context in the current working directory, in a home the caller has
+    /// already resolved (the TUI's session home).
+    pub fn current_dir_in(paths: &crate::storage::BntoPaths) -> Result<Self, BntoError> {
+        Ok(Self::new(cwd()?, paths))
+    }
+
+    /// A context with no bnto home: `<temp>/bnto` stands in for it, and no
+    /// user `.env` is read from there.
+    fn without_home(work_dir: PathBuf, temp: &Path) -> Self {
+        let paths = crate::storage::BntoPaths {
+            home: temp.join("bnto"),
         };
-        Ok(Self {
-            work_dir,
-            home_dir,
-            output_dir,
-            project_env,
-            user_env,
-            registry: crate::process_registry::global(),
-            dry_run: false,
-            scratch: RunScratch::default(),
-        })
+        Self::with_user_env(work_dir, &paths, HashMap::new())
     }
 
     /// Mark this context as a dry run (see `ProcessContext::dry_run`).
@@ -167,20 +171,17 @@ fn spawn_program(cmd: &str, _path_var: Option<&OsStr>) -> OsString {
     OsString::from(cmd)
 }
 
+/// The process's current working directory, as a run's error.
+fn cwd() -> Result<PathBuf, BntoError> {
+    std::env::current_dir()
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to get current directory: {e}")))
+}
+
 /// Load and parse a `.env` file, returning an empty map if it doesn't exist.
 fn load_dotenv_file(path: &Path) -> HashMap<String, String> {
     match std::fs::read_to_string(path) {
         Ok(contents) => parse_dotenv(&contents),
         Err(_) => HashMap::new(),
-    }
-}
-
-/// Load the user-level dotenv from `~/.bnto/.env`.
-fn load_user_dotenv() -> HashMap<String, String> {
-    let home = crate::storage::BntoPaths::resolve().map(|p| p.home);
-    match home {
-        Some(dir) => load_dotenv_file(&dir.join(".env")),
-        None => HashMap::new(),
     }
 }
 
@@ -866,6 +867,34 @@ mod tests {
             ctx.env_var("BNTO_TEST_PROJECT_KEY"),
             Some("from_project".to_string())
         );
+    }
+
+    #[test]
+    fn native_context_reads_the_user_dotenv_of_its_home() {
+        // ISS-127: the home the context is given (the configured one), not
+        // the one `BntoPaths::resolve()` finds without the config override.
+        let work = tempfile::tempdir().unwrap();
+        let home = tempfile::tempdir().unwrap();
+        std::fs::write(home.path().join(".env"), "BNTO_TEST_USER_KEY=from_home\n").unwrap();
+        let ctx = NativeContext::new(work.path().to_path_buf(), &test_paths(home.path()));
+        assert_eq!(
+            ctx.env_var("BNTO_TEST_USER_KEY"),
+            Some("from_home".to_string())
+        );
+        assert_eq!(ctx.home_dir(), Some(home.path()));
+        assert_eq!(ctx.output_dir(), Some(home.path().join("output")));
+    }
+
+    #[test]
+    fn a_context_without_a_home_reads_no_user_dotenv_from_temp() {
+        let work = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(temp.path().join("bnto")).unwrap();
+        let planted = temp.path().join("bnto").join(".env");
+        std::fs::write(planted, "BNTO_TEST_PLANTED_KEY=planted\n").unwrap();
+        let ctx = NativeContext::without_home(work.path().to_path_buf(), temp.path());
+        assert_eq!(ctx.env_var("BNTO_TEST_PLANTED_KEY"), None);
+        assert_eq!(ctx.home_dir(), Some(temp.path().join("bnto").as_path()));
     }
 
     #[test]

@@ -18,7 +18,7 @@ use super::app_helpers::{
     handle_open_folder, handle_open_library, handle_open_settings_picker, handle_open_wizard,
     handle_preview_confirm, handle_preview_requested, handle_recipe_selected,
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
-    handle_wizard_form, request_quit, settle_pending_exit,
+    handle_wizard_form, request_quit, settings_for, settle_pending_exit,
 };
 mod detail_entry;
 #[cfg(test)]
@@ -118,8 +118,12 @@ pub struct AppModel {
     pub wizard: Option<WizardModel>,
     /// TOML-based persistent config.
     pub toml_config: TomlConfig,
-    /// Resolved storage paths (~/.bnto/ home).
+    /// Resolved storage paths (~/.bnto/ home), moved by the config's
+    /// `paths.home` once at launch and fixed for the session.
     pub paths: BntoPaths,
+    /// The home whose `config.toml` sets `paths.home` (the one
+    /// `BntoPaths::configured` reads): the Settings home field edits it.
+    pub config_home: BntoPaths,
     /// Transient status bar message (e.g. "Settings saved" or "Failed to save").
     pub status_message: Option<String>,
     /// "bnto 0.17.0 available, U to upgrade" when a newer release is out.
@@ -285,7 +289,7 @@ fn with_screen(model: AppModel, screen: Screen) -> AppModel {
 
 /// Open the settings screen with the persisted config loaded.
 fn handle_open_settings(model: AppModel) -> AppModel {
-    let settings = SettingsModel::from_toml_config(&model.toml_config);
+    let settings = settings_for(&model);
     AppModel {
         screen: Screen::Settings,
         settings: Some(settings),

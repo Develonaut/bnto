@@ -10,6 +10,7 @@ use super::render_layout::space_out;
 use super::screens::results::{OutputFile, ResultsModel, format_duration, format_size};
 use super::screens::size_change::SizeChange;
 use super::theme::Theme;
+use crate::display_text::display_text;
 use crate::run_message::RunMessage;
 
 /// Render the results screen.
@@ -76,17 +77,17 @@ fn savings_lines<'a>(results: &ResultsModel, theme: &Theme) -> Vec<Line<'a>> {
 
 /// What the recipe reported, under its output's label (e.g. "Session Log").
 fn message_lines<'a>(message: &'a RunMessage, theme: &Theme) -> Vec<Line<'a>> {
-    let label = message.label.as_deref().unwrap_or("Output");
+    let label = display_text(message.label.as_deref().unwrap_or("Output")).into_owned();
     let mut lines = vec![Line::from(Span::styled(
-        format!("  {}", space_out(label)),
+        format!("  {}", space_out(&label)),
         theme.category(),
     ))];
-    lines.extend(
-        message
-            .text
-            .lines()
-            .map(|line| Line::from(Span::styled(format!("  {line}"), theme.text()))),
-    );
+    lines.extend(message.text.lines().map(|line| {
+        Line::from(Span::styled(
+            format!("  {}", display_text(line)),
+            theme.text(),
+        ))
+    }));
     lines
 }
 
@@ -95,7 +96,10 @@ fn output_dir_lines<'a>(results: &ResultsModel, theme: &Theme) -> Vec<Line<'a>> 
         return Vec::new();
     };
     vec![
-        Line::from(Span::styled(format!("  {location}"), theme.muted())),
+        Line::from(Span::styled(
+            format!("  {}", display_text(&location)),
+            theme.muted(),
+        )),
         Line::from(""),
     ]
 }
@@ -134,7 +138,7 @@ fn file_line<'a>(file: &OutputFile, name: String, is_selected: bool, theme: &The
         None => format!("  {}", format_size(file.size_bytes)),
     };
     Line::from(vec![
-        Span::styled(format!("  {marker}{name}"), name_style),
+        Span::styled(format!("  {marker}{}", display_text(&name)), name_style),
         Span::styled(size_info, theme.muted()),
     ])
 }

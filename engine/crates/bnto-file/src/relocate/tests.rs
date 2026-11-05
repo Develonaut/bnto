@@ -77,3 +77,18 @@ fn test_platform_name_check_refuses_windows_device_names() {
     assert!(check_platform_name("aux.wav").is_err());
     assert!(check_platform_name("a:b").is_err());
 }
+
+#[test]
+fn test_platform_segments_check_names_the_bad_segment() {
+    assert!(check_platform_segments("./sub/a.txt").is_ok());
+    let err = check_platform_segments("sub/a\0b").unwrap_err();
+    assert!(err.contains("\"a\0b\""), "{err}");
+}
+
+#[cfg(windows)]
+#[test]
+fn test_platform_segments_check_refuses_windows_names_in_any_segment() {
+    for name in ["sub/CON.txt", "sub\\COM1", "a./b", "x/.. /y"] {
+        assert!(check_platform_segments(name).is_err(), "{name}");
+    }
+}

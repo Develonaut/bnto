@@ -2,7 +2,7 @@ use super::*;
 use bnto_core::context::NoopContext;
 use bnto_core::processor::FileData;
 use serde_json::json;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// A base folder holding `a.txt`, `sub/b.txt` and the folder `dir/`.
 fn base_dir() -> tempfile::TempDir {
@@ -23,15 +23,34 @@ fn list_file(content: &[u8]) -> BatchFile {
     }
 }
 
+/// A run whose working folder is `0`.
+struct InFolder(PathBuf);
+
+impl ProcessContext for InFolder {
+    fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+        NoopContext.run_command(cmd, args)
+    }
+    fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
+        NoopContext.temp_file(suffix)
+    }
+    fn env_var(&self, key: &str) -> Option<String> {
+        NoopContext.env_var(key)
+    }
+    fn work_dir(&self) -> Result<&Path, BntoError> {
+        Ok(&self.0)
+    }
+}
+
+/// List in a run whose working folder is `base`, with no `base` param.
 fn run(
     base: &Path,
     files: Vec<BatchFile>,
     extra: serde_json::Value,
 ) -> Result<NodeOutput, BntoError> {
-    let mut params = extra.as_object().cloned().unwrap_or_default();
-    params.insert("base".to_string(), json!(base.to_str().unwrap()));
+    let params = extra.as_object().cloned().unwrap_or_default();
     let input = BatchInput { files, params };
-    FileList::new().process_batch(input, &ProgressReporter::new_noop(), &NoopContext)
+    let ctx = InFolder(base.to_path_buf());
+    FileList::new().process_batch(input, &ProgressReporter::new_noop(), &ctx)
 }
 
 fn names(output: &NodeOutput) -> Vec<&str> {

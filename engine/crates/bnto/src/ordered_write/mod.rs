@@ -28,6 +28,7 @@ use bnto_core::PipelineFileResult;
 use bnto_core::processor::FileData;
 use bnto_file::relocate;
 
+use crate::display_text::display_path;
 use claims::Claims;
 use order::Step;
 use staging::Staging;
@@ -65,16 +66,20 @@ fn left_as_is(files: &[PipelineFileResult], paths: &[PathBuf], held: &[bool]) ->
         .collect()
 }
 
+/// A refusal of the final write's plan into `output_dir` that comes before
+/// its paths are known (a result's name refused), worded as `check`'s:
+/// files a progressive loop already wrote there are named.
+pub fn refusal_in(listing: &str, output_dir: &Path) -> String {
+    refusal(listing, &progressive::written_under(output_dir))
+}
+
 /// The refusal text. Files a progressive loop already wrote are named: the
 /// final write wrote nothing, but the run did.
 fn refusal(listing: &str, by_iterations: &[PathBuf]) -> String {
     if by_iterations.is_empty() {
         return format!("Output refused, nothing was written: {listing}");
     }
-    let names: Vec<String> = by_iterations
-        .iter()
-        .map(|p| p.display().to_string())
-        .collect();
+    let names: Vec<String> = by_iterations.iter().map(|p| display_path(p)).collect();
     let wrote = relocate::listing(&names, ("file", "files"));
     format!(
         "Output refused, the final write wrote nothing: {listing}\n  \
@@ -197,7 +202,7 @@ impl<'a> Run<'a> {
         match self.staging.keep() {
             Some(dir) => format!(
                 "{error}\n  Copies set aside for a swap are kept in {}",
-                dir.display()
+                display_path(&dir)
             ),
             None => error,
         }
@@ -209,10 +214,10 @@ impl<'a> Run<'a> {
 fn write_one(data: &FileData, out_path: &Path) -> Result<(), String> {
     if let Some(parent) = out_path.parent() {
         std::fs::create_dir_all(parent)
-            .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
+            .map_err(|e| format!("Cannot create {}: {e}", display_path(parent)))?;
     }
     data.copy_to(out_path)
-        .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))
+        .map_err(|e| format!("Cannot write {}: {e}", display_path(out_path)))
 }
 
 #[cfg(test)]

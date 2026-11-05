@@ -9,7 +9,7 @@ use bnto_core::pipeline::PipelineNode;
 use bnto_core::registry::NodeRegistry;
 use bnto_core::{HostPlatform, InputMode, PipelineDefinition};
 
-use crate::catalog::{CatalogEntry, RecipeSource};
+use crate::catalog::CatalogEntry;
 
 use super::detail::{DetailFocus, DetailModel, ParamEntry};
 use super::detail_fields::fields_to_params;
@@ -82,7 +82,7 @@ pub fn load_detail_from_entry(
         slug: entry.slug.clone(),
         name: entry.name.clone(),
         description: entry.description.clone(),
-        is_bundled: entry.source == RecipeSource::Bundled,
+        kind: entry.source.kind(),
         has_shell: pipeline_def
             .as_ref()
             .is_some_and(|d| crate::trust::has_shell_commands(&d.nodes)),
@@ -305,7 +305,8 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         slug: "custom".to_string(),
         name,
         description,
-        is_bundled: false,
+        // Raw JSON from no catalog source, badged like a library recipe.
+        kind: crate::catalog::SourceKind::Library(None),
         has_shell: pipeline_def
             .as_ref()
             .is_some_and(|d| crate::trust::has_shell_commands(&d.nodes)),
@@ -335,6 +336,7 @@ fn value_to_display_string(v: &serde_json::Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::catalog::RecipeSource;
 
     fn registry() -> NodeRegistry {
         bnto_engine::create_registry()

@@ -482,3 +482,41 @@ fn tj16_down_moves_the_selection_one_row() {
     let screen = tui.step(Key::Down);
     assert_eq!(marker_line(&screen), Some(before + 1), "Screen:\n{screen}");
 }
+
+#[test]
+fn tj17_a_tall_consent_prompt_is_read_to_its_end_before_y_allows_it() {
+    // At 80x24 the prompt is taller than its panel: y does nothing until j
+    // has scrolled to its last row, so nothing is approved unseen.
+    let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/tui/tall-consent.bnto.json");
+    let mut tui = Tui::launch_with_library(80, 24, &[&recipe]);
+    tui.wait_for("tall-consent"); // the home Library pane lists file names
+    tui.press(&[Key::Enter]);
+    tui.wait_for("Tall Consent");
+    tui.press(&[Key::Enter]);
+    tui.wait_for("D E T A I L");
+    focus_run(&mut tui);
+    tui.press(&[Key::Enter]);
+    tui.wait_for("more below");
+    tui.press(&[Key::Char('y')]);
+    let screen = tui.step(Key::Char('j'));
+    assert!(
+        screen.contains("runs commands on your computer"),
+        "y started the run before the prompt was read:\n{screen}"
+    );
+    let mut screen = screen;
+    for _ in 0..40 {
+        if screen.contains("y allow") {
+            break;
+        }
+        screen = tui.step(Key::Char('j'));
+    }
+    assert!(
+        screen.contains("y allow and run"),
+        "never reached the end:\n{screen}"
+    );
+    tui.press(&[Key::Char('y')]);
+    tui.wait_until("the run to start", |screen| {
+        !screen.contains("runs commands on your computer")
+    });
+}

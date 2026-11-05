@@ -79,8 +79,10 @@ fn separator(params: &Params) -> String {
 fn read_escape(params: &Params) -> Result<Escape, String> {
     match text(params, "escape") {
         None => Ok(Escape::None),
-        Some(name) => Escape::parse(&name)
-            .ok_or_else(|| format!("'escape' \"{name}\" is not one of {}", Escape::NAMES)),
+        Some(name) => Escape::parse(&name).ok_or_else(|| {
+            let name = bnto_core::display_text(&name);
+            format!("'escape' \"{name}\" is not one of {}", Escape::NAMES)
+        }),
     }
 }
 

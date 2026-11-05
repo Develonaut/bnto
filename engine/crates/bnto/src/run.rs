@@ -7,8 +7,9 @@ use std::time::Instant;
 use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use colored::Colorize;
 
-use crate::catalog::RecipeCatalog;
+use crate::catalog::{RecipeCatalog, SourceKind};
 use crate::consent::check_trust;
+use crate::display_text::display_text;
 use crate::dry_run_hint::DryRunHint;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
@@ -67,7 +68,7 @@ pub fn run_recipe(
     catalog: &RecipeCatalog,
 ) {
     let verdict = RunVerdict::new(flags.json);
-    let raw_json = read_recipe(recipe_path, catalog, &verdict);
+    let (raw_json, kind) = read_recipe(recipe_path, catalog, &verdict);
     refuse_unsupported_host(recipe_path, &raw_json, &verdict);
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
@@ -83,7 +84,12 @@ pub fn run_recipe(
     prepared.definition_json = definition_json;
     let (ctx, target) = run_context(output_override, flags, time_limit, &prepared, &verdict);
     let given = DryRunHint::new(recipe_path, param_overrides, flags.vars);
-    check_trust(&raw_json, &given, flags.yes, catalog);
+    check_trust(
+        (&raw_json, &prepared.definition_json),
+        &given,
+        flags.yes,
+        &kind,
+    );
     print_run_banner(recipe_path, &raw_json, &prepared);
     let stats = run_stats(recipe_path, &prepared, param_overrides, catalog);
     log_run_start(logger, &stats);
@@ -143,8 +149,13 @@ fn refuse_unsupported_host(recipe_path: &str, raw_json: &str, verdict: &RunVerdi
     }
 }
 
-/// The recipe's JSON (`recipe_source`'s slug-else-path), or the run fails.
-fn read_recipe(recipe_path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> String {
+/// The recipe's JSON (`recipe_source`'s slug-else-path) and where it came
+/// from, or the run fails.
+fn read_recipe(
+    recipe_path: &str,
+    catalog: &RecipeCatalog,
+    verdict: &RunVerdict,
+) -> (String, SourceKind) {
     verdict.or_fail(
         recipe_source::read_recipe(recipe_path, catalog),
         "Error reading recipe:",
@@ -217,7 +228,7 @@ fn run_target(
         mode: def
             .as_ref()
             .map_or_else(|| "write".to_string(), bnto_core::resolve_output_mode),
-        // Priority chain: explicit --output > recipe directory param > default "."
+        // Priority chain: explicit --output > recipe directory param > working folder
         output_dir: resolve_effective_output_dir(output_override, def_json, ctx, &prepared.files)?,
         dry_run,
         time_limit,
@@ -291,7 +302,7 @@ fn fail_run(logger: &Arc<dyn Logger>, e: &bnto_core::BntoError, verdict: &RunVer
 /// 1. Explicit `--output` flag (highest priority)
 /// 2. Recipe's output node `directory` parameter, every placeholder filled
 ///    (an `Err` names each one nothing fills)
-/// 3. Default: current directory (".")
+/// 3. Default: the run's working folder, in full
 fn resolve_effective_output_dir(
     output_override: Option<&str>,
     definition_json: &str,
@@ -301,13 +312,17 @@ fn resolve_effective_output_dir(
     if let Some(dir) = output_override {
         return Ok(dir.to_string());
     }
-    let dir = crate::recipe_output_dir::recipe_output_dir(definition_json, process_ctx, files)?;
-    Ok(dir.unwrap_or_else(|| ".".to_string()))
+    use crate::recipe_output_dir::{default_output_dir, recipe_output_dir};
+    match recipe_output_dir(definition_json, process_ctx, files)? {
+        Some(dir) => Ok(dir),
+        None => default_output_dir(process_ctx),
+    }
 }
 
 /// Print `<recipe> with N files...` (or the input mode label).
 fn print_run_banner(recipe_path: &str, raw_json: &str, prepared: &input::PreparedInput) {
     let label = input::mode_label(raw_json);
+    let recipe_path = display_text(recipe_path);
     if prepared.files.is_empty() {
         eprintln!("{} with {label}...", recipe_path.bold());
     } else {

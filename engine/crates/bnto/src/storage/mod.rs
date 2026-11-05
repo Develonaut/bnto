@@ -1,29 +1,26 @@
 // Persistent storage — paths, config, atomic writes, and migrations.
 //
-// Called once at startup via `ensure_ready()` before command dispatch,
-// so all commands (not just TUI) get consistent storage directories
-// and run any pending config migrations.
+// `main` resolves the bnto home (refusing a relative one, ISS-126), then
+// calls `ensure_ready()` before command dispatch, so all commands (not just
+// TUI) get consistent storage directories and run any pending migrations.
 
+mod absolute_home;
 pub mod atomic;
 pub mod config;
 pub mod migrations;
 pub mod paths;
 pub mod runner;
 
+pub use absolute_home::HomeError;
 pub use paths::BntoPaths;
 pub use runner::MigrationError;
 
-/// Initialize storage: resolve paths, ensure dirs, run pending migrations.
-///
-/// Called once in `main()` before command dispatch. Returns resolved
-/// paths for use by logger, TUI, trust store, etc.
-pub fn ensure_ready() -> Result<BntoPaths, MigrationError> {
-    let paths = BntoPaths::resolve().unwrap_or_else(|| BntoPaths {
-        home: std::path::PathBuf::from(".bnto"),
-    });
+/// Initialize storage in a resolved home: ensure dirs, run pending
+/// migrations. Called once in `main()` before command dispatch.
+pub fn ensure_ready(paths: &BntoPaths) -> Result<(), MigrationError> {
     paths.ensure_dirs()?;
-    runner::run_pending(&paths, migrations::MIGRATIONS)?;
-    Ok(paths)
+    runner::run_pending(paths, migrations::MIGRATIONS)?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -38,18 +35,11 @@ mod tests {
         (tmp, paths)
     }
 
-    /// Simulate `ensure_ready()` with explicit paths (avoids env var races).
-    fn ensure_ready_with(paths: &BntoPaths) -> Result<(), MigrationError> {
-        paths.ensure_dirs()?;
-        runner::run_pending(paths, migrations::MIGRATIONS)?;
-        Ok(())
-    }
-
     #[test]
     fn ensure_ready_creates_dirs_and_runs_migrations() {
         let (_tmp, paths) = test_paths();
 
-        ensure_ready_with(&paths).unwrap();
+        ensure_ready(&paths).unwrap();
 
         assert!(paths.recipes_dir().is_dir());
         assert!(paths.logs_dir().is_dir());
@@ -62,8 +52,8 @@ mod tests {
     fn ensure_ready_is_idempotent() {
         let (_tmp, paths) = test_paths();
 
-        ensure_ready_with(&paths).unwrap();
-        ensure_ready_with(&paths).unwrap();
+        ensure_ready(&paths).unwrap();
+        ensure_ready(&paths).unwrap();
 
         assert!(paths.config_file().exists());
         // Version should still be current after second run.

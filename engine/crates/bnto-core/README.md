@@ -92,6 +92,10 @@ src/
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS
+├── display_text.rs       # display_text(), display_lines(): recipe text made safe to print (ISS-125), shared by the CLI, the TUI and node errors
+├── dot_segments.rs       # without_dot_segments(): a name less its `.` and empty segments, so two spellings plan as one
+├── leaves_folder.rs      # leaves_folder(), is_absolute_anywhere(): a name joined onto a folder that would land outside it (absolute, a drive, `..`)
+├── work_dir_path.rs      # in_work_dir(): a relative path param placed under the run's working folder; root- or drive-relative refused
 ├── split_extension.rs    # split_extension(), file_stem(), file_extension(): a name's extension from its last `/` segment, for every crate
 ├── file_stamp.rs         # stamp(): a file's size and mtime, to find one file under two paths
 ├── required_params.rs    # missing_required(): required params left out (no default) or blank; pre-flight refuses them

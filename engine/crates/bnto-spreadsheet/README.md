@@ -41,7 +41,7 @@ input (items.json) → spreadsheet-read → file-rename (pattern: "{{item.meta.i
 
 `spreadsheet-lookup` joins each file to a row of the CSV at `table` (the VLOOKUP pattern). The row whose `keyColumn` equals the file's pipeline name exactly, or only its last path segment with `matchOn: filename`, becomes the file's metadata, so later nodes read its columns with `{{item.<column>}}`. File data passes through untouched.
 
-A key may appear on one row only; rows with an empty key are skipped. Keys are compared as written: pipeline names use `/` on every OS, and no Unicode normalization is applied. A relative `table` path resolves against the current directory.
+A key may appear on one row only; rows with an empty key are skipped. Keys are compared as written: pipeline names use `/` on every OS, and no Unicode normalization is applied. A relative `table` path resolves against the run's working folder (the CLI's and TUI's current folder).
 
 A file with no row is handled per `unmatched`:
 
@@ -65,7 +65,7 @@ file-collect (flatten: false) → spreadsheet-lookup (keyColumn: new_name, match
 
 `spreadsheet-export` writes the files passing through as a CSV at `path` and passes them on unchanged; it never reads file content. One row per file: `nameColumn` (default `file`) holds the file's pipeline name, then every metadata key seen across the files, in the order first seen (alphabetical within one file), with an empty cell where a file lacks a key. Arrays and objects are written as JSON. It's a batch node, so it writes once per run, and the run output names the path and row count.
 
-- **The folder must exist**, and a relative `path` resolves against the current directory. Keep the CSV outside a folder the recipe collects, or the next run collects it too.
+- **The folder must exist**, and a relative `path` resolves against the run's working folder (the CLI's and TUI's current folder). Keep the CSV outside a folder the recipe collects, or the next run collects it too.
 - **An existing file is kept** and fails the run, since it may be an earlier run's record; set `overwrite` to replace it. The CSV is written to a temporary file and renamed into place, so an interrupted write never leaves half a record.
 - **A dry run writes it too**: it's a report, not a change to the files, and the run output says "(dry run)".
 - **It records what the run planned.** It runs before `output`, so if `output` fails partway, the CSV lists renames that didn't all land.

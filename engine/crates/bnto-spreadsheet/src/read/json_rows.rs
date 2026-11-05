@@ -36,8 +36,12 @@ pub(super) fn read(data: &[u8], filename: &str) -> Result<Table, BntoError> {
 /// The file's top-level array, or why it isn't one.
 fn parse_array(data: &[u8], filename: &str) -> Result<Vec<Value>, BntoError> {
     let data = data.strip_prefix(UTF8_BOM).unwrap_or(data);
-    let value: Value = serde_json::from_slice(data)
-        .map_err(|e| invalid(format!("{filename} is not valid JSON: {e}")))?;
+    let value: Value = serde_json::from_slice(data).map_err(|e| {
+        invalid(format!(
+            "{} is not valid JSON: {e}",
+            bnto_core::display_text(filename)
+        ))
+    })?;
     match value {
         Value::Array(elements) => Ok(elements),
         other => Err(invalid(format!(

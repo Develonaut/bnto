@@ -5,8 +5,10 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use super::Session;
+use crate::catalog::SourceKind;
 use crate::run_message::RunMessage;
-use crate::trust_gate::ConsentRequest;
+use crate::trust::TrustStore;
+use crate::trust_gate::{self, ConsentRequest};
 use crate::tui::app::{DetailOrigin, Screen};
 use crate::tui::screens::execution::{self, ExecutionMessage, ExecutionModel};
 use crate::tui::screens::results::{OutputFile, ResultsModel};
@@ -153,14 +155,29 @@ pub(super) fn failed_run() -> Vec<ExecutionMessage> {
 
 /// A library shell recipe waiting for the user to allow its script.
 pub(super) fn consent() -> Session {
-    let request = ConsentRequest {
-        recipe_name: "Slow Shell".into(),
-        commands: vec![
-            "sh -c <script> bnto\n    script:\n      for i in 1 2 3; do echo \"line $i\"; done"
-                .into(),
-        ],
-        hash: "h".into(),
+    let script =
+        "sh -c <script> bnto\n    script:\n      for i in 1 2 3; do echo \"line $i\"; done";
+    let request = ConsentRequest::for_commands("Slow Shell", vec![script.into()]);
+    in_execution(
+        Session::new(),
+        ExecutionModel::new("run").awaiting_consent(request),
+    )
+}
+
+/// A project recipe whose consent flags a path outside the project and
+/// names a project folder its command runs from.
+pub(super) fn consent_project() -> Session {
+    let json = r#"{ "name": "Tidy Assets", "nodes": [
+        { "id": "list", "type": "file-list", "parameters": { "base": "assets" } },
+        { "id": "del", "type": "file-delete", "name": "Rename", "parameters": { "base": "~/Pictures" } },
+        { "id": "opt", "type": "shell-run", "parameters": { "command": "optimize", "searchPath": ["bin"] } }
+    ] }"#;
+    let kind = SourceKind::Project {
+        root: PathBuf::from("/repo"),
+        file: Some(PathBuf::from("/repo/.bnto/recipes/tidy.bnto.json")),
     };
+    let request = trust_gate::consent_needed(json, "tidy", &kind, &TrustStore::default())
+        .expect("a project recipe asks");
     in_execution(
         Session::new(),
         ExecutionModel::new("run").awaiting_consent(request),

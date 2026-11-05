@@ -6,6 +6,7 @@ use std::process;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
+use crate::display_text::display_lines;
 use bnto_core::{NodeTally, PipelineReporter, PipelineResult, RunSummary};
 use colored::Colorize;
 
@@ -52,7 +53,7 @@ impl RunVerdict {
         let nodes = self.tally.lock().unwrap().nodes();
         let summary = RunSummary::from_error(error, elapsed_ms).with_nodes(nodes);
         let message = summary.error.as_deref().unwrap_or_default();
-        eprintln!("{} {message}", label.red());
+        eprintln!("{} {}", label.red(), shown_error(message));
         self.print_json(&summary);
         crate::scratch::remove_live_dirs();
         process::exit(1);
@@ -72,6 +73,29 @@ impl RunVerdict {
     }
 }
 
+/// `message` escaped (`display_lines`, which keeps its line breaks), every
+/// line after the first starting at least two columns in. A dry run's
+/// preview failure is shown this way too. bnto's own lines
+/// start at column 0 ("✔ 1 file written", a hint to run a command), so recipe
+/// text a builder failed to escape can't pass for one; a line bnto already
+/// indents keeps its layout.
+pub fn shown_error(message: &str) -> String {
+    let shown = display_lines(message);
+    let mut lines = shown.split('\n');
+    let first = lines.next().unwrap_or_default().to_string();
+    lines.fold(first, |mut out, line| {
+        out.push('\n');
+        if !line.starts_with(CONTINUATION) {
+            out.push_str(CONTINUATION);
+        }
+        out.push_str(line);
+        out
+    })
+}
+
+/// The least indent of an error's later lines.
+const CONTINUATION: &str = "  ";
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -79,6 +103,26 @@ mod tests {
     use bnto_core::events::NodeInfo;
     use std::cell::RefCell;
     use std::rc::Rc;
+
+    #[test]
+    fn an_errors_later_lines_never_start_at_column_zero() {
+        let shown = shown_error("Refused: \"a\nFORGED 1 file written\"\n\nTo finish, run: x");
+        assert_eq!(
+            shown,
+            "Refused: \"a\n  FORGED 1 file written\"\n  \n  To finish, run: x"
+        );
+    }
+
+    #[test]
+    fn an_already_indented_line_keeps_its_layout() {
+        let message = "File copy refused: 2 names\n  \"a\" has no file name\n    deeper";
+        assert_eq!(shown_error(message), message);
+    }
+
+    #[test]
+    fn other_control_characters_are_still_shown() {
+        assert_eq!(shown_error("a\u{1b}[2K\rb\nc"), "a\\e[2K\\rb\n  c");
+    }
 
     #[test]
     fn test_tallying_reporter_forwards_events_and_records_nodes() {

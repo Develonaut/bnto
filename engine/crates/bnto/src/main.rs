@@ -23,15 +23,23 @@ mod child_env;
 mod cli;
 mod command_stream;
 mod consent;
+mod consent_body;
+mod consent_files;
 mod consent_lines;
+mod consent_paths;
+mod consent_prompt;
+mod consent_request;
+mod consent_summary;
 mod context;
 mod dispatch;
+mod display_text;
 mod doctor;
 pub mod dry_run;
 mod dry_run_hint;
 mod exit_report;
 mod field_owner;
 mod file_param;
+mod fill_fields;
 mod fill_with;
 mod host_support;
 mod info;
@@ -52,13 +60,24 @@ mod ordered_write;
 mod output_names;
 mod overwrite;
 mod package_manager;
+mod path_flag;
+mod path_placeholders;
 mod process_registry;
 mod progress;
 mod progress_indent;
 mod progress_line;
 mod progressive_output;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "wired to catalog loading in project-recipes step 7e"
+    )
+)]
+mod project_root;
 mod recipe_output_dir;
 mod recipe_source;
+mod result_names;
 mod run;
 mod run_input;
 mod run_limit;
@@ -69,6 +88,7 @@ mod run_watchdog;
 mod scratch;
 mod shell_word;
 pub mod storage;
+mod strip_colours;
 pub mod telemetry;
 mod trust;
 mod trust_gate;
@@ -105,9 +125,7 @@ fn main() {
     telemetry::init(paths.as_ref());
     // Session logger — shared across all commands.
     let logger = create_logger(&paths);
-    // Build unified recipe catalog — bundled + user library.
-    let library_dir = paths.as_ref().map(|p| p.recipes_dir()).unwrap_or_default();
-    let catalog = RecipeCatalog::load(&library_dir);
+    let catalog = load_catalog(paths.as_ref());
 
     let cmd_name = cli.command.as_ref().map_or("tui", cli::Command::name);
     log_command(&logger, cmd_name);
@@ -138,18 +156,28 @@ fn install_signal_handler() {
     });
 }
 
-/// Resolve paths, create dirs, run pending migrations — before anything else.
+/// Resolve paths, create dirs, run pending migrations — before anything
+/// else. A home that can't be resolved or isn't absolute (`BNTO_HOME`, the
+/// config's `paths.home`) ends the process before any command runs: it
+/// would make the current folder's `.bnto/` the home (ISS-126). Only then
+/// is storage set up, and a failure there just warns.
 fn init_storage() -> Option<storage::BntoPaths> {
-    match storage::ensure_ready() {
-        Ok(p) => {
-            // Apply config home override so all derived paths follow it.
-            let config = storage::config::TomlConfig::load(&p);
-            Some(p.with_config_override(&config))
-        }
-        Err(e) => {
-            eprintln!("{} storage init: {e}", "Warning:".yellow());
-            None
-        }
+    let paths = unwrap_or_exit(storage::BntoPaths::resolve());
+    unwrap_or_exit(paths.clone().configured());
+    if let Err(e) = storage::ensure_ready(&paths) {
+        eprintln!("{} storage init: {e}", "Warning:".yellow());
+        return None;
+    }
+    // Read again: a migration may have rewritten the config.
+    Some(unwrap_or_exit(paths.configured()))
+}
+
+/// The unified recipe catalog: bundled recipes plus the user's library, or
+/// bundled alone when storage couldn't be set up.
+fn load_catalog(paths: Option<&storage::BntoPaths>) -> RecipeCatalog {
+    match paths {
+        Some(p) => RecipeCatalog::load(&p.recipes_dir()),
+        None => RecipeCatalog::without_library(),
     }
 }
 
@@ -177,7 +205,11 @@ pub(crate) fn unwrap_or_exit<T, E: std::fmt::Display>(result: Result<T, E>) -> T
     match result {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("{} {e}", "Error:".red());
+            eprintln!(
+                "{} {}",
+                "Error:".red(),
+                display_text::display_text(&e.to_string())
+            );
             process::exit(1);
         }
     }

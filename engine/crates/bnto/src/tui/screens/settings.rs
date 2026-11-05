@@ -3,7 +3,6 @@
 // Output dir opens the file picker for directory browsing (Enter).
 // Theme field cycles with left/right arrows.
 
-use super::super::theme::ThemeVariant;
 use crate::storage::config::TomlConfig;
 
 /// A single configurable field in the settings screen.
@@ -78,16 +77,21 @@ impl SettingsModel {
         self.fields.get(self.focused).is_some_and(|f| f.editable)
     }
 
-    /// Apply current settings back to a partial TomlConfig update.
-    pub fn apply_to_config(&self, config: &mut TomlConfig, variant: ThemeVariant) {
-        config.tui.theme = variant.as_slug().to_string();
-
-        config.paths.home = self
-            .fields
+    /// The home path field's value, `None` when empty.
+    pub fn home_path(&self) -> Option<String> {
+        self.fields
             .iter()
             .find(|f| f.key == "home_path")
             .map(|f| f.value.clone())
-            .filter(|v| !v.is_empty());
+            .filter(|v| !v.is_empty())
+    }
+
+    /// This model with the home path field showing `value`.
+    pub fn with_home_path(mut self, value: String) -> Self {
+        if let Some(f) = self.fields.iter_mut().find(|f| f.key == "home_path") {
+            f.value = value;
+        }
+        self
     }
 }
 
@@ -189,38 +193,32 @@ mod tests {
     }
 
     #[test]
-    fn apply_to_config_maps_home_path() {
+    fn home_path_reads_the_home_field() {
         let mut m = default_settings();
         m.fields[1].value = "/custom/bnto".to_string();
-        let mut config = TomlConfig::default();
-        m.apply_to_config(&mut config, ThemeVariant::Tokyo);
-        assert_eq!(config.tui.theme, "tokyo");
-        assert_eq!(config.paths.home, Some("/custom/bnto".to_string()));
+        assert_eq!(m.home_path(), Some("/custom/bnto".to_string()));
     }
 
     #[test]
-    fn apply_empty_home_becomes_none() {
-        let m = default_settings();
-        let mut config = TomlConfig::default();
-        m.apply_to_config(&mut config, ThemeVariant::LosAngeles);
-        assert!(config.paths.home.is_none());
+    fn an_empty_home_path_is_none() {
+        assert!(default_settings().home_path().is_none());
     }
 
     #[test]
     fn from_toml_config_roundtrips_home() {
         let config = TomlConfig {
-            tui: crate::storage::config::TuiSection {
-                theme: "tokyo".into(),
-            },
             paths: crate::storage::config::PathsSection {
                 home: Some("/custom".into()),
             },
             ..TomlConfig::default()
         };
         let model = SettingsModel::from_toml_config(&config);
-        let mut roundtripped = TomlConfig::default();
-        model.apply_to_config(&mut roundtripped, ThemeVariant::Tokyo);
-        assert_eq!(roundtripped.tui.theme, "tokyo");
-        assert_eq!(roundtripped.paths.home, config.paths.home);
+        assert_eq!(model.home_path(), config.paths.home);
+    }
+
+    #[test]
+    fn with_home_path_sets_the_home_field() {
+        let m = default_settings().with_home_path("/elsewhere".into());
+        assert_eq!(m.home_path(), Some("/elsewhere".to_string()));
     }
 }

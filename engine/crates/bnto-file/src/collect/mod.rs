@@ -61,7 +61,7 @@ impl NodeProcessor for FileCollect {
         if !root.is_dir() {
             return Err(BntoError::InvalidInput(format!(
                 "Not a directory: {}",
-                root.display()
+                bnto_core::display_path(&root)
             )));
         }
 

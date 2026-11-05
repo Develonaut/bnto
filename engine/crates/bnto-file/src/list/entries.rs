@@ -25,7 +25,7 @@ pub(super) fn checked_names(raw: Vec<String>) -> Result<Vec<String>, Vec<String>
     let mut names = Vec::new();
     let mut refused = Vec::new();
     for path in raw {
-        if escapes_base(&path) {
+        if bnto_core::leaves_folder(&path) {
             refused.push(path);
         } else {
             let name = path.replace('\\', "/");
@@ -39,17 +39,6 @@ pub(super) fn checked_names(raw: Vec<String>) -> Result<Vec<String>, Vec<String>
     } else {
         Err(refused)
     }
-}
-
-/// Absolute paths, drive letters (on every OS, so a list means the same
-/// thing wherever it runs) and `..` segments all leave the base.
-fn escapes_base(path: &str) -> bool {
-    let bytes = path.as_bytes();
-    let drive = bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':';
-    path.starts_with(['/', '\\'])
-        || drive
-        || std::path::Path::new(path).is_absolute()
-        || path.split(['/', '\\']).any(|s| s == "..")
 }
 
 #[cfg(test)]

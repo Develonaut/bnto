@@ -207,7 +207,7 @@ src/
 +-- cli.rs                 # clap definitions for every subcommand
 +-- dispatch.rs            # Routes a parsed subcommand to its implementation
 +-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
-+-- recipe_source.rs       # A recipe argument to JSON: a catalog slug, else a file path (run, dry-run, install)
++-- recipe_source.rs       # A recipe argument to JSON and its source kind: a catalog slug, else a file path (run, dry-run, install)
 +-- host_support.rs        # Refuses a recipe with no steps for this OS; the [macOS]-style badge
 +-- run_output.rs          # Writes run results and prints the summary
 +-- run_verdict.rs         # A run's last stderr line and its `--json` summary line, from one RunSummary
@@ -215,7 +215,19 @@ src/
 +-- run_watchdog.rs        # Kills a run's child processes once its time limit passes (run, TUI, dry-run preview)
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run or dry run
 +-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
-+-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
++-- consent.rs             # Consent gate by source kind (run + dry-run); a project recipe asks even without shell steps
++-- consent_request.rs     # What a consent prompt is about: origin, step types, path params, commands, files it runs
++-- consent_body.rs        # The prompt's lines, escaped, which the CLI prompt and the TUI's consent screen both render
++-- consent_summary.rs     # The prompt's heading and its one-line risk summary
++-- consent_prompt.rs      # The terminal prompt (stderr) and its y/N answer
++-- consent_paths.rs       # The path params and output names a recipe's steps use, each flagged when it reaches outside
++-- consent_files.rs       # Files from the working folder its shell steps run (searchPath, cwd, args, env values, script)
++-- consent_lines.rs       # Each shell step's full command line, as consent shows it
++-- fill_fields.rs         # `{{fields.*}}` filled with the values a run uses, for the consent prompt
++-- path_flag.rs           # Why a path needs a second look: absolute, `..`, `~`, set when run, leaves the project
++-- path_placeholders.rs   # Which `{{…}}` placeholders can't move a path (ctx.date, time, timestamp, started, platform)
++-- display_text.rs        # Escapes recipe text before bnto prints it (re-exports bnto-core's display_text, ISS-125)
++-- strip_colours.rs       # Drops SGR colour codes from a command's output before it's escaped
 +-- dry_run_hint.rs        # The quoted commands bnto suggests: a declined run's `bnto dry-run …`, a dry run's `Run with: bnto run …`
 +-- run_input.rs           # What a suggested `bnto run` ends with by input mode: nothing, `<url>`, `<text>` or `<files...>`
 +-- shell_word.rs          # Quotes an argument as one sh, zsh or PowerShell word, for printed command lines
@@ -236,10 +248,11 @@ src/
 +-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
 +-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
++-- result_names.rs        # Refuses a result name that leaves the output folder or this OS can't hold (run + TUI)
 +-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
 +-- ordered_write/         # Orders the final write so no copy replaces an input still to be read
 +-- exit_report.rs         # At the end of a stopped run, names kept staging folders and parked files
-+-- recipe_output_dir.rs   # A recipe's own output folder, filled or refused (run + TUI)
++-- recipe_output_dir.rs   # A recipe's own output folder, filled or refused, under the run's working folder (run + TUI), and `bnto run`'s default: the working folder
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (pipeline events -> lines)
 +-- progress_line.rs       # A step's live line: bar of files, or spinner + running message
@@ -259,10 +272,12 @@ src/
     +-- render.rs          # Root render dispatcher
     +-- render_detail.rs   # Detail screen renderer
     +-- render_execution.rs # Execution screen renderer
+    +-- render_consent.rs  # Consent screen: the shared body, summary pinned, scrolled a row at a time; y once read to the end
     +-- render_picker.rs   # File picker renderer
     +-- render_results.rs  # Results screen renderer
     +-- screen.rs          # Screen titles and each screen's own key hints
     +-- footer_hints.rs    # Footer hints: a mode's or the screen's keys, then the shared ones
+    +-- form_display.rs    # A tonkotsu form as drawn: text escaped, values left raw
     +-- theme.rs           # Theme variants and style helpers
     +-- screens/
     |   +-- browser.rs     # Recipe browser model + update

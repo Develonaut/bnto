@@ -12,6 +12,7 @@ use bnto_core::{HostPlatform, InputMode};
 use tonkotsu::{FormModel, Viewport};
 
 use super::picker::PickerModel;
+use crate::catalog::SourceKind;
 
 /// A single editable parameter entry shown in the detail screen.
 #[derive(Debug, Clone)]
@@ -63,8 +64,8 @@ pub struct DetailModel {
     pub name: String,
     /// Recipe description.
     pub description: String,
-    /// Whether this recipe is bundled (for trust badge display).
-    pub is_bundled: bool,
+    /// Where this recipe came from (for trust badge display).
+    pub kind: SourceKind,
     /// Whether it runs shell commands (for trust badge display).
     pub has_shell: bool,
     /// The operating systems it has steps for (for the OS badge).
@@ -119,7 +120,7 @@ impl DetailModel {
             slug: slug.to_string(),
             name: name.to_string(),
             description: description.to_string(),
-            is_bundled: true,
+            kind: SourceKind::Bundled,
             has_shell: false,
             os: HostPlatform::ALL.to_vec(),
             definition_json: String::new(),

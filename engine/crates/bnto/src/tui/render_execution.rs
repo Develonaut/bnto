@@ -5,10 +5,11 @@
 
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Paragraph, Wrap};
+use ratatui::widgets::Paragraph;
 
 use super::app::AppModel;
 use super::file_window::file_window;
+use super::render_consent::draw_consent;
 use super::render_layout::content_panel;
 use super::screens::execution::{
     ExecutionModel, ExecutionStatus, FileStatus, NodeProgress, NodeStatus,
@@ -16,6 +17,7 @@ use super::screens::execution::{
 use super::screens::results::format_duration;
 use super::theme::Theme;
 use super::wrap_lines::wrap_lines;
+use crate::display_text::display_text;
 
 /// Render the execution screen.
 pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -27,11 +29,10 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
         return;
     };
 
-    // Consent gets the whole panel, wrapped, so a long command line is
-    // read in full before it's approved.
+    // Consent gets the whole panel, wrapped and scrolled, so a long command
+    // line is read in full before it's approved.
     if let Some(request) = &exec.consent {
-        let prompt = Paragraph::new(consent_lines(request, theme)).wrap(Wrap { trim: false });
-        frame.render_widget(prompt, inner);
+        draw_consent(frame, request, exec.consent_scroll, theme, inner);
         return;
     }
 
@@ -47,40 +48,6 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
     // Fill the bottom area with the most recent command output lines.
     let output = output_lines(exec, theme, bottom.height as usize);
     frame.render_widget(Paragraph::new(output), bottom);
-}
-
-/// The consent prompt: what the recipe will run and how to answer.
-/// Mirrors the CLI prompt, so both surfaces ask the same question.
-#[expect(clippy::too_many_lines)]
-fn consent_lines<'a>(
-    request: &'a crate::trust_gate::ConsentRequest,
-    theme: &'a Theme,
-) -> Vec<Line<'a>> {
-    let mut lines = vec![
-        Line::from(Span::styled(
-            "  This recipe runs commands on your computer",
-            theme.heading(),
-        )),
-        Line::from(""),
-        Line::from(Span::styled(
-            format!("  Recipe: {}", request.recipe_name),
-            theme.muted(),
-        )),
-        Line::from(Span::styled("  COMMANDS", theme.category())),
-    ];
-    for command in &request.commands {
-        // A script step's line carries its script on the lines below.
-        for (i, part) in command.lines().enumerate() {
-            let bullet = if i == 0 { "    - " } else { "      " };
-            lines.push(Line::from(format!("{bullet}{part}")));
-        }
-    }
-    lines.push(Line::from(""));
-    lines.push(Line::from(Span::styled(
-        "  y allow and run  ·  n / Esc cancel",
-        theme.heading(),
-    )));
-    lines
 }
 
 /// Rows the OUTPUT pane keeps (heading and lines) whenever there's output,
@@ -126,16 +93,30 @@ fn header_lines<'a>(
 
 /// The error, one row per line it holds, each wrapped to `width`: a failed
 /// write's later lines name where kept copies are, and must show in full.
+/// Every row after the first, a wrapped row of the first line's included,
+/// starts under the text after `Error: `, past the column the screen's own
+/// rows start at, so recipe text a builder failed to escape can't pass for
+/// one of them.
 fn error_lines(error: &str, theme: &Theme, width: usize) -> Vec<Line<'static>> {
-    let row = |(i, part): (usize, &str)| {
-        let text = match i {
-            0 => format!("  Error: {part}"),
-            _ => format!("  {}", part.trim_start()),
-        };
+    let gutter = " ".repeat(ERROR_LABEL.len());
+    let row = |part: &str| {
+        let text = format!("{gutter}{}", display_text(part.trim_start()));
         Line::from(Span::styled(text, theme.heading()))
     };
-    wrap_lines(error.lines().enumerate().map(row).collect(), width)
+    let mut rows = wrap_lines(error.lines().map(row).collect(), width);
+    if let Some(first) = rows.first_mut() {
+        let text = first.to_string();
+        let rest = text.strip_prefix(&gutter).unwrap_or(text.trim_start());
+        *first = Line::from(Span::styled(
+            format!("{ERROR_LABEL}{rest}"),
+            theme.heading(),
+        ));
+    }
+    rows
 }
+
+/// What an error's first row starts with; its later rows indent to its end.
+const ERROR_LABEL: &str = "  Error: ";
 
 fn status_lines<'a>(exec: &ExecutionModel, theme: &Theme) -> Vec<Line<'a>> {
     let status_label = match &exec.status {
@@ -388,6 +369,91 @@ mod tests {
         );
     }
 
+    /// What a recipe would like to show as a row of its own.
+    const FORGED: &str = "FORGED 1 file written";
+
+    /// The execution screen at 100x30 after a run failed with `error`.
+    fn failed_screen(error: String) -> String {
+        use crate::tui::screens::execution::{self, ExecutionMessage};
+        let failed = ExecutionMessage::PipelineFailed {
+            node_id: String::new(),
+            error,
+        };
+        let home = tempfile::tempdir().unwrap();
+        let paths = crate::storage::BntoPaths {
+            home: home.path().to_path_buf(),
+        };
+        let variant = crate::tui::theme::ThemeVariant::LosAngeles;
+        let mut model = AppModel::with_paths(variant, None, false, paths);
+        model.execution = Some(execution::update(ExecutionModel::new("s"), failed));
+        screen_text(&model, 100, 30)
+    }
+
+    /// No row of `screen` starts with the recipe's text at or before the
+    /// column the screen's own rows use, past the panel's border.
+    fn assert_no_forged_row(screen: &str) {
+        for row in screen.lines() {
+            let inner = row.split_once('│').map_or(row, |(_, rest)| rest);
+            let indent = inner.chars().take_while(|c| *c == ' ').count();
+            let forged = inner.trim_start().starts_with("FORGED");
+            assert!(
+                !forged || indent >= ERROR_LABEL.len(),
+                "a forged row:\n{screen}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_line_break_in_a_copy_destination_forges_no_row() {
+        let value = format!("C:x\n{FORGED}");
+        let err = bnto_core::in_work_dir("destination", &value, &bnto_core::NoopContext);
+        let screen = failed_screen(err.unwrap_err().to_string());
+        assert!(screen.contains(&format!("\\n{FORGED}")), "{screen}");
+        assert_no_forged_row(&screen);
+    }
+
+    #[test]
+    fn a_line_break_in_a_rename_prefix_forges_no_row() {
+        // The name a `file-rename` prefix of `../\nFORGED…` builds, refused
+        // by `file-copy` as the engine refuses it.
+        use bnto_core::processor::{BatchFile, BatchInput, FileData, NodeProcessor};
+        let out = tempfile::tempdir().unwrap();
+        let file = BatchFile {
+            data: FileData::Bytes(b"a".to_vec()),
+            filename: format!("../\n{FORGED}a.txt"),
+            mime_type: None,
+            metadata: serde_json::Map::new(),
+        };
+        let params = serde_json::json!({ "destination": out.path().to_str().unwrap() });
+        let input = BatchInput {
+            files: vec![file],
+            params: params.as_object().unwrap().clone(),
+        };
+        let progress = bnto_core::ProgressReporter::new_noop();
+        let copy = bnto_file::FileCopy::new();
+        let err = copy.process_batch(input, &progress, &bnto_core::NoopContext);
+        let screen = failed_screen(err.err().unwrap().to_string());
+        assert!(screen.contains(&format!("\\n{FORGED}")), "{screen}");
+        assert_no_forged_row(&screen);
+    }
+
+    #[test]
+    fn a_raw_line_break_in_an_error_starts_its_row_past_the_label() {
+        // A builder that missed escaping: its line still can't pass for one
+        // of the screen's own rows.
+        let screen = failed_screen(format!("boom\n{FORGED}"));
+        assert!(screen.contains("  Error: boom"), "{screen}");
+        assert!(screen.contains(&format!("         {FORGED}")), "{screen}");
+        assert_no_forged_row(&screen);
+    }
+
+    #[test]
+    fn a_long_first_line_wraps_under_the_label() {
+        // Enough words that some wrapped row starts with one.
+        let screen = failed_screen("FORGED ".repeat(40));
+        assert_no_forged_row(&screen);
+    }
+
     #[test]
     fn a_skipped_node_is_marked_and_says_so() {
         let node = make_node(NodeStatus::Skipped, 0, 0);
@@ -488,11 +554,7 @@ mod tests {
         };
         let tail = "--sub-langs {{fields.subtitles}} -o {{output_dir}}/%(title)s.%(ext)s";
         let command = format!("yt-dlp --no-playlist {tail}");
-        let request = ConsentRequest {
-            recipe_name: "Probe".into(),
-            commands: vec![command],
-            hash: "h".into(),
-        };
+        let request = ConsentRequest::for_commands("Probe", vec![command]);
         let model = AppModel {
             screen: Screen::Execution {
                 slug: "probe".into(),

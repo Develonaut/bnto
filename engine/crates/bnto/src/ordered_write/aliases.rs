@@ -15,6 +15,7 @@ use bnto_core::file_stamp::stamp;
 use bnto_core::processor::FileData;
 
 use super::landing::landing_key;
+use crate::display_text::{display_path, display_text};
 
 /// `shared_kept` with only files already at their destination left as is.
 #[cfg(test)]
@@ -123,14 +124,17 @@ fn listed(dir: &Path, path: &Path) -> bool {
     entries.into_iter().any(|e| e.file_name() == name)
 }
 
-/// `path` for a refusal: with its file name's non-ASCII characters escaped
-/// after it when it has any, since two Unicode forms of one name (`café`
-/// composed and decomposed) print the same.
+/// `path` for a refusal, escaped as all recipe text is (`display_path`),
+/// with its file name's non-ASCII characters escaped after it when it has
+/// any, since two Unicode forms of one name (`café` composed and
+/// decomposed) print the same.
 pub fn shown(path: &Path) -> String {
-    let leaf = path.file_name().map(|n| n.to_string_lossy().into_owned());
+    let leaf = path
+        .file_name()
+        .map(|n| display_text(&n.to_string_lossy()).into_owned());
     match leaf.filter(|l| !l.is_ascii()) {
-        Some(leaf) => format!("{} (\"{}\")", path.display(), escaped(&leaf)),
-        None => path.display().to_string(),
+        Some(leaf) => format!("{} (\"{}\")", display_path(path), escaped(&leaf)),
+        None => display_path(path),
     }
 }
 
@@ -298,6 +302,18 @@ mod tests {
         assert_eq!(
             shown(Path::new("out/caf\u{e9}")),
             "out/caf\u{e9} (\"caf\\u{e9}\")"
+        );
+    }
+
+    #[test]
+    fn test_control_characters_in_a_name_are_escaped() {
+        assert_eq!(
+            shown(Path::new("o\nut/x\n\u{1b}[2Kb.txt")),
+            "o\\nut/x\\n\\e[2Kb.txt"
+        );
+        assert_eq!(
+            shown(Path::new("out/caf\u{e9}\r")),
+            "out/caf\u{e9}\\r (\"caf\\u{e9}\\r\")"
         );
     }
 }

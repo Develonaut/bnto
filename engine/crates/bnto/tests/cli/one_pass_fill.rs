@@ -96,11 +96,9 @@ fn assert_compares_a_field_holding_a_token_as_written() {
 fn in_a_loop_a_node_value_holding_an_item_token_is_not_filled_again() {
     // The input lists the path `{{item.first}}`; the loop's item has `first`.
     let dir = temp_output_dir();
-    let base = dir.path().join("base");
-    std::fs::create_dir(&base).unwrap();
     let nodes = json!([
         input(),
-        { "id": "ls", "type": "file-list", "parameters": { "base": base } },
+        { "id": "ls", "type": "file-list" },
         { "id": "set", "type": "edit-fields", "parameters": { "values": { "first": "Ada" } } },
         { "id": "each", "type": "loop", "nodes": [
             { "id": "say", "type": "report",

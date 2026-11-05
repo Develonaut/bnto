@@ -8,7 +8,8 @@ use serde_json::Value;
 pub(super) struct ListParams {
     /// Paths listed by the recipe, added to any read from input lists.
     pub paths: Vec<String>,
-    /// The folder paths are relative to; `None` means the work dir.
+    /// The folder paths are relative to, under the work dir; `None` means
+    /// the work dir itself.
     pub base: Option<String>,
 }
 
@@ -20,6 +21,13 @@ impl ListParams {
             .and_then(|v| v.as_str())
             .filter(|s| !s.is_empty())
             .map(str::to_string);
+        if let Some(base) = base.as_deref().filter(|b| bnto_core::leaves_folder(b)) {
+            return Err(format!(
+                "'base' must be a folder under the working directory, not \"{}\" ({})",
+                bnto_core::display_text(base),
+                bnto_core::LEAVES_FOLDER_WHY
+            ));
+        }
         Ok(Self {
             paths: read_paths(params.get("paths"))?,
             base,

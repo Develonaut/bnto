@@ -12,6 +12,7 @@ mod format;
 mod host_skip;
 mod shell;
 mod shell_note;
+mod shown_line;
 
 use bnto_core::{Dependency, HostPlatform, InputMode, PipelineDefinition, resolve_input_mode};
 use bnto_engine::deps::collect_pipeline_dependencies;
@@ -116,6 +117,7 @@ fn preview_files(definition_json: &str, inputs: &[String], params: &[String]) ->
             warnings: result.warnings,
         },
         Err(e) => {
+            let e = crate::run_verdict::shown_error(&e.to_string());
             eprintln!("Warning: pipeline preview failed: {e}");
             FilesPreview::default()
         }

@@ -93,7 +93,8 @@ impl NodeProcessor for FileMove {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let params = MoveParams::read(&input.params).map_err(BntoError::InvalidInput)?;
-        let mut root = Root::resolve(&params.destination, params.create_dirs)
+        let destination = bnto_core::in_work_dir("destination", &params.destination, ctx)?;
+        let mut root = Root::resolve(&destination, params.create_dirs)
             .map_err(|e| BntoError::InvalidInput(refused(&e)))?;
         let planned = plan::plan(&input.files, &mut root).map_err(BntoError::InvalidInput)?;
         let moves = real_moves(&planned.moves);

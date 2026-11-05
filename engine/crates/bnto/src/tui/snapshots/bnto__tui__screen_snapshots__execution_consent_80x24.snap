@@ -12,16 +12,16 @@ expression: "session.screen(width, height)"
 
       ╭ R U N N I N G ───────────────────────────────────────────────────╮
       │  This recipe runs commands on your computer                      │
+      │  runs 1 command                                                  │
       │                                                                  │
       │  Recipe: Slow Shell                                              │
+      │  Local recipe `slow-shell`                                       │
+      │                                                                  │
       │  COMMANDS                                                        │
       │    - sh -c <script> bnto                                         │
       │          script:                                                 │
       │            for i in 1 2 3; do echo "line $i"; done               │
-      │                                                                  │
-      │  y allow and run  ·  n / Esc cancel                              │
-      │                                                                  │
-      │                                                                  │
-      │                                                                  │
+      │  STEPS                                                           │
+      │  ↓ more below · j/k scroll                                       │
       ╰──────────────────────────────────────────────────────────────────╯
-      y allow  n/Esc cancel         22 recipes  ·  v[version]  ·  Los Angeles
+      n/Esc cancel  j more  q quit  22 recipes  ·  v[version]  ·  Los Angeles

@@ -19,9 +19,12 @@ pub(super) enum Target {
     Missing,
 }
 
-/// The base folder as a canonical path; it must exist and be a folder.
-pub(super) fn base_root(base: &str) -> Result<PathBuf, String> {
-    let path = std::fs::canonicalize(base)
+/// The base folder (`resolved`, under the run's working folder when `base`
+/// is relative) as a canonical path; it must exist and be a folder. `base`
+/// is the param as written, for the message.
+pub(super) fn base_root(base: &str, resolved: &Path) -> Result<PathBuf, String> {
+    let base = bnto_core::display_text(base);
+    let path = std::fs::canonicalize(resolved)
         .map_err(|e| format!("base folder {base} can't be resolved: {e}"))?;
     if !path.is_dir() {
         return Err(format!("base folder {base} is not a folder"));
@@ -33,7 +36,10 @@ pub(super) fn base_root(base: &str) -> Result<PathBuf, String> {
 /// param as written, for the message.
 #[expect(clippy::too_many_lines)]
 pub(super) fn check(file: &BatchFile, root: &Path, base: &str) -> Result<Target, String> {
-    let name = &file.filename;
+    // Recipe text (a name, a path, the base param), escaped where the
+    // refusal is built.
+    let name = bnto_core::display_text(&file.filename);
+    let base = bnto_core::display_text(base);
     let FileData::Path(path) = &file.data else {
         return Err(format!(
             "{name} is in memory, not a file on disk; file-delete only deletes files on disk"
@@ -42,7 +48,7 @@ pub(super) fn check(file: &BatchFile, root: &Path, base: &str) -> Result<Target,
     let outside = || {
         format!(
             "{name} ({}) is outside the base folder {base}",
-            path.display()
+            bnto_core::display_path(path)
         )
     };
     let location = locate(path).ok_or_else(outside)?;
@@ -64,7 +70,7 @@ pub(super) fn check(file: &BatchFile, root: &Path, base: &str) -> Result<Target,
     if std::fs::metadata(&location).is_ok_and(|m| m.is_dir()) {
         return Err(format!(
             "{name} ({}) is a folder; file-delete only deletes files",
-            path.display()
+            bnto_core::display_path(path)
         ));
     }
     Ok(Target::File(location))

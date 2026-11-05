@@ -40,18 +40,21 @@ struct OldPaths {
 }
 
 impl OldPaths {
+    /// `None` (skip the migration) unless every folder is absolute: `dirs`
+    /// takes a relative `$HOME` as given, which would make the working
+    /// folder the old home and copy its recipes and approvals (ISS-126).
     fn resolve() -> Option<Self> {
-        let home = dirs::home_dir()?;
+        let home = absolute(dirs::home_dir())?;
 
         // Config: macOS used ~/.config/bnto/ (XDG convention for CLIs).
         let config_dir = if cfg!(target_os = "macos") {
             home.join(".config").join("bnto")
         } else {
-            dirs::config_dir()?.join("bnto")
+            absolute(dirs::config_dir())?.join("bnto")
         };
 
         // Data: platform default (~/Library/Application Support/bnto/ on macOS).
-        let data_dir = dirs::data_dir()?.join("bnto");
+        let data_dir = absolute(dirs::data_dir())?.join("bnto");
 
         Some(Self {
             config_dir,
@@ -70,6 +73,11 @@ impl OldPaths {
     fn trusted_file(&self) -> PathBuf {
         self.data_dir.join("trusted.json")
     }
+}
+
+/// `dir` when it's absolute.
+fn absolute(dir: Option<PathBuf>) -> Option<PathBuf> {
+    dir.filter(|d| d.is_absolute())
 }
 
 /// Copy recipe files from the old data dir. Skips files that already exist.

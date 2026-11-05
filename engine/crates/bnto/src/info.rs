@@ -7,6 +7,7 @@ use bnto_core::{HostPlatform, InputMode, PipelineDefinition, resolve_input_mode}
 use bnto_engine::deps::{ScopedDependency, scoped_pipeline_dependencies};
 
 use crate::catalog::RecipeCatalog;
+use crate::display_text::display_text;
 use crate::run_input::with_run_input;
 
 /// Structured recipe details ready for display.
@@ -25,21 +26,29 @@ pub struct RecipeInfo {
     pub os: Vec<HostPlatform>,
 }
 
-/// Print recipe info to stdout with colored formatting.
+/// Print recipe info to stdout with colored formatting, recipe text escaped
+/// (ISS-125).
 pub fn print_recipe_info(slug: &str, info: &RecipeInfo) {
     use colored::Colorize;
-    println!("\n{}", info.name.bold());
-    println!("{}\n", info.description);
-    println!("  {}   {}", "Category:".dimmed(), info.category);
+    println!("\n{}", display_text(&info.name).bold());
+    println!("{}\n", display_text(&info.description));
+    println!(
+        "  {}   {}",
+        "Category:".dimmed(),
+        display_text(&info.category)
+    );
     println!("  {}      {}", "Input:".dimmed(), info.input_mode);
     println!("  {}    {}", "Runs on:".dimmed(), describe_os(&info.os));
     println!(
         "  {}      {}",
         "Nodes:".dimmed(),
-        info.node_types.join(", ").cyan()
+        display_text(&info.node_types.join(", ")).cyan()
     );
     print_dependencies(&info.dependencies);
-    println!("\n{}", run_hint(slug, info.input_mode).dimmed());
+    println!(
+        "\n{}",
+        display_text(&run_hint(slug, info.input_mode)).dimmed()
+    );
 }
 
 /// Usage hint tailored to the recipe's input mode — a `none` recipe takes
@@ -58,13 +67,11 @@ fn print_dependencies(deps: &[ScopedDependency]) {
     for scoped in deps {
         println!(
             "    {}{}",
-            scoped.dependency.binary.yellow(),
-            dependency_notes(scoped)
+            display_text(&scoped.dependency.binary).yellow(),
+            display_text(&dependency_notes(scoped))
         );
-        println!(
-            "      Install: {}",
-            scoped.install_hint(HostPlatform::current())
-        );
+        let hint = scoped.install_hint(HostPlatform::current());
+        println!("      Install: {}", display_text(hint));
     }
 }
 

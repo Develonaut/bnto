@@ -15,6 +15,7 @@ use super::super::super::screens::execution::{ExecutionMessage, ExecutionStatus}
 use super::super::super::screens::preview::PreviewModel;
 use super::super::super::theme::ThemeVariant;
 use super::{consent_check, hold};
+use crate::catalog::{CatalogEntry, RecipeSource};
 use crate::storage::paths::BntoPaths;
 use crate::trust::{TrustStore, definition_hash};
 use crate::trust_gate::{self, ConsentRequest};
@@ -73,14 +74,15 @@ fn key(code: KeyCode) -> KeyEvent {
 fn would_ask(model: &AppModel) -> Option<ConsentRequest> {
     let exec = model.execution.as_ref().expect("a run");
     let check = consent_check(model, &exec.slug, &exec.definition_json);
-    let store = TrustStore::load(&check.trusted_file);
-    trust_gate::consent_needed(&exec.definition_json, &exec.slug, check.bundled, &store)
+    let store = TrustStore::load(&check.paths.trusted_file());
+    trust_gate::consent_needed(&exec.definition_json, &exec.slug, &check.kind, &store)
 }
 
-/// The run held for consent, as the bridge's request does.
+/// The run held for consent, as the bridge's request does, drawn in a
+/// terminal big enough to show all of it.
 fn held(model: AppModel) -> AppModel {
     let request = would_ask(&model).expect("the run needs consent");
-    hold(model, request)
+    fitted(hold(model, request), 120, 60)
 }
 
 /// The run starts its bridge, which will ask before any command runs.
@@ -235,7 +237,7 @@ fn y_allows_and_n_declines_only_while_consent_is_pending() {
     // Not yet asked: the bridge is still checking the run.
     assert!(handle_key(&app, key(KeyCode::Char('y'))).is_none());
     assert!(handle_key(&app, key(KeyCode::Char('n'))).is_none());
-    let app = held(app);
+    let app = fitted(held(app), 120, 40);
     assert!(matches!(
         handle_key(&app, key(KeyCode::Char('y'))),
         Some(AppMessage::Execution(ExecutionMessage::AllowCommands))
@@ -284,4 +286,146 @@ fn a_library_copy_with_a_built_in_slug_still_asks() {
     let (_dir, model) = model_with_library_copy(&copy);
     let app = run_from_detail(model, "download-video", &copy, false);
     asks_first(&app);
+}
+
+const PLAIN_RECIPE: &str = r#"{
+    "id": "tidy", "type": "group", "version": "1.0.0", "name": "Tidy",
+    "nodes": [
+        { "id": "r", "type": "file-rename", "version": "1.0.0", "parameters": {} }
+    ]
+}"#;
+
+/// Where the project recipe `tidy` below is read from.
+fn project_file(dir: &tempfile::TempDir) -> std::path::PathBuf {
+    dir.path().join("project/.bnto/recipes/tidy.bnto.json")
+}
+
+/// A model whose catalog runs `PLAIN_RECIPE` as the project recipe `tidy`.
+fn model_with_project_recipe() -> (tempfile::TempDir, AppModel) {
+    let (dir, model) = model();
+    let entry = CatalogEntry {
+        slug: "tidy".into(),
+        name: "Tidy".into(),
+        description: String::new(),
+        category: String::new(),
+        tags: Vec::new(),
+        definition_json: PLAIN_RECIPE.into(),
+        source: RecipeSource::Project {
+            root: dir.path().join("project"),
+            file: project_file(&dir),
+        },
+    };
+    let catalog = model.catalog.with_entry(entry);
+    (dir, AppModel { catalog, ..model })
+}
+
+#[test]
+fn a_project_recipe_without_shell_steps_asks_first() {
+    let (_dir, model) = model_with_project_recipe();
+    let app = run_from_detail(model, "tidy", PLAIN_RECIPE, false);
+    asks_first(&app);
+}
+
+#[test]
+fn an_approved_project_recipe_starts_without_asking() {
+    let (_dir, model) = model_with_project_recipe();
+    let app = held(run_from_detail(model, "tidy", PLAIN_RECIPE, false));
+    let app = update(app, AppMessage::Execution(ExecutionMessage::AllowCommands));
+    let app = run_from_detail(app, "tidy", PLAIN_RECIPE, false);
+    assert!(would_ask(&app).is_none());
+}
+
+#[test]
+fn a_project_slug_run_with_other_json_still_asks() {
+    // An edited or reloaded copy of a project recipe keeps the project's
+    // rule: it must not fall back to the library's no-shell pass.
+    let (_dir, model) = model_with_project_recipe();
+    let edited = PLAIN_RECIPE.replace("Tidy", "Tidier");
+    let app = run_from_detail(model, "tidy", &edited, false);
+    asks_first(&app);
+}
+
+#[test]
+fn a_project_recipes_consent_names_its_file() {
+    let (dir, model) = model_with_project_recipe();
+    let app = run_from_detail(model, "tidy", PLAIN_RECIPE, false);
+    let request = would_ask(&app).expect("asks");
+    let file = project_file(&dir);
+    assert_eq!(
+        request.origin,
+        format!("Project recipe `tidy` from `{}`", file.display())
+    );
+    assert_eq!(request.steps, ["file-rename"]);
+}
+
+#[test]
+fn an_edited_project_recipe_doesnt_claim_its_file() {
+    // What runs isn't the file's text, so the prompt can't say it's the file.
+    let (_dir, model) = model_with_project_recipe();
+    let edited = PLAIN_RECIPE.replace("Tidy", "Tidier");
+    let app = run_from_detail(model, "tidy", &edited, false);
+    let request = would_ask(&app).expect("asks");
+    assert_eq!(request.origin, "Project recipe `tidy`, edited here");
+}
+
+/// Draw-time fitting for a `cols`x`rows` terminal, as the run loop does.
+fn fitted(mut app: AppModel, cols: u16, rows: u16) -> AppModel {
+    let exec = app.execution.as_mut().expect("a run");
+    let size = ratatui::layout::Size::new(cols, rows);
+    crate::tui::render_consent::fit_consent(exec, &app.theme, size);
+    app
+}
+
+#[test]
+fn j_and_k_scroll_the_held_prompt() {
+    let (_dir, model) = model();
+    let app = held(run_from_detail(model, "probe", SHELL_RECIPE, false));
+    let press = |app: AppModel, code| {
+        let msg = handle_key(&app, key(code)).expect("a consent key");
+        update(app, msg)
+    };
+    let app = press(app, KeyCode::Char('j'));
+    let app = press(app, KeyCode::Down);
+    assert_eq!(app.execution.as_ref().unwrap().consent_scroll, 2);
+    let app = press(app, KeyCode::Char('k'));
+    assert_eq!(app.execution.as_ref().unwrap().consent_scroll, 1);
+    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+}
+
+#[test]
+fn y_does_nothing_until_the_prompt_is_read_to_its_end() {
+    let (_dir, model) = model();
+    let app = fitted(
+        held(run_from_detail(model, "probe", SHELL_RECIPE, false)),
+        80,
+        20,
+    );
+    assert!(handle_key(&app, key(KeyCode::Char('y'))).is_none());
+    // No jump to the end: every row is drawn on the way down.
+    assert!(handle_key(&app, key(KeyCode::Char('G'))).is_none());
+    assert!(handle_key(&app, key(KeyCode::End)).is_none());
+    let mut app = app;
+    for _ in 0..20 {
+        let down = handle_key(&app, key(KeyCode::Char('j'))).unwrap();
+        app = fitted(update(app, down), 80, 20);
+    }
+    assert!(matches!(
+        handle_key(&app, key(KeyCode::Char('y'))),
+        Some(AppMessage::Execution(ExecutionMessage::AllowCommands))
+    ));
+}
+
+#[test]
+fn allowing_a_prompt_not_read_to_its_end_is_refused() {
+    // Defence in depth: whatever sends AllowCommands, the app checks too.
+    let (_dir, model) = model();
+    let app = fitted(
+        held(run_from_detail(model, "probe", SHELL_RECIPE, false)),
+        80,
+        20,
+    );
+    let app = update(app, AppMessage::Execution(ExecutionMessage::AllowCommands));
+    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+    let store = TrustStore::load(&app.paths.trusted_file());
+    assert!(!store.is_approved(&definition_hash(SHELL_RECIPE)));
 }

@@ -9,6 +9,7 @@ use super::app::AppModel;
 use super::render_home_grid::pane_block;
 use super::render_layout::space_out;
 use super::theme::Theme;
+use crate::display_text::display_text;
 
 /// Draw the Library pane — user's saved recipe files.
 pub fn draw_library_pane(
@@ -100,7 +101,10 @@ fn item_line(name: &str, is_selected: bool, theme: &Theme) -> Line<'static> {
     } else {
         ("   ", theme.text())
     };
-    Line::from(Span::styled(format!("{marker}{name}"), style))
+    Line::from(Span::styled(
+        format!("{marker}{}", display_text(name)),
+        style,
+    ))
 }
 
 /// Rows to scroll a pane `height` rows tall so line `selected` shows: none
